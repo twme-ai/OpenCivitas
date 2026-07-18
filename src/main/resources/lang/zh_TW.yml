@@ -18,6 +18,10 @@ balance:
 payment:
   sent: '<green>你已支付 <player> <amount>。</green>'
   received: '<green>你收到 <player> 支付的 <amount>。</green>'
+baltop:
+  header: '<gold>餘額排行榜</gold> <gray>（第 <page> 頁）</gray>'
+  empty: '<gray>此頁沒有餘額資料。</gray>'
+  entry: '<yellow>#<rank></yellow> <white><player></white> <gray><amount></gray>'
 transactions:
   header: '<gold>交易紀錄</gold> <gray>（第 <page> 頁）</gray>'
   empty: '<gray>此頁沒有交易紀錄。</gray>'

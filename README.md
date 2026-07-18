@@ -19,7 +19,7 @@ The first playable foundation includes:
 - English and Traditional Chinese message catalogs with per-player locale choice
 - SQLite persistence with an auditable per-account ledger
 - Configurable starting balance (default `$1,200`)
-- `/balance`, `/pay`, `/transactions`, `/about`, and `/locale`
+- `/balance`, `/baltop`, `/pay`, `/transactions`, `/about`, and `/locale`
 - persistent qualifications and job membership
 - two-trade, one-profession, and unlimited government-role limits
 - self-service career enrollment plus administrative appointments

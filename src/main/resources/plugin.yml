@@ -18,6 +18,9 @@ commands:
   transactions:
     description: View recent account transactions.
     usage: /transactions [page]
+  baltop:
+    description: View the highest personal account balances.
+    usage: /baltop [page]
   about:
     description: View a citizen profile.
     usage: /about [player]

@@ -100,7 +100,7 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         MessageService messages = new MessageService(this);
         CitizenRepository citizens = new CitizenRepository(database);
         CivitasCommand commands = new CivitasCommand(this, database, citizens, messages, currencySymbol, pageSize);
-        for (String name : List.of("balance", "pay", "transactions", "about", "locale")) {
+        for (String name : List.of("balance", "pay", "transactions", "baltop", "about", "locale")) {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(commands);
             command.setTabCompleter(commands);

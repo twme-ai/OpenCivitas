@@ -18,6 +18,10 @@ balance:
 payment:
   sent: '<green>You paid <player> <amount>.</green>'
   received: '<green>You received <amount> from <player>.</green>'
+baltop:
+  header: '<gold>Top balances</gold> <gray>(page <page>)</gray>'
+  empty: '<gray>No balances were found on this page.</gray>'
+  entry: '<yellow>#<rank></yellow> <white><player></white> <gray><amount></gray>'
 transactions:
   header: '<gold>Transactions</gold> <gray>(page <page>)</gray>'
   empty: '<gray>No transactions were found on this page.</gray>'

@@ -4,6 +4,7 @@ import dev.opencivitas.citizen.CitizenProfile;
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.LedgerEntry;
+import dev.opencivitas.economy.BalanceRank;
 import dev.opencivitas.economy.LedgerEntryType;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.economy.TransferResult;
@@ -69,6 +70,7 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
             case "balance" -> balance(sender, args);
             case "pay" -> pay(sender, args);
             case "transactions" -> transactions(sender, args);
+            case "baltop" -> balanceTop(sender, args);
             case "about" -> about(sender, args);
             case "locale" -> locale(sender, args);
             default -> false;
@@ -199,6 +201,40 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
         complete(sender,
                 database.submit(() -> citizens.transactions(player.getUniqueId(), transactionPageSize, offset)),
                 entries -> showTransactions(sender, selectedPage, entries));
+        return true;
+    }
+
+    private boolean balanceTop(CommandSender sender, String[] args) {
+        if (args.length > 1) {
+            usage(sender, "/baltop [page]");
+            return true;
+        }
+        int page;
+        int offset;
+        try {
+            page = args.length == 0 ? 1 : Integer.parseInt(args[0]);
+            if (page < 1) {
+                throw new NumberFormatException("Page must be positive");
+            }
+            offset = Math.multiplyExact(page - 1, transactionPageSize);
+        } catch (NumberFormatException | ArithmeticException exception) {
+            messages.send(sender, "error.invalid-page");
+            return true;
+        }
+        int selectedPage = page;
+        complete(sender, database.submit(() -> citizens.balanceTop(transactionPageSize, offset)), ranks -> {
+            messages.send(sender, "baltop.header", Placeholder.unparsed("page", Integer.toString(selectedPage)));
+            if (ranks.isEmpty()) {
+                messages.send(sender, "baltop.empty");
+            }
+            for (int index = 0; index < ranks.size(); index++) {
+                BalanceRank rank = ranks.get(index);
+                messages.send(sender, "baltop.entry",
+                        Placeholder.unparsed("rank", Integer.toString(offset + index + 1)),
+                        Placeholder.unparsed("player", rank.playerName()),
+                        Placeholder.unparsed("amount", Money.format(rank.balanceCents(), currencySymbol)));
+            }
+        });
         return true;
     }
 

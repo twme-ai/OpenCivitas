@@ -114,6 +114,16 @@ class CitizenRepositoryTest {
         assertEquals(null, repository.find(ALICE).orElseThrow().preferredLocale());
     }
 
+    @Test
+    void balanceTopUsesStableOrderingAndPaging() throws Exception {
+        registerBoth();
+        repository.transfer(ALICE, BOB, 10_000);
+
+        assertEquals("Bob", repository.balanceTop(1, 0).getFirst().playerName());
+        assertEquals("Alice", repository.balanceTop(1, 1).getFirst().playerName());
+        assertTrue(repository.balanceTop(10, 2).isEmpty());
+    }
+
     private void registerBoth() throws Exception {
         repository.register(ALICE, "Alice", "en_US", 120_000);
         repository.register(BOB, "Bob", "en_US", 120_000);

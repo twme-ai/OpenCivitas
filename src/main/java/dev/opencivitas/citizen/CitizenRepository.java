@@ -2,6 +2,7 @@ package dev.opencivitas.citizen;
 
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.AccountRegistration;
+import dev.opencivitas.economy.BalanceRank;
 import dev.opencivitas.economy.LedgerEntry;
 import dev.opencivitas.economy.LedgerEntryType;
 import dev.opencivitas.economy.TransferResult;
@@ -21,6 +22,29 @@ public final class CitizenRepository {
 
     public CitizenRepository(Database database) {
         this.database = database;
+    }
+
+    public List<BalanceRank> balanceTop(int limit, int offset) throws SQLException {
+        String sql = """
+                SELECT p.uuid, p.last_name, a.balance_cents
+                FROM accounts a JOIN players p ON p.uuid = a.player_uuid
+                ORDER BY a.balance_cents DESC, p.last_name COLLATE NOCASE, p.uuid
+                LIMIT ? OFFSET ?
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            statement.setInt(2, offset);
+            try (ResultSet results = statement.executeQuery()) {
+                List<BalanceRank> ranks = new ArrayList<>();
+                while (results.next()) {
+                    ranks.add(new BalanceRank(
+                            UUID.fromString(results.getString("uuid")),
+                            results.getString("last_name"), results.getLong("balance_cents")));
+                }
+                return List.copyOf(ranks);
+            }
+        }
     }
 
     public AccountRegistration register(UUID uuid, String name, String clientLocale, long startingCents)
