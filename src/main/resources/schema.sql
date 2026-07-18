@@ -240,6 +240,123 @@ CREATE TABLE IF NOT EXISTS enacted_laws (
 CREATE INDEX IF NOT EXISTS idx_enacted_laws_active
     ON enacted_laws(repealed_at, enacted_at DESC, id DESC);
 
+CREATE TABLE IF NOT EXISTS court_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_number TEXT UNIQUE,
+    court_level TEXT NOT NULL CHECK (court_level IN ('DISTRICT', 'FEDERAL', 'SUPREME')),
+    case_type TEXT NOT NULL CHECK (case_type IN ('CIVIL', 'CRIMINAL', 'CONSTITUTIONAL', 'INSTITUTIONAL', 'APPEAL')),
+    status TEXT NOT NULL CHECK (status IN ('FILED', 'ASSIGNED', 'SCHEDULED', 'HEARING', 'DECIDED', 'APPEALED', 'DISMISSED', 'CLOSED')),
+    parent_case_id INTEGER REFERENCES court_cases(id) ON DELETE SET NULL,
+    filer_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    plaintiff_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    defendant_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    title TEXT NOT NULL,
+    claim_text TEXT NOT NULL,
+    claim_amount_cents INTEGER NOT NULL DEFAULT 0 CHECK (claim_amount_cents >= 0),
+    filed_at INTEGER NOT NULL,
+    scheduled_at INTEGER,
+    decided_at INTEGER,
+    outcome TEXT,
+    decision_text TEXT,
+    judgment_cents INTEGER NOT NULL DEFAULT 0 CHECK (judgment_cents >= 0),
+    fine_cents INTEGER NOT NULL DEFAULT 0 CHECK (fine_cents >= 0),
+    jail_minutes INTEGER NOT NULL DEFAULT 0 CHECK (jail_minutes >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_court_cases_status_filed
+    ON court_cases(status, filed_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS court_participants (
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    role TEXT NOT NULL CHECK (role IN ('PLAINTIFF_COUNSEL', 'DEFENSE_COUNSEL')),
+    appointed_by TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    appointed_at INTEGER NOT NULL,
+    PRIMARY KEY (case_id, role)
+);
+
+CREATE TABLE IF NOT EXISTS court_case_judges (
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    judge_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    judicial_role TEXT NOT NULL,
+    joined_at INTEGER NOT NULL,
+    PRIMARY KEY (case_id, judge_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS court_evidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    submitted_by TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    description TEXT NOT NULL,
+    item_data BLOB,
+    submitted_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS court_docket (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    actor_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    entry_type TEXT NOT NULL,
+    entry_text TEXT,
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_court_docket_case_created
+    ON court_docket(case_id, created_at, id);
+
+CREATE TABLE IF NOT EXISTS court_verdict_votes (
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    judge_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    outcome TEXT NOT NULL,
+    judgment_cents INTEGER NOT NULL DEFAULT 0 CHECK (judgment_cents >= 0),
+    fine_cents INTEGER NOT NULL DEFAULT 0 CHECK (fine_cents >= 0),
+    jail_minutes INTEGER NOT NULL DEFAULT 0 CHECK (jail_minutes >= 0),
+    reasoning TEXT NOT NULL,
+    voted_at INTEGER NOT NULL,
+    PRIMARY KEY (case_id, judge_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS court_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    judge_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    target_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    order_type TEXT NOT NULL,
+    order_text TEXT NOT NULL,
+    issued_at INTEGER NOT NULL,
+    expires_at INTEGER,
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'COMPLIED', 'REVOKED', 'EXPIRED'))
+);
+
+CREATE TABLE IF NOT EXISTS court_warrants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL REFERENCES court_cases(id) ON DELETE CASCADE,
+    judge_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    target_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    warrant_type TEXT NOT NULL CHECK (warrant_type IN ('ARREST', 'SEARCH')),
+    reason TEXT NOT NULL,
+    issued_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL CHECK (expires_at > issued_at),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'EXECUTED', 'REVOKED', 'EXPIRED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_court_warrants_target_status
+    ON court_warrants(target_uuid, status, expires_at);
+
+CREATE TABLE IF NOT EXISTS criminal_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL UNIQUE REFERENCES court_cases(id) ON DELETE RESTRICT,
+    defendant_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    charge TEXT NOT NULL,
+    fine_cents INTEGER NOT NULL CHECK (fine_cents >= 0),
+    jail_minutes INTEGER NOT NULL CHECK (jail_minutes >= 0),
+    convicted_at INTEGER NOT NULL,
+    pardoned_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_criminal_records_defendant
+    ON criminal_records(defendant_uuid, convicted_at DESC);
+
 CREATE TABLE IF NOT EXISTS exam_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,

@@ -17,10 +17,10 @@ legally or meaningfully copied from another server.
 | Auctions | item listings, bids, settlement | implemented: metadata-safe listings, browse/search, escrow bids, buyouts, refunds, cancellation rules, expiry settlement, persistent claims |
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | in progress: registered 3D plots, purchase, fixed-term escrow/rent expiry, proportional refund, titleholder/tenant/trust, price search, protection |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | in progress: 4,096-block allowance, paid expansion, menu/wand create and resize, trust, transfer, protection, explosion toggle, kick-out |
-| Government | executive, bicameral legislature, judiciary | in progress: configurable elected offices and persistent office terms; executive appointments and judiciary remain |
+| Government | executive, bicameral legislature, judiciary | in progress: configurable elected offices, persistent office terms, legislature, and judiciary; executive appointments remain |
 | Elections | STV, instant runoff, terms, eligibility, referendums | implemented: candidate and six-hour voter eligibility, sealed ranked ballots, nominations/running mates, ballot replacement, IRV, Droop-quota STV, strict-majority referendums, auditable rounds/results, automatic terms |
 | Legislature | bills, amendments, chamber votes, veto and override | implemented: House introduction, Senate review/amendments, House reconsideration, immutable stage votes/tallies, quorum/floors, presidential assent/veto, assumed assent, bicameral override, constitutional referendums, enacted law codex |
-| Courts | three levels, cases, filings, orders, appeals | planned |
+| Courts | three levels, cases, filings, orders, appeals | implemented: public docket, jurisdiction-routed civil/criminal/constitutional/institutional filings, counsel, judicial assignment, hearings, text/item evidence, motions, expiring orders and warrants, jurisdiction-limited sanctions, criminal records, linked appeals, and two-vote Supreme Court decisions |
 | Law enforcement | reports, consent, wanted status, evidence, arrest | planned |
 | Health | symptoms, injuries, diseases, contagion, doctors, treatments | planned |
 | Medicare | covered hospital treatment and configurable pharmacy co-pay | planned |

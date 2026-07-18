@@ -108,6 +108,16 @@ commands:
   law:
     description: Read an enacted law.
     usage: /law <number|id>
+  case:
+    description: File, view, hear, decide, and appeal court cases.
+    usage: /case <list|info|docket|file|counsel|claim|schedule|hearing|evidence|evidenceitem|motion|order|warrant|verdict|appeal>
+    aliases: [cases, court]
+  records:
+    description: View a citizen's public criminal record.
+    usage: /records [player]
+  warrants:
+    description: View a citizen's active court warrants.
+    usage: /warrants [player]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.

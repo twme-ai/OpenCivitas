@@ -70,6 +70,19 @@ behavioral reference, not a source of copyable implementation or content.
   for congressional quorum, dynamic majorities, absolute affirmative floors of
   four House or two Senate votes, and two-thirds supermajorities unless a
   constitutional veto override requires 80 percent.
+- A [24 May 2026 archive of the DemocracyCraft Judiciary page](https://web.archive.org/web/20260524135705/https://wiki.democracycraft.net/Judiciary)
+  and the current public Constitution were cross-checked for three-level court
+  jurisdiction. District Court covers civil disputes up to `$120,000`, minor
+  criminal matters up to `$10,000` or 60 minutes of imprisonment, arrests,
+  seizures, and public-official misconduct. Federal Court handles larger cases,
+  constitutional matters, warrants, and District appeals. Supreme Court handles
+  Federal appeals and institutional disputes through a three-justice panel in
+  which at least two justices must agree.
+- [LawAndOrder](https://github.com/highspeedtrain/LawAndOrder): MIT-licensed
+  lawsuit, judge, criminal-record, and custom-law behavior reference. Its public
+  model was used to compare case lifecycle expectations; OpenCivitas uses an
+  original transactional schema with explicit jurisdiction, immutable docket
+  entries, linked appeals, and concurrence-based Supreme Court decisions.
 - [single-transferable-vote](https://github.com/buzzlawless/single-transferable-vote):
   MIT-licensed Droop quota, candidate elimination, surplus transfer, and result
   test reference. OpenCivitas implements its own immutable ballots and

@@ -42,6 +42,8 @@ The first playable foundation includes:
   eligibility, ranked ballots, auditable rounds, and elected office terms
 - bicameral bills, Senate amendments, chamber tallies, presidential assent or
   veto, veto overrides, constitutional referendums, and an enacted law codex
+- persistent three-level courts with civil, criminal, constitutional, and
+  institutional cases, evidence, orders, warrants, verdicts, records, and appeals
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

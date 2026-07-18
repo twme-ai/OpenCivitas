@@ -1,0 +1,19 @@
+package dev.opencivitas.court;
+
+public enum CourtActionResult {
+    SUCCESS,
+    NOT_FOUND,
+    PLAYER_NOT_FOUND,
+    INVALID_STATE,
+    INVALID_CONTENT,
+    INVALID_JURISDICTION,
+    NOT_PARTY,
+    NOT_AUTHORIZED,
+    NOT_JUDGE,
+    PANEL_FULL,
+    ALREADY_ASSIGNED,
+    INVALID_OUTCOME,
+    INVALID_SANCTION,
+    NO_APPEAL,
+    ALREADY_APPEALED
+}

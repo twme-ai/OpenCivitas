@@ -7,6 +7,7 @@ import dev.opencivitas.command.AuctionCommand;
 import dev.opencivitas.command.BusinessCommand;
 import dev.opencivitas.command.ClaimCommand;
 import dev.opencivitas.command.CivitasCommand;
+import dev.opencivitas.command.CourtCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.ElectionCommand;
 import dev.opencivitas.command.JobCommand;
@@ -14,6 +15,7 @@ import dev.opencivitas.command.LegislatureCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
+import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
 import dev.opencivitas.claim.ClaimRegistry;
 import dev.opencivitas.claim.ClaimRepository;
@@ -321,6 +323,14 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                 getLogger().log(Level.SEVERE, "Could not settle legislative deadlines", error);
             }
         }), 1_200L, 1_200L);
+
+        CourtCommand courtCommands = new CourtCommand(
+                this, database, citizens, new CourtRepository(database), messages, currencySymbol);
+        for (String name : List.of("case", "records", "warrants")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(courtCommands);
+            command.setTabCompleter(courtCommands);
+        }
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

@@ -21,6 +21,11 @@ jobs:
   mechanic: {category: PROFESSION, qualification: mechanic, self-join: true}
   realtor: {category: PROFESSION, qualification: realtor, self-join: true}
 
+  magistrate: {category: GOVERNMENT, qualification: magistrate, self-join: false}
+  judge: {category: GOVERNMENT, qualification: judge, self-join: false}
+  justice: {category: GOVERNMENT, qualification: justice, self-join: false}
+  chief-justice: {category: GOVERNMENT, qualification: chief-justice, self-join: false}
+
   archivist: {category: GOVERNMENT, qualification: archivist, self-join: false}
   auditor: {category: GOVERNMENT, qualification: auditor, self-join: false}
   building-inspector: {category: GOVERNMENT, qualification: building-inspector, self-join: false}
