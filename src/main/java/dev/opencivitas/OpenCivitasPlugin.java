@@ -1,6 +1,8 @@
 package dev.opencivitas;
 
 import dev.opencivitas.citizen.CitizenRepository;
+import dev.opencivitas.business.BusinessRepository;
+import dev.opencivitas.command.BusinessCommand;
 import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.JobCommand;
@@ -108,6 +110,19 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setTabCompleter(examCommands);
         }
         getServer().getPluginManager().registerEvents(examCommands, this);
+
+        PluginCommand businessCommand = Objects.requireNonNull(getCommand("business"), "Missing command business");
+        BusinessCommand businessCommands = new BusinessCommand(
+                this,
+                database,
+                citizens,
+                new BusinessRepository(database),
+                messages,
+                currencySymbol,
+                pageSize
+        );
+        businessCommand.setExecutor(businessCommands);
+        businessCommand.setTabCompleter(businessCommands);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);

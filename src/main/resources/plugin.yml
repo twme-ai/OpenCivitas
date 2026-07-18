@@ -48,6 +48,10 @@ commands:
   university:
     description: Travel to the university or set its warp.
     usage: /university [setwarp]
+  business:
+    description: Create and manage player businesses.
+    usage: /business <create|info|list|deposit|withdraw|pay|transactions|disband>
+    aliases: [democracybusiness, db, firm, company]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -66,4 +70,10 @@ permissions:
     default: op
   opencivitas.university.setwarp:
     description: Set the university warp.
+    default: op
+  opencivitas.business.list.others:
+    description: View another citizen's businesses.
+    default: true
+  opencivitas.business.audit:
+    description: View any business account and transaction history.
     default: op

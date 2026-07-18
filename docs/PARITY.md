@@ -13,7 +13,7 @@ legally or meaningfully copied from another server.
 | Jobs | two trades, one profession, unlimited government jobs | in progress: persistent membership, qualification gates, limits, appointments |
 | University | exams and qualifications for jobs/licenses | in progress: localized exam engine, attempt ledger, qualification awards, warp |
 | Shops | chest buy/sell, stack modifiers, item search, sales history | planned |
-| Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | planned |
+| Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: qualification gate, accounts, payments, ledgers, ownership/disband |
 | Auctions | item listings, bids, settlement | planned |
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | planned |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | planned |

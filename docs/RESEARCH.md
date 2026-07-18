@@ -54,6 +54,14 @@ behavioral reference, not a source of copyable implementation or content.
   implementing immutable options and direct, transactional rewards.
 - [Paper asynchronous teleport documentation](https://docs.papermc.io/paper/dev/entity-teleport/):
   chunk-safe university travel using `teleportAsync`.
+- [DemocracyCraft Business](https://wiki.democracycraft.net/Business): public
+  firm lifecycle, account, employee, role, wage, and chest-shop command behavior.
+- [DemocracyCraft Chestshops](https://wiki.democracycraft.net/Chestshops): sign
+  format, buy/sell interaction, firm account prefix, and sales history behavior.
+- [QuickShop-Hikari economy transactions](https://github.com/QuickShop-Community/QuickShop-Hikari/tree/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/economy/transaction):
+  preflight balance checks, commit/rollback, callbacks, and transaction events.
+  OpenCivitas uses a single SQLite transaction for the current internal account
+  transfers and keeps the same all-or-nothing invariant.
 
 ## Build automation references
 

@@ -25,6 +25,8 @@ The first playable foundation includes:
 - self-service career enrollment plus administrative appointments
 - localized, configurable university exams with auditable attempts
 - qualification awards and an asynchronous `/university` warp
+- entrepreneur-gated firms with separate accounts and transaction ledgers
+- atomic business deposits, withdrawals, payments, and disband refunds
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

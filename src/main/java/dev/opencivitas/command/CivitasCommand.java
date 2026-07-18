@@ -209,15 +209,20 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
             return;
         }
         for (LedgerEntry entry : entries) {
-            Component description;
-            if (entry.type() == LedgerEntryType.STARTING_BALANCE) {
-                description = messages.component(sender, "transactions.starting-balance");
-            } else {
-                String key = entry.amountCents() < 0
-                        ? "transactions.payment-sent" : "transactions.payment-received";
-                description = messages.component(sender, key,
-                        Placeholder.unparsed("player", Optional.ofNullable(entry.counterpartyName()).orElse("Unknown")));
-            }
+            Component description = switch (entry.type()) {
+                case STARTING_BALANCE -> messages.component(sender, "transactions.starting-balance");
+                case PAYMENT -> {
+                    String key = entry.amountCents() < 0
+                            ? "transactions.payment-sent" : "transactions.payment-received";
+                    yield messages.component(sender, key,
+                            Placeholder.unparsed("player",
+                                    Optional.ofNullable(entry.counterpartyName()).orElse("Unknown")));
+                }
+                case BUSINESS_TRANSFER -> messages.component(sender,
+                        entry.amountCents() < 0
+                                ? "transactions.business-deposit" : "transactions.business-withdrawal");
+                case BUSINESS_PAYMENT -> messages.component(sender, "transactions.business-payment");
+            };
             messages.send(sender, "transactions.entry",
                     Placeholder.unparsed("date", DATE.format(entry.createdAt())),
                     Placeholder.unparsed("amount", Money.format(entry.amountCents(), currencySymbol)),

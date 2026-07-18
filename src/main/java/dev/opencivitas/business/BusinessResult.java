@@ -1,0 +1,13 @@
+package dev.opencivitas.business;
+
+public enum BusinessResult {
+    SUCCESS,
+    BUSINESS_NOT_FOUND,
+    BUSINESS_INACTIVE,
+    CITIZEN_NOT_FOUND,
+    MISSING_QUALIFICATION,
+    NAME_TAKEN,
+    NO_PERMISSION,
+    INSUFFICIENT_PERSONAL_FUNDS,
+    INSUFFICIENT_BUSINESS_FUNDS
+}
