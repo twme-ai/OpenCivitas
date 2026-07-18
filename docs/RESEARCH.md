@@ -211,6 +211,28 @@ behavioral reference, not a source of copyable implementation or content.
   OpenCivitas uses Paper's native `ItemStack` byte serialization, SQLite
   integer-cents escrow, immutable listing history, and claim records; it does
   not copy reference source or GUI assets.
+- A [5 September 2025 archive of DemocracyCraft Health](https://web.archive.org/web/20250905224644/https://wiki.democracycraft.net/Health)
+  and a [30 May 2026 Doctor archive](https://web.archive.org/web/20260530093330/https://wiki.democracycraft.net/Doctor)
+  were cross-checked for private symptoms, doctor-only diagnosis, body
+  temperature, hospital call monitors, doctor attendance, treatment items,
+  nearby-player transmission, pharmacy self-treatment, `/doh`, `/health`, and
+  `/bulkbill`. Public condition pages were individually inspected for broken
+  limbs, flesh wounds, cholera, chicken pox, common cold, culicid fever, heat
+  exhaustion, hypothermia, Lyme disease, mad cow disease, salmonella, and
+  tetanus, including their documented causes, symptoms, recipe ingredients,
+  and the published 3- or 5-block transmission distances where available.
+- Purple pimples, webbed feet, hyperglycemia, and clogged ears appear in the
+  public Health catalog as pharmacy-treated conditions, but their detailed
+  pages and recipes were not publicly recoverable. OpenCivitas therefore keeps
+  their original clean-room exposure, symptom, item, and co-pay defaults fully
+  editable in `health.yml` rather than presenting those defaults as exact
+  DemocracyCraft data.
+- [Immersive Health System](https://github.com/whoisyonaa/Immersive-Health-System)
+  is an MIT-licensed modern Paper reference for configurable diseases, staged
+  symptoms, transmission, PDC-tagged medicines, and persistent per-player
+  illness state. OpenCivitas uses an original SQLite model with one active row
+  per condition, immutable treatment history, exclusive medical-call claims,
+  and exactly-once Medicare ledger settlement; no reference source was copied.
 
 ## Build automation references
 

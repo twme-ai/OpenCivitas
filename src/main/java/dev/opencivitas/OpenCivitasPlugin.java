@@ -15,6 +15,7 @@ import dev.opencivitas.command.LegislatureCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ShopCommand;
+import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -28,6 +29,10 @@ import dev.opencivitas.exam.ExamRepository;
 import dev.opencivitas.exam.UniversityService;
 import dev.opencivitas.job.JobRegistry;
 import dev.opencivitas.job.JobRepository;
+import dev.opencivitas.health.HealthItems;
+import dev.opencivitas.health.HealthListener;
+import dev.opencivitas.health.HealthRegistry;
+import dev.opencivitas.health.HealthRepository;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -365,6 +370,46 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(
                 new PoliceListener(this, database, policeRepository, custody, messages), this);
+
+        HealthRegistry healthRegistry;
+        try {
+            healthRegistry = new HealthRegistry(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load health.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        HealthRepository healthRepository = new HealthRepository(database);
+        try {
+            healthRepository.releaseStaleClaims(
+                    System.currentTimeMillis() - healthRegistry.callClaimTimeout().toMillis());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore medical call claims", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        HealthItems healthItems = new HealthItems(this, healthRegistry);
+        healthItems.registerRecipes();
+        HealthCommand healthCommands = new HealthCommand(
+                this, database, citizens, healthRepository, healthRegistry,
+                healthItems, messages, currencySymbol);
+        for (String name : List.of("health", "doctor-attend", "bulkbill", "doh")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(healthCommands);
+            command.setTabCompleter(healthCommands);
+        }
+        getServer().getPluginManager().registerEvents(healthCommands, this);
+        HealthListener healthListener = new HealthListener(
+                this, database, healthRepository, healthRegistry, healthItems, messages);
+        getServer().getPluginManager().registerEvents(healthListener, this);
+        healthListener.start();
+        getServer().getScheduler().runTaskTimer(this, () -> database.submit(() ->
+                healthRepository.releaseStaleClaims(
+                        System.currentTimeMillis() - healthRegistry.callClaimTimeout().toMillis()))
+                .exceptionally(error -> {
+                    if (isEnabled()) getLogger().log(Level.WARNING, "Could not release stale medical calls", error);
+                    return 0;
+                }), 1_200L, 1_200L);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

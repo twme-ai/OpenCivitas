@@ -46,6 +46,9 @@ The first playable foundation includes:
   institutional cases, evidence, orders, warrants, verdicts, records, and appeals
 - consent-aware PvP incident tracking, forensic clues, `/911` reports, police
   charges, wanted status, court-warrant arrests, fines, and restart-safe custody
+- persistent injuries and diseases, symptom-only patient views, doctor diagnosis,
+  contagious spread, temperature illness, crafted treatments, hospital call
+  monitors, pharmacy counters, Medicare benefits, and Department of Health chat
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

@@ -16,5 +16,7 @@ public enum LedgerEntryType {
     AUCTION_REFUND,
     AUCTION_PURCHASE,
     AUCTION_SALE,
-    POLICE_FINE
+    POLICE_FINE,
+    MEDICARE_BENEFIT,
+    PHARMACY_COPAY
 }

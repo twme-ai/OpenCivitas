@@ -1,0 +1,221 @@
+temperature:
+  normal-millicelsius: 37000
+  minimum-millicelsius: 20000
+  maximum-millicelsius: 55000
+  cold-threshold-millicelsius: 30000
+  hot-threshold-millicelsius: 45000
+  update-step-millicelsius: 1000
+
+calls:
+  claim-timeout-seconds: 300
+
+treatments:
+  wrist-splint:
+    name: {en_US: 'Wrist Splint', zh_TW: '手腕夾板'}
+    item: STICK
+    ingredients: [STICK, STICK, STICK]
+    setting: HOSPITAL
+    medicare-benefit: '45.00'
+  leg-splint:
+    name: {en_US: 'Leg Splint', zh_TW: '腿部夾板'}
+    item: STICK
+    ingredients: [STICK, STICK, STICK, STICK, STICK, STICK]
+    setting: HOSPITAL
+    medicare-benefit: '60.00'
+  bandage:
+    name: {en_US: 'Bandage', zh_TW: '繃帶'}
+    item: PAPER
+    ingredients: [WHITE_WOOL, PAPER, PAPER, PAPER, PAPER, PAPER, PAPER, PAPER, PAPER]
+    setting: HOSPITAL
+    medicare-benefit: '35.00'
+  rehydrating-solution:
+    name: {en_US: 'Rehydrating Solution', zh_TW: '補水溶液'}
+    item: POTION
+    ingredients: [ICE, GLASS_BOTTLE, GLOW_BERRIES, MILK_BUCKET]
+    setting: HOSPITAL
+    medicare-benefit: '55.00'
+  aciclovir:
+    name: {en_US: 'Aciclovir', zh_TW: '阿昔洛韋'}
+    item: POTION
+    ingredients: [WHEAT_SEEDS, GLASS_BOTTLE, SPIDER_EYE, EGG]
+    setting: HOSPITAL
+    medicare-benefit: '75.00'
+  cough-syrup:
+    name: {en_US: 'Cough Syrup', zh_TW: '止咳糖漿'}
+    item: HONEY_BOTTLE
+    ingredients: [GLOW_BERRIES, GLASS_BOTTLE, HONEY_BOTTLE, MAGMA_CREAM]
+    setting: HOSPITAL
+    medicare-benefit: '40.00'
+  antiemetic:
+    name: {en_US: 'Antiemetic', zh_TW: '止吐藥'}
+    item: POTION
+    ingredients: [COAL, GLASS_BOTTLE, SPIDER_EYE, NETHER_WART]
+    setting: HOSPITAL
+    medicare-benefit: '65.00'
+  ice-pack:
+    name: {en_US: 'Ice Pack', zh_TW: '冰敷袋'}
+    item: PACKED_ICE
+    ingredients: [ICE, PAPER]
+    setting: HOSPITAL
+    medicare-benefit: '30.00'
+  heat-pack:
+    name: {en_US: 'Heat Pack', zh_TW: '熱敷袋'}
+    item: MAGMA_CREAM
+    ingredients: [MAGMA_CREAM, PAPER]
+    setting: HOSPITAL
+    medicare-benefit: '30.00'
+  antibiotics:
+    name: {en_US: 'Antibiotics', zh_TW: '抗生素'}
+    item: POTION
+    ingredients: [GLOWSTONE_DUST, GLASS_BOTTLE, CRIMSON_FUNGUS, CLAY_BALL]
+    setting: HOSPITAL
+    medicare-benefit: '70.00'
+  pain-relief:
+    name: {en_US: 'Pain Relief', zh_TW: '止痛藥'}
+    item: POTION
+    ingredients: [RED_MUSHROOM, GLASS_BOTTLE, GUNPOWDER, GLOWSTONE_DUST, MAGMA_CREAM]
+    setting: HOSPITAL
+    medicare-benefit: '65.00'
+  activated-charcoal:
+    name: {en_US: 'Activated Charcoal', zh_TW: '活性碳'}
+    item: CHARCOAL
+    ingredients: [COAL, GLASS_BOTTLE, MAGMA_CREAM, CRIMSON_FUNGUS]
+    setting: HOSPITAL
+    medicare-benefit: '55.00'
+  metrozol:
+    name: {en_US: 'Metrozol', zh_TW: '甲硝唑'}
+    item: POTION
+    ingredients: [GUNPOWDER, GLASS_BOTTLE, BROWN_MUSHROOM, GLOWSTONE_DUST]
+    setting: HOSPITAL
+    medicare-benefit: '70.00'
+  skin-cream:
+    name: {en_US: 'Skin Cream', zh_TW: '皮膚藥膏'}
+    item: HONEYCOMB
+    ingredients: [HONEYCOMB, GLOW_BERRIES, BOWL]
+    setting: PHARMACY
+    pharmacy-copay: '25.00'
+  foot-ointment:
+    name: {en_US: 'Foot Ointment', zh_TW: '足部藥膏'}
+    item: HONEYCOMB
+    ingredients: [HONEYCOMB, BROWN_MUSHROOM, BOWL]
+    setting: PHARMACY
+    pharmacy-copay: '25.00'
+  insulin:
+    name: {en_US: 'Insulin', zh_TW: '胰島素'}
+    item: POTION
+    ingredients: [GLASS_BOTTLE, FERMENTED_SPIDER_EYE, SUGAR]
+    setting: PHARMACY
+    pharmacy-copay: '30.00'
+  ear-drops:
+    name: {en_US: 'Ear Drops', zh_TW: '滴耳液'}
+    item: POTION
+    ingredients: [GLASS_BOTTLE, HONEY_BOTTLE, KELP]
+    setting: PHARMACY
+    pharmacy-copay: '20.00'
+
+conditions:
+  broken-wrist:
+    name: {en_US: 'Broken Wrist', zh_TW: '手腕骨折'}
+    symptoms: [wrist-pain]
+    treatment: wrist-splint
+    setting: HOSPITAL
+    exposures: {blunt-attack: 0.08}
+  broken-leg:
+    name: {en_US: 'Broken Leg', zh_TW: '腿部骨折'}
+    symptoms: [leg-pain, slowed-movement]
+    treatment: leg-splint
+    setting: HOSPITAL
+    exposures: {fall: 1.0}
+  flesh-wound:
+    name: {en_US: 'Flesh Wound', zh_TW: '皮肉傷'}
+    symptoms: [bleeding]
+    treatment: bandage
+    setting: HOSPITAL
+    exposures: {cut: 0.18}
+  cholera:
+    name: {en_US: 'Cholera', zh_TW: '霍亂'}
+    symptoms: [sore-throat, cough]
+    treatment: rehydrating-solution
+    setting: HOSPITAL
+    exposures: {unsafe-water: 0.05}
+  chicken-pox:
+    name: {en_US: 'Chicken Pox', zh_TW: '水痘'}
+    symptoms: [itchy-spots, stomach-ache, fatigue, cough, blindness]
+    treatment: aciclovir
+    setting: HOSPITAL
+    transmission: {radius: 5.0, chance: 0.10}
+    exposures: {chicken: 0.03}
+  common-cold:
+    name: {en_US: 'Common Cold', zh_TW: '普通感冒'}
+    symptoms: [confusion, cough, sore-throat]
+    treatment: cough-syrup
+    setting: HOSPITAL
+    transmission: {radius: 3.0, chance: 0.08}
+    exposures: {cold: 0.15}
+  culicid-fever:
+    name: {en_US: 'Culicid Fever', zh_TW: '蚊媒熱'}
+    symptoms: [vomiting, confusion, bleeding]
+    treatment: antiemetic
+    setting: HOSPITAL
+    transmission: {radius: 5.0, chance: 0.10}
+    exposures: {jungle: 0.03}
+  heat-exhaustion:
+    name: {en_US: 'Heat Exhaustion', zh_TW: '熱衰竭'}
+    symptoms: [dehydration, vomiting, headache, high-temperature]
+    treatment: ice-pack
+    setting: HOSPITAL
+    exposures: {heat: 1.0}
+  hypothermia:
+    name: {en_US: 'Hypothermia', zh_TW: '失溫症'}
+    symptoms: [shivering, headache, low-temperature]
+    treatment: heat-pack
+    setting: HOSPITAL
+    exposures: {cold-extreme: 1.0}
+  lyme-disease:
+    name: {en_US: 'Lyme Disease', zh_TW: '萊姆病'}
+    symptoms: [sweating, fatigue]
+    treatment: antibiotics
+    setting: HOSPITAL
+    exposures: {jungle: 0.02}
+  mad-cow-disease:
+    name: {en_US: 'Mad Cow Disease', zh_TW: '狂牛症'}
+    symptoms: [severe-headache]
+    treatment: pain-relief
+    setting: HOSPITAL
+    exposures: {cow: 0.02, raw-beef: 0.08}
+  salmonella:
+    name: {en_US: 'Salmonella', zh_TW: '沙門氏菌感染'}
+    symptoms: [diarrhoea, dehydration, fatigue]
+    treatment: activated-charcoal
+    setting: HOSPITAL
+    exposures: {raw-meat: 0.12}
+  tetanus:
+    name: {en_US: 'Tetanus', zh_TW: '破傷風'}
+    symptoms: [sweating]
+    treatment: metrozol
+    setting: HOSPITAL
+    exposures: {metal-wound: 0.08}
+  purple-pimples:
+    name: {en_US: 'Purple Pimples', zh_TW: '紫色丘疹'}
+    symptoms: [itchy-spots]
+    treatment: skin-cream
+    setting: PHARMACY
+    exposures: {ambient: 0.002}
+  webbed-feet:
+    name: {en_US: 'Webbed Feet', zh_TW: '蹼足症'}
+    symptoms: [slowed-movement]
+    treatment: foot-ointment
+    setting: PHARMACY
+    exposures: {wet: 0.01}
+  hyperglycemia:
+    name: {en_US: 'Hyperglycemia', zh_TW: '高血糖'}
+    symptoms: [fatigue, dehydration]
+    treatment: insulin
+    setting: PHARMACY
+    exposures: {sugar: 0.08}
+  clogged-ears:
+    name: {en_US: 'Clogged Ears', zh_TW: '耳道阻塞'}
+    symptoms: [clogged-hearing]
+    treatment: ear-drops
+    setting: PHARMACY
+    exposures: {wet: 0.01}

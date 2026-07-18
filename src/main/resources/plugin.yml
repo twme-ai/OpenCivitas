@@ -127,6 +127,18 @@ commands:
   wanted:
     description: View a citizen's active police charges.
     usage: /wanted [player]
+  health:
+    description: View symptoms and temperature, call a doctor, and manage public health.
+    usage: /health <symptoms|temperature|list|diagnose|call|calls|buy|monitor|pharmacy|medicine|expose>
+  doctor-attend:
+    description: Claim a medical call and travel to its patient.
+    usage: /doctor-attend <player>
+  bulkbill:
+    description: Claim the latest eligible Medicare treatment benefit.
+    usage: /bulkbill <patient>
+  doh:
+    description: Toggle or send a Department of Health channel message.
+    usage: /doh [message]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -169,4 +181,7 @@ permissions:
     default: op
   opencivitas.police.configure:
     description: Configure police jail and release locations.
+    default: op
+  opencivitas.health.configure:
+    description: Configure medical call monitors and administer health test operations.
     default: op

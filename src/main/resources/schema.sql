@@ -741,3 +741,84 @@ CREATE TABLE IF NOT EXISTS auction_claims (
 
 CREATE INDEX IF NOT EXISTS idx_auction_claims_player
     ON auction_claims(player_uuid, claimed_at, created_at, id);
+
+CREATE TABLE IF NOT EXISTS health_profiles (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    temperature_millicelsius INTEGER NOT NULL DEFAULT 37000
+        CHECK (temperature_millicelsius BETWEEN 20000 AND 55000),
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS health_conditions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    condition_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    acquired_at INTEGER NOT NULL,
+    resolved_at INTEGER
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_health_conditions_active
+    ON health_conditions(player_uuid, condition_id)
+    WHERE resolved_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_health_conditions_player_history
+    ON health_conditions(player_uuid, acquired_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS medical_calls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    world_name TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'OPEN'
+        CHECK (status IN ('OPEN', 'CLAIMED', 'ATTENDED', 'CANCELLED')),
+    claimed_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL,
+    claimed_at INTEGER,
+    attended_at INTEGER
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_medical_calls_patient_open
+    ON medical_calls(patient_uuid)
+    WHERE status IN ('OPEN', 'CLAIMED');
+
+CREATE INDEX IF NOT EXISTS idx_medical_calls_status_created
+    ON medical_calls(status, created_at, id);
+
+CREATE TABLE IF NOT EXISTS medical_treatments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    practitioner_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    treatment_id TEXT NOT NULL,
+    condition_id TEXT NOT NULL,
+    administered_at INTEGER NOT NULL,
+    medicare_eligible INTEGER NOT NULL DEFAULT 0 CHECK (medicare_eligible IN (0, 1)),
+    medicare_benefit_cents INTEGER NOT NULL DEFAULT 0 CHECK (medicare_benefit_cents >= 0),
+    billed_at INTEGER,
+    CHECK ((billed_at IS NULL) OR medicare_eligible = 1)
+);
+
+CREATE INDEX IF NOT EXISTS idx_medical_treatments_billing
+    ON medical_treatments(practitioner_uuid, patient_uuid, billed_at, administered_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS medical_call_monitors (
+    world_name TEXT NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    z INTEGER NOT NULL,
+    registered_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    registered_at INTEGER NOT NULL,
+    PRIMARY KEY (world_name, x, y, z)
+);
+
+CREATE TABLE IF NOT EXISTS pharmacy_counters (
+    world_name TEXT NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    z INTEGER NOT NULL,
+    registered_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    registered_at INTEGER NOT NULL,
+    PRIMARY KEY (world_name, x, y, z)
+);
