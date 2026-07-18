@@ -1,0 +1,33 @@
+name: OpenCivitas
+version: '0.1.0-SNAPSHOT'
+main: dev.opencivitas.OpenCivitasPlugin
+description: Open-source civic city roleplay systems for Paper.
+api-version: '1.21.11'
+authors: [OpenCivitas contributors]
+website: https://github.com/twme-ai/OpenCivitas
+libraries:
+  - org.xerial:sqlite-jdbc:3.53.2.0
+commands:
+  balance:
+    description: View an account balance.
+    usage: /balance [player]
+    aliases: [bal]
+  pay:
+    description: Transfer money to another player.
+    usage: /pay <player> <amount>
+  transactions:
+    description: View recent account transactions.
+    usage: /transactions [page]
+  about:
+    description: View a citizen profile.
+    usage: /about [player]
+  locale:
+    description: Select a message language.
+    usage: /locale [list|set <locale>|reset]
+permissions:
+  opencivitas.balance.others:
+    description: View another player's balance.
+    default: true
+  opencivitas.about.others:
+    description: View another player's public profile.
+    default: true

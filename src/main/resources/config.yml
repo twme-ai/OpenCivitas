@@ -1,0 +1,13 @@
+database:
+  file: opencivitas.db
+
+economy:
+  currency-symbol: '$'
+  starting-balance: '1200.00'
+  transaction-page-size: 10
+
+locale:
+  default: en_US
+  supported:
+    - en_US
+    - zh_TW

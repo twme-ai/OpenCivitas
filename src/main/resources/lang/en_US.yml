@@ -1,0 +1,36 @@
+plugin:
+  enabled: '<green>OpenCivitas is ready.</green>'
+  welcome: '<gold>Welcome to OpenCivitas.</gold> <gray>Your balance is <amount>.</gray>'
+error:
+  player-only: '<red>This command can only be used by a player.</red>'
+  usage: '<red>Usage: <usage></red>'
+  invalid-amount: '<red>Enter a positive amount with no more than two decimal places.</red>'
+  invalid-page: '<red>Enter a positive page number.</red>'
+  player-not-found: '<red>No citizen named <player> was found.</red>'
+  self-payment: '<red>You cannot pay yourself.</red>'
+  insufficient-funds: '<red>You do not have enough money for that payment.</red>'
+  database: '<red>The request could not be completed. Please try again.</red>'
+  no-permission: '<red>You do not have permission to do that.</red>'
+balance:
+  self: '<gold>Balance:</gold> <white><amount></white>'
+  other: '<gold><player>''s balance:</gold> <white><amount></white>'
+payment:
+  sent: '<green>You paid <player> <amount>.</green>'
+  received: '<green>You received <amount> from <player>.</green>'
+transactions:
+  header: '<gold>Transactions</gold> <gray>(page <page>)</gray>'
+  empty: '<gray>No transactions were found on this page.</gray>'
+  entry: '<gray><date></gray> <amount> <dark_gray>-</dark_gray> <white><description></white>'
+  starting-balance: 'Starting balance'
+  payment-sent: 'Payment to <player>'
+  payment-received: 'Payment from <player>'
+about:
+  header: '<gold>Citizen profile: <player></gold>'
+  joined: '<gray>Joined:</gray> <white><date></white>'
+  balance: '<gray>Balance:</gray> <white><amount></white>'
+locale:
+  current: '<gold>Current locale:</gold> <white><locale></white>'
+  available: '<gold>Available locales:</gold> <white><locales></white>'
+  changed: '<green>Your locale is now <locale>.</green>'
+  reset: '<green>Your locale now follows your Minecraft client.</green>'
+  unsupported: '<red>Unsupported locale. Available: <locales></red>'

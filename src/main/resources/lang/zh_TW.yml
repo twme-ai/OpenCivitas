@@ -1,0 +1,36 @@
+plugin:
+  enabled: '<green>OpenCivitas 已準備完成。</green>'
+  welcome: '<gold>歡迎來到 OpenCivitas。</gold> <gray>你的餘額為 <amount>。</gray>'
+error:
+  player-only: '<red>只有玩家能使用此指令。</red>'
+  usage: '<red>用法：<usage></red>'
+  invalid-amount: '<red>請輸入正數，且小數不得超過兩位。</red>'
+  invalid-page: '<red>請輸入正整數頁碼。</red>'
+  player-not-found: '<red>找不到名為 <player> 的市民。</red>'
+  self-payment: '<red>你不能付款給自己。</red>'
+  insufficient-funds: '<red>你的餘額不足。</red>'
+  database: '<red>目前無法完成此請求，請稍後再試。</red>'
+  no-permission: '<red>你沒有執行此操作的權限。</red>'
+balance:
+  self: '<gold>餘額：</gold> <white><amount></white>'
+  other: '<gold><player> 的餘額：</gold> <white><amount></white>'
+payment:
+  sent: '<green>你已支付 <player> <amount>。</green>'
+  received: '<green>你收到 <player> 支付的 <amount>。</green>'
+transactions:
+  header: '<gold>交易紀錄</gold> <gray>（第 <page> 頁）</gray>'
+  empty: '<gray>此頁沒有交易紀錄。</gray>'
+  entry: '<gray><date></gray> <amount> <dark_gray>-</dark_gray> <white><description></white>'
+  starting-balance: '初始餘額'
+  payment-sent: '支付給 <player>'
+  payment-received: '來自 <player> 的付款'
+about:
+  header: '<gold>市民資料：<player></gold>'
+  joined: '<gray>加入日期：</gray> <white><date></white>'
+  balance: '<gray>餘額：</gray> <white><amount></white>'
+locale:
+  current: '<gold>目前語言：</gold> <white><locale></white>'
+  available: '<gold>可用語言：</gold> <white><locales></white>'
+  changed: '<green>你的語言已變更為 <locale>。</green>'
+  reset: '<green>你的語言現在會跟隨 Minecraft 客戶端設定。</green>'
+  unsupported: '<red>不支援此語言。可用語言：<locales></red>'
