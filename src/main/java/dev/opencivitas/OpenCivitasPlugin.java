@@ -17,6 +17,7 @@ import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.command.ChatCommand;
+import dev.opencivitas.command.NavigationCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -37,6 +38,9 @@ import dev.opencivitas.health.HealthRepository;
 import dev.opencivitas.chat.ChatPolicy;
 import dev.opencivitas.chat.ChatRepository;
 import dev.opencivitas.chat.ChatRouter;
+import dev.opencivitas.navigation.NavigationPolicy;
+import dev.opencivitas.navigation.NavigationRepository;
+import dev.opencivitas.navigation.NavigationService;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -435,6 +439,32 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setTabCompleter(chatCommands);
         }
         getServer().getPluginManager().registerEvents(chatRouter, this);
+
+        NavigationPolicy navigationPolicy;
+        try {
+            navigationPolicy = new NavigationPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load navigation.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        NavigationRepository navigationRepository = new NavigationRepository(database);
+        NavigationService navigationService = new NavigationService(
+                this, messages, navigationPolicy.gpsUpdateTicks());
+        NavigationCommand navigationCommands = new NavigationCommand(
+                this, database, navigationRepository, navigationPolicy,
+                navigationService, propertyRegistry, messages);
+        for (String name : List.of(
+                "sethome", "home", "homes", "delhome", "civicwarp",
+                "coords", "sendcoords", "map", "gps", "directions",
+                "spawn", "spawn-north", "spawn-south", "spawn-university",
+                "spawn-airport", "spawn-oakridge", "spawn-willow", "spawn-aventura")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(navigationCommands);
+            command.setTabCompleter(navigationCommands);
+        }
+        getServer().getPluginManager().registerEvents(navigationService, this);
+        navigationService.start();
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

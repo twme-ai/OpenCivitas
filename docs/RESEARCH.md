@@ -249,6 +249,19 @@ behavioral reference, not a source of copyable implementation or content.
   original Paper event router and SQLite repository; no GPL source was copied.
   Direct-message content is deliberately not stored, while offline mail is
   persisted with recipient ownership, read state, and soft deletion.
+- The same Useful Commands archive was cross-checked for `/map`, `/coords`,
+  `/sendcoords`, `/gps start`, `/gps stop`, `/directions`, named `/sethome` and
+  `/home`, central/north/south/university/airport warps, and the Oakridge,
+  Willow, and Aventura district aliases. OpenCivitas resolves GPS only against
+  locally registered real-estate plots and civic warps configured by the
+  operator; it does not copy DemocracyCraft coordinates, streets, or map data.
+- [EssentialsX](https://github.com/EssentialsX/Essentials) is a GPL-3.0 home,
+  warp, and teleport behavioral reference. Its current `Commandhome`,
+  `Commandsethome`, and `AsyncTeleport` implementations were inspected for
+  named-home limits that still allow updates, case-normalized names, missing
+  destination handling, world-border checks, asynchronous chunk loading,
+  passable destination validation, and completion-aware teleport feedback.
+  OpenCivitas uses original SQLite and Paper API code; no GPL source was copied.
 
 ## Build automation references
 

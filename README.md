@@ -51,6 +51,8 @@ The first playable foundation includes:
   monitors, pharmacy counters, Medicare benefits, and Department of Health chat
 - persisted global, local, murmur, and government channels, private messaging
   and replies, offline mail, help questions, and qualification-gated advertising
+- persistent named homes and civic warps, async safe teleport, coordinate sharing,
+  configurable web-map link, and compass/action-bar GPS for registered plots
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

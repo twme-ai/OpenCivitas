@@ -1,0 +1,19 @@
+maximum-homes: 3
+map-url: ''
+gps-update-ticks: 20
+
+warp-aliases:
+  spawn: spawn
+  spawn-north: north
+  zoo: north
+  spawn-south: south
+  courts: south
+  spawn-university: university
+  spawn-airport: airport
+  airport: airport
+  spawn-oakridge: oakridge
+  oakridge: oakridge
+  spawn-willow: willow
+  willow: willow
+  spawn-aventura: aventura
+  aventura: aventura

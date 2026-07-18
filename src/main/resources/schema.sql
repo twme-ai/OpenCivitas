@@ -860,3 +860,28 @@ CREATE TABLE IF NOT EXISTS advertisements (
 
 CREATE INDEX IF NOT EXISTS idx_advertisements_advertiser_created
     ON advertisements(advertiser_uuid, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS player_homes (
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    home_name TEXT NOT NULL COLLATE NOCASE,
+    world_name TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    yaw REAL NOT NULL,
+    pitch REAL NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (player_uuid, home_name)
+);
+
+CREATE TABLE IF NOT EXISTS civic_warps (
+    warp_id TEXT PRIMARY KEY COLLATE NOCASE,
+    world_name TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    yaw REAL NOT NULL,
+    pitch REAL NOT NULL,
+    updated_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    updated_at INTEGER NOT NULL
+);

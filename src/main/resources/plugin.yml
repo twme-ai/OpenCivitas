@@ -175,6 +175,66 @@ commands:
   ask:
     description: Ask the server help channel a question.
     usage: /ask <message>
+  sethome:
+    description: Save a named home at your current location.
+    usage: /sethome <name>
+  home:
+    description: List homes or travel to a named home.
+    usage: /home [name]
+  homes:
+    description: List your named homes.
+    usage: /homes
+  delhome:
+    description: Delete a named home.
+    usage: /delhome <name>
+  civicwarp:
+    description: List or configure civic warp destinations.
+    usage: /civicwarp <list|set|remove>
+  coords:
+    description: Show your current coordinates.
+    usage: /coords
+  sendcoords:
+    description: Send your current coordinates to an online player.
+    usage: /sendcoords <player>
+  map:
+    description: Show the configured web map link.
+    usage: /map
+  gps:
+    description: Start or stop compass navigation to a registered plot.
+    usage: /gps <start <plot>|stop>
+  directions:
+    description: Show the bearing and distance to a registered plot.
+    usage: /directions <plot>
+  spawn:
+    description: Travel to the central spawn.
+    usage: /spawn
+  spawn-north:
+    description: Travel to North Spawn.
+    usage: /spawn-north
+    aliases: [zoo]
+  spawn-south:
+    description: Travel to South Spawn.
+    usage: /spawn-south
+    aliases: [courts]
+  spawn-university:
+    description: Travel to the university civic warp.
+    usage: /spawn-university
+  spawn-airport:
+    description: Travel to the airport.
+    usage: /spawn-airport
+    aliases: [airport]
+  spawn-oakridge:
+    description: Travel to Oakridge.
+    usage: /spawn-oakridge
+    aliases: [oakridge]
+  spawn-willow:
+    description: Travel to Willow.
+    usage: /spawn-willow
+    aliases: [willow]
+  spawn-aventura:
+    description: Travel to Aventura.
+    usage: /spawn-aventura
+    aliases: [aventura]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -220,4 +280,7 @@ permissions:
     default: op
   opencivitas.health.configure:
     description: Configure medical call monitors and administer health test operations.
+    default: op
+  opencivitas.navigation.configure:
+    description: Create and remove civic warp destinations.
     default: op
