@@ -1,0 +1,79 @@
+maximum-owned: 6
+save-interval-ticks: 20
+
+vehicles:
+  compact-car:
+    name: {en_US: 'Compact Car', zh_TW: '小型汽車'}
+    category: GROUND
+    item: MINECART
+    display: BLUE_CONCRETE
+    license: driver
+    maximum-fuel: 12000
+    fuel-per-block: 10
+    maximum-health: 100
+    storage-slots: 27
+    maximum-speed: 0.45
+    acceleration: 0.04
+    recipe:
+      shape: ['WBW', 'ECE', 'W W']
+      ingredients: {W: 'part:wheel', B: 'part:battery', E: 'part:engine', C: CHEST}
+  motorcycle:
+    name: {en_US: 'Motorcycle', zh_TW: '摩托車'}
+    category: GROUND
+    item: CARROT_ON_A_STICK
+    display: BLACK_CONCRETE
+    license: driver
+    maximum-fuel: 8000
+    fuel-per-block: 8
+    maximum-health: 70
+    storage-slots: 9
+    maximum-speed: 0.55
+    acceleration: 0.055
+    recipe:
+      shape: [' W ', 'BEW', ' I ']
+      ingredients: {W: 'part:wheel', B: 'part:battery', E: 'part:engine', I: IRON_INGOT}
+  motorboat:
+    name: {en_US: 'Motorboat', zh_TW: '動力船'}
+    category: WATER
+    item: OAK_BOAT
+    display: OAK_BOAT
+    license: driver
+    maximum-fuel: 14000
+    fuel-per-block: 12
+    maximum-health: 120
+    storage-slots: 18
+    maximum-speed: 0.50
+    acceleration: 0.045
+    recipe:
+      shape: ['PPP', 'EHE', ' W ']
+      ingredients: {P: OAK_PLANKS, E: 'part:engine', H: OAK_BOAT, W: 'part:propeller'}
+  helicopter:
+    name: {en_US: 'Helicopter', zh_TW: '直升機'}
+    category: AIR
+    item: FEATHER
+    display: LIME_CONCRETE
+    license: pilot
+    maximum-fuel: 24000
+    fuel-per-block: 20
+    maximum-health: 160
+    storage-slots: 18
+    maximum-speed: 0.65
+    acceleration: 0.035
+    recipe:
+      shape: ['PPP', 'BEP', ' W ']
+      ingredients: {P: 'part:propeller', B: 'part:battery', E: 'part:engine', W: 'part:wheel'}
+  airplane:
+    name: {en_US: 'Airplane', zh_TW: '飛機'}
+    category: AIR
+    item: PHANTOM_MEMBRANE
+    display: WHITE_CONCRETE
+    license: pilot
+    maximum-fuel: 30000
+    fuel-per-block: 18
+    maximum-health: 180
+    storage-slots: 27
+    maximum-speed: 0.90
+    acceleration: 0.035
+    recipe:
+      shape: ['PPP', 'BEP', 'W W']
+      ingredients: {P: IRON_INGOT, B: 'part:battery', E: 'part:engine', W: 'part:wheel'}

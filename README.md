@@ -55,6 +55,9 @@ The first playable foundation includes:
   configurable web-map link, and compass/action-bar GPS for registered plots
 - reciprocal friend consent, lawyer-officiated marriage, audited divorce, shared
   partner home, unlogged partner chat, and two-sided partner PvP consent
+- config-driven road, water, and air vehicles with native Paper controls,
+  permanent driver/pilot qualifications, owner locks and transfers, persistent
+  fuel, damage, repair, trunk storage, mechanic recipes, and chunk recovery
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
@@ -71,9 +74,10 @@ Copy `build/libs/opencivitas-0.1.0-SNAPSHOT.jar` to a Paper 1.21.11 server's
 
 ## Configuration
 
-Configuration is generated at `plugins/OpenCivitas/config.yml`. Language files
-are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are supported in
-all catalog strings.
+Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
+files including `vehicles.yml`. Language files are generated at
+`plugins/OpenCivitas/lang/`. MiniMessage tags are supported in all catalog
+strings.
 
 ## Design rules
 
@@ -81,8 +85,8 @@ all catalog strings.
 - Database operations never run on the server tick thread after startup.
 - Persistent state changes are transactional and auditable.
 - PacketEvents is added only for features that require packet interception or
-  client-side illusions. It is not justified for the current command/database
-  foundation.
+  client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
+  so it is not justified for the current vehicle renderer or control path.
 
 ## License
 

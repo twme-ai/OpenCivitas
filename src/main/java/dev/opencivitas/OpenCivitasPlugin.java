@@ -19,6 +19,7 @@ import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.command.ChatCommand;
 import dev.opencivitas.command.NavigationCommand;
 import dev.opencivitas.command.FamilyCommand;
+import dev.opencivitas.command.VehicleCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -47,6 +48,13 @@ import dev.opencivitas.family.FamilyListener;
 import dev.opencivitas.family.FamilyPolicy;
 import dev.opencivitas.family.FamilyRegistry;
 import dev.opencivitas.family.FamilyRepository;
+import dev.opencivitas.vehicle.VehicleAccessService;
+import dev.opencivitas.vehicle.VehicleItems;
+import dev.opencivitas.vehicle.VehicleListener;
+import dev.opencivitas.vehicle.VehicleManager;
+import dev.opencivitas.vehicle.VehicleRegistry;
+import dev.opencivitas.vehicle.VehicleRepository;
+import dev.opencivitas.vehicle.VehicleStorageService;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -73,6 +81,8 @@ import java.util.logging.Level;
 
 public final class OpenCivitasPlugin extends JavaPlugin {
     private Database database;
+    private VehicleManager vehicleManager;
+    private VehicleStorageService vehicleStorage;
 
     @Override
     public void onEnable() {
@@ -503,6 +513,49 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new FamilyListener(familyRegistry, messages), this);
 
+        VehicleRegistry vehicleRegistry;
+        VehicleItems vehicleItems;
+        try {
+            vehicleRegistry = new VehicleRegistry(this);
+            vehicleItems = new VehicleItems(this, vehicleRegistry);
+            vehicleItems.registerRecipes();
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load vehicles.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        VehicleRepository vehicleRepository = new VehicleRepository(database);
+        VehicleAccessService vehicleAccess = new VehicleAccessService(
+                this, database, vehicleRepository);
+        vehicleManager = new VehicleManager(
+                this, database, vehicleRepository, vehicleRegistry, vehicleItems, messages);
+        try {
+            vehicleManager.start(vehicleRepository.all());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore vehicles", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        VehicleCommand vehicleCommands = new VehicleCommand(
+                this, database, citizens, vehicleRepository, vehicleRegistry,
+                vehicleItems, vehicleManager, vehicleAccess, messages);
+        for (String name : List.of("vehicle", "recipes")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(vehicleCommands);
+            command.setTabCompleter(vehicleCommands);
+        }
+        getServer().getPluginManager().registerEvents(vehicleCommands, this);
+        vehicleStorage = new VehicleStorageService(
+                this, database, vehicleRepository, vehicleManager, vehicleRegistry, messages);
+        getServer().getPluginManager().registerEvents(vehicleStorage, this);
+        getServer().getPluginManager().registerEvents(new VehicleListener(
+                this, database, vehicleRepository, vehicleRegistry, vehicleItems,
+                vehicleManager, vehicleAccess, vehicleStorage, messages), this);
+        getServer().getOnlinePlayers().forEach(player -> vehicleAccess.refresh(player.getUniqueId()));
+        getServer().getScheduler().runTaskTimer(this,
+                () -> getServer().getOnlinePlayers().forEach(
+                        player -> vehicleAccess.refresh(player.getUniqueId())), 600L, 600L);
+
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();
             List<java.util.UUID> online = getServer().getOnlinePlayers().stream()
@@ -523,6 +576,12 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (vehicleStorage != null) {
+            vehicleStorage.stop();
+        }
+        if (vehicleManager != null) {
+            vehicleManager.stop();
+        }
         if (database != null) {
             database.close();
         }

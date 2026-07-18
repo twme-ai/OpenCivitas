@@ -966,3 +966,31 @@ CREATE TABLE IF NOT EXISTS marriage_preferences (
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (marriage_id, player_uuid)
 );
+
+CREATE TABLE IF NOT EXISTS vehicles (
+    vehicle_uuid TEXT PRIMARY KEY,
+    type_id TEXT NOT NULL,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    world_name TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    yaw REAL NOT NULL,
+    fuel_units INTEGER NOT NULL CHECK (fuel_units >= 0),
+    locked INTEGER NOT NULL DEFAULT 1 CHECK (locked IN (0, 1)),
+    health INTEGER NOT NULL CHECK (health >= 0),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_vehicles_owner
+    ON vehicles(owner_uuid, created_at, vehicle_uuid);
+
+CREATE INDEX IF NOT EXISTS idx_vehicles_chunk
+    ON vehicles(world_name, x, z);
+
+CREATE TABLE IF NOT EXISTS vehicle_storage (
+    vehicle_uuid TEXT PRIMARY KEY REFERENCES vehicles(vehicle_uuid) ON DELETE CASCADE,
+    contents BLOB NOT NULL,
+    updated_at INTEGER NOT NULL
+);

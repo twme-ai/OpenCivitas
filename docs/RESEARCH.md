@@ -276,6 +276,26 @@ behavioral reference, not a source of copyable implementation or content.
   partner chat, partner teleport, and configurable partner PvP. OpenCivitas
   uses an original consent-first SQLite model and immutable in-memory combat
   snapshot; no GPL source was copied and partner chat content is not stored.
+- A [28 May 2026 archive of the DemocracyCraft Mechanic page](https://web.archive.org/web/20260528083203/https://wiki.democracycraft.net/Mechanic),
+  [28 May 2026 Driver's licence archive](https://web.archive.org/web/20260528032710/https://wiki.democracycraft.net/Driver%27s_licence),
+  and [10 June 2026 Pilot's license archive](https://web.archive.org/web/20260610182933/https://wiki.democracycraft.net/Pilot%27s_license)
+  were cross-checked for mechanic-only part, vehicle, and fuel crafting;
+  permanent driver and pilot exam qualifications; owner interaction; road and
+  parking rules; refuel, pickup, entry, trunk, and aircraft altitude controls;
+  player trade and chest-shop acquisition; and the two published fuel recipes.
+  The archived recipe images establish a bucket surrounded by alternating
+  emeralds and either coal or dried-kelp blocks. Vehicle models, proprietary
+  recipes, city geometry, and dealership assets were not copied.
+- [VehiclesWASD](https://github.com/aematsubara/VehiclesWASD) is a current
+  GPL-3.0 Paper vehicle reference. Its public type, input, ownership, lock,
+  fuel, storage, periodic save, and movement boundaries were inspected.
+  OpenCivitas uses original configuration, SQLite transactions, native Paper
+  entities and item displays, and `ItemStack` byte serialization; no GPL source,
+  models, textures, or configuration was copied.
+- [Paper PlayerInputEvent](https://jd.papermc.io/paper/1.21.11/org/bukkit/event/player/PlayerInputEvent.html)
+  exposes forward, backward, left, right, jump, sneak, and sprint state on the
+  server thread. It replaces the older steer-packet interception used by
+  multi-version vehicle projects for the fixed Paper 1.21.11 target.
 
 ## Build automation references
 
@@ -288,8 +308,9 @@ behavioral reference, not a source of copyable implementation or content.
 
 ## PacketEvents decision
 
-The foundation does not intercept, rewrite, or synthesize protocol packets.
-Paper APIs are sufficient for commands, components, locale selection, joins, and
-SQLite persistence, so PacketEvents would add lifecycle and versioning risk with
-no current benefit. Re-evaluate it for security cameras, vehicle rendering,
-client-side election displays, or other packet-only behavior.
+The implementation does not intercept, rewrite, or synthesize protocol packets.
+Paper APIs are sufficient for commands, components, locale selection, joins,
+SQLite persistence, complete vehicle input, persistent interaction hitboxes,
+and item-display rendering. PacketEvents would duplicate the native input path
+and add lifecycle and versioning risk with no benefit. Re-evaluate it only for
+security-camera viewpoints or another feature that proves packet-only.

@@ -118,3 +118,123 @@ exams:
             text: {en_US: 'To publish private partner chat', zh_TW: '為了公開伴侶私人聊天'}
           C:
             text: {en_US: 'To bypass both spouses', zh_TW: '為了繞過雙方配偶'}
+
+  driver:
+    qualification: driver
+    passing-score: 3
+    randomize-questions: true
+    title:
+      en_US: '<gold>Driver Qualification</gold>'
+      zh_TW: '<gold>駕駛資格考試</gold>'
+    description:
+      en_US: '<gray>This original exam covers responsible road use and vehicle management.</gray>'
+      zh_TW: '<gray>此原創考試涵蓋負責任的道路使用與載具管理。</gray>'
+    questions:
+      road-side:
+        prompt:
+          en_US: 'Which side of a two-way road should you normally drive on?'
+          zh_TW: '在雙向道路上通常應靠哪一側行駛？'
+        options:
+          A:
+            text: {en_US: 'The right side', zh_TW: '右側'}
+            correct: true
+          B:
+            text: {en_US: 'The left side', zh_TW: '左側'}
+          C:
+            text: {en_US: 'The pavement', zh_TW: '人行道'}
+      road-area:
+        prompt:
+          en_US: 'Where should road vehicles be driven?'
+          zh_TW: '道路載具應在哪裡行駛？'
+        options:
+          A:
+            text: {en_US: 'Within marked road areas', zh_TW: '標示的道路範圍內'}
+            correct: true
+          B:
+            text: {en_US: 'Across any private plot', zh_TW: '穿越任何私人地產'}
+          C:
+            text: {en_US: 'Only on pavements', zh_TW: '只在人行道上'}
+      impairment:
+        prompt:
+          en_US: 'When is driving under the influence acceptable?'
+          zh_TW: '何時可以酒後或受藥物影響駕駛？'
+        options:
+          A:
+            text: {en_US: 'Never', zh_TW: '任何時候都不可以'}
+            correct: true
+          B:
+            text: {en_US: 'When the road is empty', zh_TW: '道路無人時'}
+          C:
+            text: {en_US: 'When the vehicle is unlocked', zh_TW: '載具未上鎖時'}
+      parking:
+        prompt:
+          en_US: 'What may happen to an improperly parked vehicle?'
+          zh_TW: '違規停放的載具可能會如何？'
+        options:
+          A:
+            text: {en_US: 'It may be impounded', zh_TW: '可能被拖吊扣押'}
+            correct: true
+          B:
+            text: {en_US: 'It receives free fuel', zh_TW: '獲得免費燃料'}
+          C:
+            text: {en_US: 'Ownership is erased', zh_TW: '所有權會被刪除'}
+
+  pilot:
+    qualification: pilot
+    passing-score: 3
+    randomize-questions: true
+    title:
+      en_US: '<gold>Pilot Qualification</gold>'
+      zh_TW: '<gold>飛行員資格考試</gold>'
+    description:
+      en_US: '<gray>This original exam covers lawful aircraft operation and controls.</gray>'
+      zh_TW: '<gray>此原創考試涵蓋合法的飛行載具操作與控制。</gray>'
+    questions:
+      qualification:
+        prompt:
+          en_US: 'What must you hold before operating an aircraft?'
+          zh_TW: '操作飛行載具前必須具備什麼？'
+        options:
+          A:
+            text: {en_US: 'A pilot qualification', zh_TW: '飛行員資格'}
+            correct: true
+          B:
+            text: {en_US: 'Only a driver qualification', zh_TW: '僅需駕駛資格'}
+          C:
+            text: {en_US: 'No qualification', zh_TW: '不需要資格'}
+      parking:
+        prompt:
+          en_US: 'Where may you park an aircraft without abandoning it?'
+          zh_TW: '飛行載具應停放在哪裡才不構成棄置？'
+        options:
+          A:
+            text: {en_US: 'On property where you have permission', zh_TW: '你擁有權限的地產上'}
+            correct: true
+          B:
+            text: {en_US: 'Across a public road', zh_TW: '公共道路中央'}
+          C:
+            text: {en_US: 'Inside another citizen''s locked plot', zh_TW: '其他市民上鎖的地產內'}
+      altitude:
+        prompt:
+          en_US: 'Which control increases aircraft altitude?'
+          zh_TW: '哪個按鍵可提升飛行載具高度？'
+        options:
+          A:
+            text: {en_US: 'Jump', zh_TW: '跳躍鍵'}
+            correct: true
+          B:
+            text: {en_US: 'Drop item', zh_TW: '丟棄物品鍵'}
+          C:
+            text: {en_US: 'Open inventory', zh_TW: '開啟背包鍵'}
+      acquisition:
+        prompt:
+          en_US: 'How should an aircraft be acquired?'
+          zh_TW: '應如何取得飛行載具？'
+        options:
+          A:
+            text: {en_US: 'Purchase or trade it lawfully', zh_TW: '透過合法購買或交易'}
+            correct: true
+          B:
+            text: {en_US: 'Take another owner''s aircraft', zh_TW: '拿走其他車主的飛行載具'}
+          C:
+            text: {en_US: 'Duplicate its registration', zh_TW: '複製其登記資料'}

@@ -256,6 +256,13 @@ commands:
   partnerpvp:
     description: Opt in or out of PvP with your spouse.
     usage: /partnerpvp <on|off>
+  vehicle:
+    description: Manage owned vehicles, fuel, locks, repairs, and transfers.
+    usage: /vehicle <list|types|info|lock|refuel|repair|pickup|transfer>
+    aliases: [vehicles, car]
+  recipes:
+    description: Browse mechanic parts, vehicle, fuel, and repair recipes.
+    usage: /recipes
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -277,6 +284,9 @@ permissions:
     default: op
   opencivitas.university.setwarp:
     description: Set the university warp.
+    default: op
+  opencivitas.vehicles.manage:
+    description: Give vehicle items, fuel, and repair kits.
     default: op
   opencivitas.business.list.others:
     description: View another citizen's businesses.

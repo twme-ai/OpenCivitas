@@ -5,6 +5,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,10 +33,19 @@ public final class ExamRegistry {
         if (section == null) {
             throw new IllegalArgumentException("exams.yml does not contain an exams section");
         }
-        Map<String, ExamDefinition> loaded = new LinkedHashMap<>();
+        ConfigurationSection bundled = bundled(plugin).getConfigurationSection("exams");
+        if (bundled == null) throw new IllegalArgumentException("Bundled exams.yml does not contain exams");
+        Map<String, ConfigurationSection> sources = new LinkedHashMap<>();
+        for (String rawId : bundled.getKeys(false)) {
+            sources.put(normalizeId(rawId, "exam"), requiredSection(bundled, rawId));
+        }
         for (String rawId : section.getKeys(false)) {
-            String id = normalizeId(rawId, "exam");
-            ConfigurationSection exam = requiredSection(section, rawId);
+            sources.put(normalizeId(rawId, "exam"), requiredSection(section, rawId));
+        }
+        Map<String, ExamDefinition> loaded = new LinkedHashMap<>();
+        for (Map.Entry<String, ConfigurationSection> source : sources.entrySet()) {
+            String id = source.getKey();
+            ConfigurationSection exam = source.getValue();
             String qualification = normalizeId(exam.getString("qualification", id), "qualification");
             LocalizedText title = localized(exam, "title", defaultLocale);
             LocalizedText description = localized(exam, "description", defaultLocale);
@@ -44,6 +56,16 @@ public final class ExamRegistry {
                     id, qualification, passingScore, randomize, title, description, questions));
         }
         exams = Map.copyOf(loaded);
+    }
+
+    private static YamlConfiguration bundled(JavaPlugin plugin) {
+        try (var stream = plugin.getResource("exams.yml")) {
+            if (stream == null) throw new IllegalArgumentException("Bundled exams.yml is missing");
+            return YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("Could not read bundled exams.yml", exception);
+        }
     }
 
     public Optional<ExamDefinition> find(String id) {
