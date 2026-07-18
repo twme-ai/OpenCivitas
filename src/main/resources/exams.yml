@@ -1,0 +1,84 @@
+exams:
+  miner:
+    qualification: miner
+    passing-score: 3
+    randomize-questions: true
+    title:
+      en_US: '<gold>Miner Certification</gold>'
+      zh_TW: '<gold>礦工資格考試</gold>'
+    description:
+      en_US: '<gray>This original sample exam covers OpenCivitas career rules.</gray>'
+      zh_TW: '<gray>此原創範例考試涵蓋 OpenCivitas 的職業規則。</gray>'
+    questions:
+      job-limit:
+        prompt:
+          en_US: 'How many trade jobs may a citizen hold at once?'
+          zh_TW: '一位市民可同時擁有幾個一般職業？'
+        options:
+          A:
+            text: {en_US: 'One', zh_TW: '一個'}
+          B:
+            text: {en_US: 'Two', zh_TW: '兩個'}
+            correct: true
+          C:
+            text: {en_US: 'Unlimited', zh_TW: '無限制'}
+      qualification:
+        prompt:
+          en_US: 'What is required before self-enrolling in a trade?'
+          zh_TW: '自行加入一般職業前需要什麼？'
+        options:
+          A:
+            text: {en_US: 'The matching qualification', zh_TW: '對應的資格'}
+            correct: true
+          B:
+            text: {en_US: 'A government appointment', zh_TW: '政府任命'}
+          C:
+            text: {en_US: 'No requirement', zh_TW: '不需要任何條件'}
+      payments:
+        prompt:
+          en_US: 'Which command shows your auditable account history?'
+          zh_TW: '哪個指令可查看可稽核的帳戶紀錄？'
+        options:
+          A:
+            text: {en_US: '/balance', zh_TW: '/balance'}
+          B:
+            text: {en_US: '/transactions', zh_TW: '/transactions'}
+            correct: true
+          C:
+            text: {en_US: '/jobs', zh_TW: '/jobs'}
+
+  entrepreneur:
+    qualification: entrepreneur
+    passing-score: 2
+    randomize-questions: true
+    title:
+      en_US: '<gold>Entrepreneur Certification</gold>'
+      zh_TW: '<gold>企業家資格考試</gold>'
+    description:
+      en_US: '<gray>This original sample exam covers responsible business operation.</gray>'
+      zh_TW: '<gray>此原創範例考試涵蓋負責任的企業經營。</gray>'
+    questions:
+      records:
+        prompt:
+          en_US: 'Why should business transfers retain an audit trail?'
+          zh_TW: '企業交易為何應保留稽核紀錄？'
+        options:
+          A:
+            text: {en_US: 'For accountability and dispute resolution', zh_TW: '為了問責與處理爭議'}
+            correct: true
+          B:
+            text: {en_US: 'To hide account activity', zh_TW: '為了隱藏帳戶活動'}
+          C:
+            text: {en_US: 'They should not retain one', zh_TW: '不應保留紀錄'}
+      funds:
+        prompt:
+          en_US: 'Which practice keeps personal and company funds clear?'
+          zh_TW: '哪種做法能清楚區分個人與公司資金？'
+        options:
+          A:
+            text: {en_US: 'Use separate, auditable accounts', zh_TW: '使用分開且可稽核的帳戶'}
+            correct: true
+          B:
+            text: {en_US: 'Record nothing', zh_TW: '完全不記錄'}
+          C:
+            text: {en_US: 'Share one player password', zh_TW: '共用一組玩家密碼'}

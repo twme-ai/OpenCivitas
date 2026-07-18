@@ -11,7 +11,7 @@ legally or meaningfully copied from another server.
 | Identity | persistent profiles, last known name, join timestamps | implemented |
 | Economy | `$1,200` start, balances, payments, transaction history | implemented |
 | Jobs | two trades, one profession, unlimited government jobs | in progress: persistent membership, qualification gates, limits, appointments |
-| University | exams and qualifications for jobs/licenses | planned |
+| University | exams and qualifications for jobs/licenses | in progress: localized exam engine, attempt ledger, qualification awards, warp |
 | Shops | chest buy/sell, stack modifiers, item search, sales history | planned |
 | Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | planned |
 | Auctions | item listings, bids, settlement | planned |

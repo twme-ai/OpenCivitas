@@ -23,6 +23,8 @@ The first playable foundation includes:
 - persistent qualifications and job membership
 - two-trade, one-profession, and unlimited government-role limits
 - self-service career enrollment plus administrative appointments
+- localized, configurable university exams with auditable attempts
+- qualification awards and an asynchronous `/university` warp
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

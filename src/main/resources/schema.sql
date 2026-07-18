@@ -46,3 +46,17 @@ CREATE TABLE IF NOT EXISTS citizen_jobs (
 
 CREATE INDEX IF NOT EXISTS idx_citizen_jobs_player_category
     ON citizen_jobs(player_uuid, category);
+
+CREATE TABLE IF NOT EXISTS exam_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    exam_id TEXT NOT NULL,
+    qualification_id TEXT NOT NULL,
+    score INTEGER NOT NULL CHECK (score >= 0 AND score <= total_questions),
+    total_questions INTEGER NOT NULL CHECK (total_questions > 0),
+    passed INTEGER NOT NULL CHECK (passed IN (0, 1)),
+    completed_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_exam_attempts_player_completed
+    ON exam_attempts(player_uuid, completed_at DESC, id DESC);

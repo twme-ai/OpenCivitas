@@ -48,6 +48,12 @@ behavioral reference, not a source of copyable implementation or content.
   spatial authorization.
 - [ElectionPlugin](https://github.com/lucasperecin/ElectionPlugin): modern Paper
   election command and persistence reference.
+- [QuizMaster](https://github.com/Ansandr/QuizMaster): MIT-licensed question,
+  option, active-session, pass-score, and configuration model. Its public
+  `QuizManager`, `QuizHandler`, and `QuizConfiguration` were inspected before
+  implementing immutable options and direct, transactional rewards.
+- [Paper asynchronous teleport documentation](https://docs.papermc.io/paper/dev/entity-teleport/):
+  chunk-safe university travel using `teleportAsync`.
 
 ## Build automation references
 

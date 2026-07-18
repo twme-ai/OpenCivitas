@@ -2,9 +2,13 @@ package dev.opencivitas;
 
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.command.CivitasCommand;
+import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.Money;
+import dev.opencivitas.exam.ExamRegistry;
+import dev.opencivitas.exam.ExamRepository;
+import dev.opencivitas.exam.UniversityService;
 import dev.opencivitas.job.JobRegistry;
 import dev.opencivitas.job.JobRepository;
 import dev.opencivitas.listener.CitizenListener;
@@ -81,6 +85,29 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setExecutor(jobCommands);
             command.setTabCompleter(jobCommands);
         }
+
+        ExamRegistry examRegistry;
+        try {
+            examRegistry = new ExamRegistry(this, messages.defaultLocale());
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load exams.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ExamCommand examCommands = new ExamCommand(
+                this,
+                database,
+                new ExamRepository(database),
+                examRegistry,
+                new UniversityService(this),
+                messages
+        );
+        for (String name : List.of("exams", "university")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(examCommands);
+            command.setTabCompleter(examCommands);
+        }
+        getServer().getPluginManager().registerEvents(examCommands, this);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);

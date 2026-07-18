@@ -42,6 +42,12 @@ commands:
   quitprofession:
     description: Leave your current profession.
     usage: /quitprofession
+  exams:
+    description: List, start, answer, or leave a university exam.
+    usage: /exams <list|start <exam>|answer <letter>|quit>
+  university:
+    description: Travel to the university or set its warp.
+    usage: /university [setwarp]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -57,4 +63,7 @@ permissions:
     default: op
   opencivitas.qualifications.manage:
     description: Grant and revoke citizen qualifications.
+    default: op
+  opencivitas.university.setwarp:
+    description: Set the university warp.
     default: op

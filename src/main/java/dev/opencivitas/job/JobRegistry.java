@@ -47,6 +47,9 @@ public final class JobRegistry {
             }
             String qualification = section.getString(rawId + ".qualification", id)
                     .toLowerCase(Locale.ROOT);
+            if (!ID.matcher(qualification).matches()) {
+                throw new IllegalArgumentException("Invalid qualification id for job " + id);
+            }
             boolean selfJoin = section.getBoolean(rawId + ".self-join", category != JobCategory.GOVERNMENT);
             loaded.put(id, new JobDefinition(id, category, qualification, selfJoin));
         }

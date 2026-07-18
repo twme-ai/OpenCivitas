@@ -57,6 +57,10 @@ public final class MessageService {
         return miniMessage.deserialize(template, resolvers);
     }
 
+    public Component parse(String miniMessageText, TagResolver... resolvers) {
+        return miniMessage.deserialize(miniMessageText, resolvers);
+    }
+
     public String locale(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             return defaultLocale;

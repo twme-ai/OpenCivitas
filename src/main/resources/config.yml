@@ -11,3 +11,6 @@ locale:
   supported:
     - en_US
     - zh_TW
+
+university:
+  warp: {}
