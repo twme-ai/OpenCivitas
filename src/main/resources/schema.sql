@@ -164,6 +164,82 @@ CREATE TABLE IF NOT EXISTS office_terms (
 CREATE INDEX IF NOT EXISTS idx_office_terms_active
     ON office_terms(office_id, status, ends_at, seat_number);
 
+CREATE TABLE IF NOT EXISTS legislative_bills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_number TEXT UNIQUE,
+    bill_type TEXT NOT NULL CHECK (bill_type IN ('REGULAR', 'CONSTITUTIONAL', 'APPROPRIATION', 'RESOLUTION')),
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    author_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    status TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    presidential_deadline INTEGER,
+    veto_reason TEXT,
+    referendum_election_id INTEGER REFERENCES elections(id) ON DELETE SET NULL,
+    enacted_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_legislative_bills_status_updated
+    ON legislative_bills(status, updated_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS legislative_amendments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_id INTEGER NOT NULL REFERENCES legislative_bills(id) ON DELETE CASCADE,
+    author_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    amendment_text TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PROPOSED' CHECK (status IN ('PROPOSED', 'ADOPTED', 'REJECTED')),
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS legislative_votes (
+    bill_id INTEGER NOT NULL REFERENCES legislative_bills(id) ON DELETE CASCADE,
+    stage TEXT NOT NULL,
+    voter_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    vote TEXT NOT NULL CHECK (vote IN ('YES', 'NO', 'ABSTAIN')),
+    cast_at INTEGER NOT NULL,
+    PRIMARY KEY (bill_id, stage, voter_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS legislative_vote_results (
+    bill_id INTEGER NOT NULL REFERENCES legislative_bills(id) ON DELETE CASCADE,
+    stage TEXT NOT NULL,
+    yes_votes INTEGER NOT NULL CHECK (yes_votes >= 0),
+    no_votes INTEGER NOT NULL CHECK (no_votes >= 0),
+    abstain_votes INTEGER NOT NULL CHECK (abstain_votes >= 0),
+    quorum_required INTEGER NOT NULL CHECK (quorum_required >= 0),
+    threshold TEXT NOT NULL,
+    passed INTEGER NOT NULL CHECK (passed IN (0, 1)),
+    tallied_at INTEGER NOT NULL,
+    PRIMARY KEY (bill_id, stage)
+);
+
+CREATE TABLE IF NOT EXISTS legislative_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_id INTEGER NOT NULL REFERENCES legislative_bills(id) ON DELETE CASCADE,
+    actor_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    event_type TEXT NOT NULL,
+    detail TEXT,
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_legislative_events_bill_created
+    ON legislative_events(bill_id, created_at, id);
+
+CREATE TABLE IF NOT EXISTS enacted_laws (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_id INTEGER NOT NULL UNIQUE REFERENCES legislative_bills(id) ON DELETE RESTRICT,
+    law_number TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    law_type TEXT NOT NULL,
+    enacted_at INTEGER NOT NULL,
+    repealed_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_enacted_laws_active
+    ON enacted_laws(repealed_at, enacted_at DESC, id DESC);
+
 CREATE TABLE IF NOT EXISTS exam_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,

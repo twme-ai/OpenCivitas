@@ -10,6 +10,7 @@ import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.ElectionCommand;
 import dev.opencivitas.command.JobCommand;
+import dev.opencivitas.command.LegislatureCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
@@ -24,6 +25,8 @@ import dev.opencivitas.exam.ExamRepository;
 import dev.opencivitas.exam.UniversityService;
 import dev.opencivitas.job.JobRegistry;
 import dev.opencivitas.job.JobRepository;
+import dev.opencivitas.legislature.LegislatureRepository;
+import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
 import dev.opencivitas.shop.ShopListener;
@@ -264,7 +267,10 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        ElectionRepository electionRepository = new ElectionRepository(database);
+        ElectionRepository electionRepository = new ElectionRepository(
+                database,
+                electionRegistry.minimumVoterRecentPlaytime(),
+                electionRegistry.voterRecentWindow());
         try {
             electionRepository.closeDue(System.currentTimeMillis());
         } catch (SQLException exception) {
@@ -284,6 +290,37 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                         getLogger().log(Level.SEVERE, "Could not settle due elections", error);
                     }
                 }), 1_200L, 1_200L);
+
+        int presidentialActionDays = Math.max(
+                1, Math.min(60, getConfig().getInt("legislature.presidential-action-days", 14)));
+        int constitutionalReferendumHours = Math.max(
+                1, Math.min(168, getConfig().getInt("legislature.constitutional-referendum-hours", 48)));
+        LegislatureRepository legislatureRepository = new LegislatureRepository(
+                database, Duration.ofDays(presidentialActionDays));
+        LegislatureService legislatureService = new LegislatureService(
+                legislatureRepository, electionRepository, Duration.ofHours(constitutionalReferendumHours));
+        try {
+            legislatureService.settle(System.currentTimeMillis());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not settle legislative deadlines", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        LegislatureCommand legislatureCommands = new LegislatureCommand(
+                this, database, legislatureRepository, legislatureService, messages);
+        for (String name : List.of("bill", "laws", "law")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(legislatureCommands);
+            command.setTabCompleter(legislatureCommands);
+        }
+        getServer().getScheduler().runTaskTimer(this, () -> database.submit(() -> {
+            legislatureService.settle(System.currentTimeMillis());
+            return null;
+        }).whenComplete((ignored, error) -> {
+            if (error != null && isEnabled()) {
+                getLogger().log(Level.SEVERE, "Could not settle legislative deadlines", error);
+            }
+        }), 1_200L, 1_200L);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

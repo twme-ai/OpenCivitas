@@ -40,6 +40,8 @@ The first playable foundation includes:
   scheduled settlement, browse GUI, search, and persistent item claims
 - configurable IRV/STV elections and strict-majority referendums with tracked
   eligibility, ranked ballots, auditable rounds, and elected office terms
+- bicameral bills, Senate amendments, chamber tallies, presidential assent or
+  veto, veto overrides, constitutional referendums, and an enacted law codex
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

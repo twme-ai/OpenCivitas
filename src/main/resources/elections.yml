@@ -1,3 +1,7 @@
+voters:
+  recent-hours: 6
+  recent-window-days: 30
+
 offices:
   house:
     method: STV

@@ -98,6 +98,16 @@ commands:
     description: View elections, nominate candidates, and cast ranked ballots.
     usage: /election <list|offices|info|nominate|withdraw|ballot|results|terms>
     aliases: [elections]
+  bill:
+    description: Draft, debate, vote on, and enact legislation.
+    usage: /bill <list|info|text|events|create|submit|withdraw|amend|vote|tally|assent|veto|override>
+    aliases: [bills, legislation]
+  laws:
+    description: List the active law codex.
+    usage: /laws [page]
+  law:
+    description: Read an enacted law.
+    usage: /law <number|id>
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.

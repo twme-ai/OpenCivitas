@@ -437,6 +437,7 @@ public final class ElectionCommand implements CommandExecutor, TabCompleter {
             case INELIGIBLE_TOTAL_PLAYTIME -> "elections.ineligible-total";
             case INELIGIBLE_RECENT_PLAYTIME -> "elections.ineligible-recent";
             case INELIGIBLE_REELECTION -> "elections.ineligible-reelection";
+            case INELIGIBLE_VOTER_PLAYTIME -> "elections.ineligible-voter";
             case EMPTY_BALLOT -> "elections.empty-ballot";
             case DUPLICATE_CHOICE -> "elections.duplicate-choice";
             case INVALID_CHOICE -> "elections.invalid-choice";
@@ -445,7 +446,9 @@ public final class ElectionCommand implements CommandExecutor, TabCompleter {
         };
         messages.send(sender, key,
                 Placeholder.unparsed("id", Long.toString(id)),
-                Placeholder.unparsed("player", ""));
+                Placeholder.unparsed("player", ""),
+                Placeholder.unparsed("hours",
+                        Long.toString(registry.minimumVoterRecentPlaytime().toHours())));
     }
 
     private Component title(CommandSender sender, Election election) {

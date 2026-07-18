@@ -107,6 +107,21 @@ class ElectionRepositoryTest {
     }
 
     @Test
+    void voterMustMeetConfiguredRecentPlaytimeThreshold() throws Exception {
+        ElectionRepository strict = new ElectionRepository(
+                database, Duration.ofHours(6), Duration.ofDays(30));
+        Election election = strict.createReferendum(
+                ADMIN, "library", "Build a library?", NOW, NOW + 100).election().orElseThrow();
+
+        assertEquals(ElectionActionResult.INELIGIBLE_VOTER_PLAYTIME,
+                strict.castBallot(election.id(), ALICE, List.of("yes"), NOW + 1).result());
+
+        activity(ALICE, NOW - Duration.ofHours(7).toMillis(), Duration.ofHours(7));
+        assertEquals(ElectionActionResult.SUCCESS,
+                strict.castBallot(election.id(), ALICE, List.of("yes"), NOW + 2).result());
+    }
+
+    @Test
     void eligibilityChecksTotalAndRecentTrackedPlaytime() throws Exception {
         ElectionDefinition definition = new ElectionDefinition(
                 "president", ElectionMethod.IRV, 1, 120, Duration.ZERO,
@@ -147,6 +162,13 @@ class ElectionRepositoryTest {
                 elections.nominate(second.id(), ALICE, CAROL, president, NOW + 301).result());
         assertEquals(ElectionActionResult.RUNNING_MATE_INELIGIBLE_HISTORY,
                 elections.nominate(second.id(), CAROL, ALICE, president, NOW + 301).result());
+
+        long afterTerm = NOW + 200 + Duration.ofDays(121).toMillis();
+        Election third = elections.createOffice(
+                ADMIN, "president-three", president,
+                afterTerm, afterTerm + 100, afterTerm + 200).election().orElseThrow();
+        assertEquals(ElectionActionResult.INELIGIBLE_REELECTION,
+                elections.nominate(third.id(), ALICE, CAROL, president, afterTerm + 1).result());
     }
 
     @Test

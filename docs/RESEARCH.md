@@ -13,6 +13,10 @@ behavioral reference, not a source of copyable implementation or content.
 - [DemocracyCraft Government](https://wiki.democracycraft.net/Government):
   bicameral legislature, executive, courts, office terms, eligibility, vetoes,
   succession, and voting systems.
+- [Current public Constitution](https://www.democracycraft.net/threads/constitution.6/):
+  legislative initiative, review and amendment sequence, quorum, dynamic and
+  absolute vote thresholds, assent deadlines, vetoes and overrides,
+  constitutional referendums, election rights, and judicial jurisdiction.
 - [DemocracyCraft Health](https://wiki.democracycraft.net/Health): symptoms,
   diseases, contagious conditions, doctors, hospitals, Medicare, pharmacies,
   and treatment items.
@@ -60,6 +64,12 @@ behavioral reference, not a source of copyable implementation or content.
   [archived Vice President revision 9309](https://web.archive.org/web/20260610182952/https://wiki.democracycraft.net/Vice_president)
   establishes four months of citizenship, 150 total hours, 12 recent hours,
   and exclusion of the most recently elected president for running mates.
+- The current public Constitution was cross-checked for election rights and
+  legislative thresholds. It requires six active hours in the prior 30 days to
+  vote, secret election and referendum ballots, at least half of modified seats
+  for congressional quorum, dynamic majorities, absolute affirmative floors of
+  four House or two Senate votes, and two-thirds supermajorities unless a
+  constitutional veto override requires 80 percent.
 - [single-transferable-vote](https://github.com/buzzlawless/single-transferable-vote):
   MIT-licensed Droop quota, candidate elimination, surplus transfer, and result
   test reference. OpenCivitas implements its own immutable ballots and
@@ -70,6 +80,12 @@ behavioral reference, not a source of copyable implementation or content.
   persistence, and multilingual command expectations. OpenCivitas replaces its
   name-keyed flat-file ballots with transactional UUID identities, replaceable
   ranked ballots, scheduled phases, and SQLite result history.
+- [StateCraftMods](https://github.com/tswink44/StateCraftMods): current Minecraft
+  legislation model with draft/debate/voting stages, amendments, vote
+  replacement, quorum, veto, enactment, persistence, and a law codex. The
+  repository has no declared license, so it was used only as a behavioral and
+  domain-model reference. OpenCivitas uses original SQLite transactions and a
+  Constitution-specific bicameral state machine; no source was copied.
 - [QuizMaster](https://github.com/Ansandr/QuizMaster): MIT-licensed question,
   option, active-session, pass-score, and configuration model. Its public
   `QuizManager`, `QuizHandler`, and `QuizConfiguration` were inspected before

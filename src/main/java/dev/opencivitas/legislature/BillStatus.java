@@ -1,0 +1,18 @@
+package dev.opencivitas.legislature;
+
+public enum BillStatus {
+    DRAFT,
+    HOUSE_VOTING,
+    SENATE_VOTING,
+    HOUSE_RECONSIDERATION,
+    PRESIDENT_REVIEW,
+    VETOED,
+    HOUSE_OVERRIDE,
+    SENATE_OVERRIDE,
+    REFERENDUM_REQUIRED,
+    REFERENDUM,
+    ENACTED,
+    REJECTED,
+    VETO_UPHELD,
+    WITHDRAWN
+}

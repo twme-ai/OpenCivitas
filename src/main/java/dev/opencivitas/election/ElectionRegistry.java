@@ -18,6 +18,8 @@ public final class ElectionRegistry {
     private static final Pattern ID = Pattern.compile("[a-z0-9][a-z0-9-]{0,47}");
 
     private final Map<String, ElectionDefinition> definitions;
+    private final Duration minimumVoterRecentPlaytime;
+    private final Duration voterRecentWindow;
 
     public ElectionRegistry(JavaPlugin plugin) {
         File file = new File(plugin.getDataFolder(), "elections.yml");
@@ -25,6 +27,11 @@ public final class ElectionRegistry {
             plugin.saveResource("elections.yml", false);
         }
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+        minimumVoterRecentPlaytime = hours(
+                configuration.getInt("voters.recent-hours", 6), "voters.");
+        voterRecentWindow = days(positive(
+                configuration.getInt("voters.recent-window-days", 30),
+                "voters.recent-window-days"), "voters.");
         ConfigurationSection offices = configuration.getConfigurationSection("offices");
         if (offices == null) {
             throw new IllegalArgumentException("elections.yml does not contain an offices section");
@@ -82,6 +89,14 @@ public final class ElectionRegistry {
 
     public Collection<ElectionDefinition> all() {
         return definitions.values().stream().sorted(Comparator.comparing(ElectionDefinition::id)).toList();
+    }
+
+    public Duration minimumVoterRecentPlaytime() {
+        return minimumVoterRecentPlaytime;
+    }
+
+    public Duration voterRecentWindow() {
+        return voterRecentWindow;
     }
 
     private static int positive(int value, String path) {

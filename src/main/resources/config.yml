@@ -33,3 +33,7 @@ auction:
   minimum-increment: '1.00'
   default-hours: 24
   maximum-hours: 168
+
+legislature:
+  presidential-action-days: 14
+  constitutional-referendum-hours: 48

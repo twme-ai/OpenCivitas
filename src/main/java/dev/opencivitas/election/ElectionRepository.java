@@ -24,9 +24,21 @@ public final class ElectionRepository {
     private static final BigDecimal VOTE_MICROS = BigDecimal.valueOf(1_000_000L);
 
     private final Database database;
+    private final Duration minimumVoterRecentPlaytime;
+    private final Duration voterRecentWindow;
 
     public ElectionRepository(Database database) {
+        this(database, Duration.ZERO, Duration.ofDays(30));
+    }
+
+    public ElectionRepository(
+            Database database,
+            Duration minimumVoterRecentPlaytime,
+            Duration voterRecentWindow
+    ) {
         this.database = database;
+        this.minimumVoterRecentPlaytime = minimumVoterRecentPlaytime;
+        this.voterRecentWindow = voterRecentWindow;
     }
 
     public ElectionOperation createOffice(
@@ -107,6 +119,17 @@ public final class ElectionRepository {
             return Optional.of(new ElectionDetails(
                     election.get(), readChoices(connection, electionId, false),
                     ballotCount(connection, electionId), readResults(connection, electionId)));
+        }
+    }
+
+    public Optional<Election> findBySlug(String slug) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT * FROM elections WHERE slug = ? COLLATE NOCASE")) {
+            statement.setString(1, slug);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(readElection(results)) : Optional.empty();
+            }
         }
     }
 
@@ -224,8 +247,13 @@ public final class ElectionRepository {
                 if (election.phase(now) != ElectionPhase.VOTING) {
                     return rollback(connection, ElectionActionResult.INVALID_PHASE);
                 }
-                if (!playerExists(connection, voter)) {
+                Optional<CitizenEligibility> voterProfile = eligibility(
+                        connection, voter, voterRecentWindow, now);
+                if (voterProfile.isEmpty()) {
                     return rollback(connection, ElectionActionResult.PLAYER_NOT_FOUND);
+                }
+                if (voterProfile.get().recentPlaytime() < minimumVoterRecentPlaytime.toMillis()) {
+                    return rollback(connection, ElectionActionResult.INELIGIBLE_VOTER_PLAYTIME);
                 }
                 Set<String> choices = readChoices(connection, electionId, true).stream()
                         .map(ElectionChoice::id).collect(java.util.stream.Collectors.toUnmodifiableSet());
@@ -371,7 +399,8 @@ public final class ElectionRepository {
             return ElectionActionResult.INELIGIBLE_RECENT_PLAYTIME;
         }
         if (definition.disallowImmediateReelection()
-                && holdsOffice(connection, candidate, definition.id(), now)) {
+                && (holdsOffice(connection, candidate, definition.id(), now)
+                || ("president".equals(definition.id()) && wasMostRecentPresident(connection, candidate)))) {
             return ElectionActionResult.INELIGIBLE_REELECTION;
         }
         return ElectionActionResult.SUCCESS;
@@ -833,15 +862,6 @@ public final class ElectionRepository {
                 """)) {
             statement.setLong(1, electionId);
             statement.setString(2, candidate.toString());
-            try (ResultSet results = statement.executeQuery()) {
-                return results.next();
-            }
-        }
-    }
-
-    private static boolean playerExists(Connection connection, UUID player) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT 1 FROM players WHERE uuid = ?")) {
-            statement.setString(1, player.toString());
             try (ResultSet results = statement.executeQuery()) {
                 return results.next();
             }

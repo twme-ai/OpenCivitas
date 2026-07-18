@@ -18,8 +18,8 @@ legally or meaningfully copied from another server.
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | in progress: registered 3D plots, purchase, fixed-term escrow/rent expiry, proportional refund, titleholder/tenant/trust, price search, protection |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | in progress: 4,096-block allowance, paid expansion, menu/wand create and resize, trust, transfer, protection, explosion toggle, kick-out |
 | Government | executive, bicameral legislature, judiciary | in progress: configurable elected offices and persistent office terms; executive appointments and judiciary remain |
-| Elections | STV, instant runoff, terms, eligibility, referendums | implemented: playtime/citizenship eligibility, nominations, running mates, ranked ballot replacement, IRV, Droop-quota STV, strict-majority referendums, auditable rounds/results, automatic terms |
-| Legislature | bills, amendments, chamber votes, veto and override | planned |
+| Elections | STV, instant runoff, terms, eligibility, referendums | implemented: candidate and six-hour voter eligibility, sealed ranked ballots, nominations/running mates, ballot replacement, IRV, Droop-quota STV, strict-majority referendums, auditable rounds/results, automatic terms |
+| Legislature | bills, amendments, chamber votes, veto and override | implemented: House introduction, Senate review/amendments, House reconsideration, immutable stage votes/tallies, quorum/floors, presidential assent/veto, assumed assent, bicameral override, constitutional referendums, enacted law codex |
 | Courts | three levels, cases, filings, orders, appeals | planned |
 | Law enforcement | reports, consent, wanted status, evidence, arrest | planned |
 | Health | symptoms, injuries, diseases, contagion, doctors, treatments | planned |
