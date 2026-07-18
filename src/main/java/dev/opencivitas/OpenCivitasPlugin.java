@@ -2,6 +2,8 @@ package dev.opencivitas;
 
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.business.BusinessRepository;
+import dev.opencivitas.auction.AuctionRepository;
+import dev.opencivitas.command.AuctionCommand;
 import dev.opencivitas.command.BusinessCommand;
 import dev.opencivitas.command.ClaimCommand;
 import dev.opencivitas.command.CivitasCommand;
@@ -46,9 +48,12 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
         long startingBalance;
         long claimBlockCost;
+        long auctionMinimumIncrement;
         try {
             startingBalance = Money.parseCents(getConfig().getString("economy.starting-balance", "1200.00"));
             claimBlockCost = Money.parsePositiveCents(getConfig().getString("claims.block-cost", "20.00"));
+            auctionMinimumIncrement = Money.parsePositiveCents(
+                    getConfig().getString("auction.minimum-increment", "1.00"));
         } catch (IllegalArgumentException exception) {
             getLogger().log(Level.SEVERE, "An economy amount in config.yml is invalid", exception);
             getServer().getPluginManager().disablePlugin(this);
@@ -65,6 +70,10 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                 maximumClaimBlocks, getConfig().getInt("claims.free-blocks", 10)));
         int defaultRentalDays = Math.max(1, Math.min(
                 3_650, getConfig().getInt("property.default-rental-days", 30)));
+        int auctionListingLimit = Math.max(1, Math.min(100, getConfig().getInt("auction.listing-limit", 10)));
+        int auctionDefaultHours = Math.max(1, Math.min(720, getConfig().getInt("auction.default-hours", 24)));
+        int auctionMaximumHours = Math.max(
+                auctionDefaultHours, Math.min(720, getConfig().getInt("auction.maximum-hours", 168)));
         List<String> claimWorlds = getConfig().getStringList("claims.enabled-worlds");
         if (claimWorlds.isEmpty()) {
             claimWorlds = List.of("wilderness");
@@ -217,6 +226,30 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                             propertyRegistry.replaceAll(loaded);
                         }
                     });
+                }), 1_200L, 1_200L);
+
+        AuctionRepository auctionRepository = new AuctionRepository(
+                database, auctionMinimumIncrement, auctionListingLimit);
+        try {
+            auctionRepository.settleExpired(System.currentTimeMillis());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not settle expired auctions", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        AuctionCommand auctionCommands = new AuctionCommand(
+                this, database, auctionRepository, messages, currencySymbol,
+                auctionDefaultHours, auctionMaximumHours);
+        PluginCommand auctionCommand = Objects.requireNonNull(getCommand("auction"), "Missing command auction");
+        auctionCommand.setExecutor(auctionCommands);
+        auctionCommand.setTabCompleter(auctionCommands);
+        getServer().getPluginManager().registerEvents(auctionCommands, this);
+        getServer().getScheduler().runTaskTimer(this, () -> database.submit(
+                () -> auctionRepository.settleExpired(System.currentTimeMillis()))
+                .whenComplete((ignored, error) -> {
+                    if (error != null && isEnabled()) {
+                        getLogger().log(Level.SEVERE, "Could not settle expired auctions", error);
+                    }
                 }), 1_200L, 1_200L);
 
         getServer().getPluginManager().registerEvents(

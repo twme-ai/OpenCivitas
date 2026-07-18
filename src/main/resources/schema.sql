@@ -261,3 +261,54 @@ CREATE TABLE IF NOT EXISTS property_transactions (
 
 CREATE INDEX IF NOT EXISTS idx_property_transactions_created
     ON property_transactions(property_id, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS auction_listings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    seller_uuid TEXT NOT NULL REFERENCES players(uuid),
+    item_data BLOB NOT NULL,
+    item_key TEXT NOT NULL,
+    item_name TEXT NOT NULL,
+    item_quantity INTEGER NOT NULL CHECK (item_quantity > 0),
+    starting_bid_cents INTEGER NOT NULL CHECK (starting_bid_cents > 0),
+    buyout_cents INTEGER CHECK (buyout_cents >= starting_bid_cents),
+    current_bid_cents INTEGER NOT NULL DEFAULT 0 CHECK (current_bid_cents >= 0),
+    current_bidder_uuid TEXT REFERENCES players(uuid),
+    state TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (state IN ('ACTIVE', 'SOLD', 'EXPIRED', 'CANCELLED')),
+    created_at INTEGER NOT NULL,
+    ends_at INTEGER NOT NULL,
+    settled_at INTEGER,
+    CHECK ((current_bid_cents = 0 AND current_bidder_uuid IS NULL)
+        OR (current_bid_cents > 0 AND current_bidder_uuid IS NOT NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_auction_listings_active_ends
+    ON auction_listings(state, ends_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_auction_listings_seller
+    ON auction_listings(seller_uuid, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS auction_bids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listing_id INTEGER NOT NULL REFERENCES auction_listings(id),
+    bidder_uuid TEXT NOT NULL REFERENCES players(uuid),
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auction_bids_listing_created
+    ON auction_bids(listing_id, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS auction_claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listing_id INTEGER NOT NULL REFERENCES auction_listings(id),
+    player_uuid TEXT NOT NULL REFERENCES players(uuid),
+    item_data BLOB NOT NULL,
+    item_key TEXT NOT NULL,
+    item_name TEXT NOT NULL,
+    item_quantity INTEGER NOT NULL CHECK (item_quantity > 0),
+    created_at INTEGER NOT NULL,
+    claimed_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_auction_claims_player
+    ON auction_claims(player_uuid, claimed_at, created_at, id);

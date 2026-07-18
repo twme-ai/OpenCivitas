@@ -123,6 +123,18 @@ behavioral reference, not a source of copyable implementation or content.
   rent/lease update loop were used to cross-check those behaviors. OpenCivitas
   holds prepaid rent in an auditable SQLite escrow value and conserves every
   cent across proportional refund plus landlord payout.
+- [Auctify](https://github.com/PteroxOS/Auctify) and
+  [AuctionHouse](https://github.com/Nikster1234/AuctionHouse) are current
+  MIT-licensed Paper auction implementations. Their per-listing locking,
+  escrow withdrawal, outbid refund, seller settlement, restart expiry, search,
+  cancellation, and persistent claim flows were inspected before the
+  OpenCivitas auction transaction was designed.
+- [CrazyAuctions](https://github.com/Crazy-Crew/CrazyAuctions) and
+  [GlobalMarketChest](https://github.com/EpiCanard/GlobalMarketChest) provide
+  additional MIT-licensed GUI auction and global marketplace references.
+  OpenCivitas uses Paper's native `ItemStack` byte serialization, SQLite
+  integer-cents escrow, immutable listing history, and claim records; it does
+  not copy reference source or GUI assets.
 
 ## Build automation references
 

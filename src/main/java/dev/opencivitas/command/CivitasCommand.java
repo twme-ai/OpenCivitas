@@ -229,6 +229,10 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
                 case PROPERTY_RENT -> messages.component(sender, "transactions.property-rent");
                 case PROPERTY_RENT_REFUND -> messages.component(sender, "transactions.property-rent-refund");
                 case PROPERTY_RENT_INCOME -> messages.component(sender, "transactions.property-rent-income");
+                case AUCTION_BID -> messages.component(sender, "transactions.auction-bid");
+                case AUCTION_REFUND -> messages.component(sender, "transactions.auction-refund");
+                case AUCTION_PURCHASE -> messages.component(sender, "transactions.auction-purchase");
+                case AUCTION_SALE -> messages.component(sender, "transactions.auction-sale");
             };
             messages.send(sender, "transactions.entry",
                     Placeholder.unparsed("date", DATE.format(entry.createdAt())),

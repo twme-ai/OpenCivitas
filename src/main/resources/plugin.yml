@@ -78,6 +78,10 @@ commands:
     description: Search, buy, rent, and manage real-estate plots.
     usage: /realestate <help|me|buy|rent|unrent|search|info|add|remove|set>
     aliases: [rl, realty]
+  auction:
+    description: Browse, list, bid on, buy, and claim auction items.
+    usage: /auction <open|sell|bid|buy|cancel|claims|claim|mine|search>
+    aliases: [ah, auctions]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.

@@ -1,0 +1,17 @@
+package dev.opencivitas.auction;
+
+public enum AuctionResult {
+    SUCCESS,
+    LISTING_NOT_FOUND,
+    LISTING_INACTIVE,
+    LISTING_EXPIRED,
+    LISTING_LIMIT,
+    INVALID_BID,
+    BUYOUT_UNAVAILABLE,
+    BID_EXISTS,
+    NO_PERMISSION,
+    INSUFFICIENT_FUNDS,
+    CITIZEN_NOT_FOUND,
+    SELF,
+    CLAIM_NOT_FOUND
+}

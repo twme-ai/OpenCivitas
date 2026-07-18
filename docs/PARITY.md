@@ -14,7 +14,7 @@ legally or meaningfully copied from another server.
 | University | exams and qualifications for jobs/licenses | in progress: localized exam engine, attempt ledger, qualification awards, warp |
 | Shops | chest buy/sell, stack modifiers, item search, sales history | in progress: persistent personal/firm shops, sign creation, click/shift-click settlement, search, history, stock and capacity checks |
 | Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: accounts, offers, five ranks, wages/payroll, ownership, ledgers, firm shops and sales history; custom roles remain |
-| Auctions | item listings, bids, settlement | planned |
+| Auctions | item listings, bids, settlement | implemented: metadata-safe listings, browse/search, escrow bids, buyouts, refunds, cancellation rules, expiry settlement, persistent claims |
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | in progress: registered 3D plots, purchase, fixed-term escrow/rent expiry, proportional refund, titleholder/tenant/trust, price search, protection |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | in progress: 4,096-block allowance, paid expansion, menu/wand create and resize, trust, transfer, protection, explosion toggle, kick-out |
 | Government | executive, bicameral legislature, judiciary | planned |

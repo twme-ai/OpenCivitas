@@ -27,3 +27,9 @@ claims:
 
 property:
   default-rental-days: 30
+
+auction:
+  listing-limit: 10
+  minimum-increment: '1.00'
+  default-hours: 24
+  maximum-hours: 168

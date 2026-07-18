@@ -35,6 +35,8 @@ The first playable foundation includes:
   golden-shovel create/resize selection, trust, transfer, and protection
 - registered real-estate plots with purchase, fixed-term rent escrow/refunds,
   titleholders, tenants, trusted builders, search, and region protection
+- metadata-safe item auctions with bid escrow, buyouts, outbid refunds,
+  scheduled settlement, browse GUI, search, and persistent item claims
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
