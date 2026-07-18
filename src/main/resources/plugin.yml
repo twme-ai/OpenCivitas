@@ -59,6 +59,21 @@ commands:
     description: View chest shop transaction history.
     usage: /chestshop history [page]
     aliases: [csn, shop]
+  claim:
+    description: Create and manage wilderness claims.
+    usage: /claim <list|info|create|buy|trust|untrust|delete>
+  claimwand:
+    description: Receive the daily wilderness claim wand.
+    usage: /claimwand
+  giveclaim:
+    description: Transfer the wilderness claim at your location.
+    usage: /giveclaim <player>
+  claimexplosions:
+    description: Toggle explosions in the wilderness claim at your location.
+    usage: /claimexplosions
+  claimkickout:
+    description: Remove a player from your wilderness claim.
+    usage: /claimkickout kickout <player>
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -83,4 +98,7 @@ permissions:
     default: true
   opencivitas.business.audit:
     description: View any business account and transaction history.
+    default: op
+  opencivitas.claims.bypass:
+    description: Build and interact in any wilderness claim.
     default: op

@@ -3,11 +3,15 @@ package dev.opencivitas;
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.business.BusinessRepository;
 import dev.opencivitas.command.BusinessCommand;
+import dev.opencivitas.command.ClaimCommand;
 import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
+import dev.opencivitas.claim.ClaimListener;
+import dev.opencivitas.claim.ClaimRegistry;
+import dev.opencivitas.claim.ClaimRepository;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.exam.ExamRegistry;
 import dev.opencivitas.exam.ExamRepository;
@@ -37,10 +41,12 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         saveDefaultConfig();
 
         long startingBalance;
+        long claimBlockCost;
         try {
             startingBalance = Money.parseCents(getConfig().getString("economy.starting-balance", "1200.00"));
+            claimBlockCost = Money.parsePositiveCents(getConfig().getString("claims.block-cost", "20.00"));
         } catch (IllegalArgumentException exception) {
-            getLogger().log(Level.SEVERE, "economy.starting-balance is invalid", exception);
+            getLogger().log(Level.SEVERE, "An economy amount in config.yml is invalid", exception);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -50,6 +56,13 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         long offerExpiryMinutes = Math.max(
                 1, Math.min(525_600, getConfig().getLong("business.offer-expiry-minutes", 1_440)));
         long offerExpiryMillis = Duration.ofMinutes(offerExpiryMinutes).toMillis();
+        int maximumClaimBlocks = Math.max(1, getConfig().getInt("claims.maximum-blocks", 4_096));
+        int freeClaimBlocks = Math.max(0, Math.min(
+                maximumClaimBlocks, getConfig().getInt("claims.free-blocks", 10)));
+        List<String> claimWorlds = getConfig().getStringList("claims.enabled-worlds");
+        if (claimWorlds.isEmpty()) {
+            claimWorlds = List.of("wilderness");
+        }
         Path dataDirectory = getDataFolder().toPath().toAbsolutePath().normalize();
         Path databaseFile = dataDirectory
                 .resolve(getConfig().getString("database.file", "opencivitas.db"))
@@ -143,6 +156,29 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(
                 new ShopListener(this, database, shops, messages, currencySymbol), this);
+
+        ClaimRepository claimRepository = new ClaimRepository(
+                database, freeClaimBlocks, maximumClaimBlocks, claimBlockCost);
+        ClaimRegistry claimRegistry = new ClaimRegistry(claimWorlds);
+        try {
+            claimRegistry.replaceAll(claimRepository.loadAll());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not load wilderness claims", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ClaimCommand claimCommands = new ClaimCommand(
+                this, database, citizens, claimRepository, claimRegistry,
+                messages, currencySymbol, claimBlockCost);
+        for (String name : List.of(
+                "claim", "claimwand", "giveclaim", "claimexplosions", "claimkickout")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(claimCommands);
+            command.setTabCompleter(claimCommands);
+        }
+        getServer().getPluginManager().registerEvents(
+                new ClaimListener(this, database, claimRepository, claimRegistry, messages), this);
+        getServer().getPluginManager().registerEvents(claimCommands, this);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);

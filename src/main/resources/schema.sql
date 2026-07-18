@@ -161,3 +161,44 @@ CREATE INDEX IF NOT EXISTS idx_shop_sales_shop_created
 
 CREATE INDEX IF NOT EXISTS idx_shop_sales_customer_created
     ON shop_sales(customer_uuid, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS claim_accounts (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    purchased_blocks INTEGER NOT NULL DEFAULT 0 CHECK (purchased_blocks >= 0),
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS wilderness_claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid),
+    world_name TEXT NOT NULL,
+    min_x INTEGER NOT NULL,
+    max_x INTEGER NOT NULL,
+    min_z INTEGER NOT NULL,
+    max_z INTEGER NOT NULL,
+    explosions INTEGER NOT NULL DEFAULT 0 CHECK (explosions IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    CHECK (min_x <= max_x AND min_z <= max_z)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wilderness_claims_world_bounds
+    ON wilderness_claims(world_name, min_x, max_x, min_z, max_z);
+
+CREATE INDEX IF NOT EXISTS idx_wilderness_claims_owner
+    ON wilderness_claims(owner_uuid, created_at, id);
+
+CREATE TABLE IF NOT EXISTS claim_trust (
+    claim_id INTEGER NOT NULL REFERENCES wilderness_claims(id) ON DELETE CASCADE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (claim_id, player_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_claim_trust_player
+    ON claim_trust(player_uuid, claim_id);
+
+CREATE TABLE IF NOT EXISTS claim_wands (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    issued_day TEXT NOT NULL
+);

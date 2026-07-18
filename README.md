@@ -31,6 +31,8 @@ The first playable foundation includes:
 - persistent sign chest shops for personal or firm accounts
 - left-click sales, right-click purchases, shift-click stack transactions,
   stock/capacity checks, item search, owner notices, and sales history
+- wilderness claims with a management menu, paid claim-block allowance,
+  golden-shovel create/resize selection, trust, transfer, and protection
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

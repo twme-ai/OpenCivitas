@@ -89,6 +89,27 @@ behavioral reference, not a source of copyable implementation or content.
   persistent tile-state data, front-side Adventure components, waxed signs,
   main-hand filtering, and left/right block actions cover shop creation and
   interaction without packet interception.
+- [DemocracyCraft Wilderness Claiming](https://wiki.democracycraft.net/Wilderness_Claiming):
+  current revision 9515 documents wilderness-only self-service claims, a
+  4,096-block limit, 10 free blocks, `$20` additional blocks, golden-shovel
+  corner resizing, trust, transfer, explosion policy, and kick-out commands.
+- [GriefPrevention](https://github.com/GriefPrevention/GriefPrevention):
+  GPL-3.0 claim geometry, overlap checks, explicit claim activation, trust
+  levels, transfers, explosion flags, boundary visualization, and remaining
+  block accounting were inspected as behavioral and engineering references.
+  OpenCivitas uses original records, SQLite transactions, and an immutable
+  tick-thread spatial snapshot; no GPL source was copied.
+- [AreaShop](https://github.com/NLthijs48/AreaShop): GPL-3.0 buy/rent region,
+  friend access, owner, price, duration, and reset lifecycle reference for the
+  upcoming real-estate implementation.
+- [AdvancedRegionMarket](https://github.com/LibertyLand/AdvancedRegionMarket):
+  region lookup, transactional purchase, ownership/member authorization,
+  resale, and search command behavior were inspected as an additional public
+  real-estate reference.
+- [RealEstate](https://github.com/EtienneDx/RealEstate): MIT-licensed claim
+  sale, rent, lease, auction, exit-offer, and multi-protection-provider model;
+  retained as a reference for the upcoming property and auction settlement
+  work.
 
 ## Build automation references
 

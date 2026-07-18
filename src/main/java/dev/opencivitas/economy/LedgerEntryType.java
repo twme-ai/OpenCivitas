@@ -6,5 +6,6 @@ public enum LedgerEntryType {
     BUSINESS_TRANSFER,
     BUSINESS_PAYMENT,
     SHOP_PURCHASE,
-    SHOP_SALE
+    SHOP_SALE,
+    CLAIM_BLOCK_PURCHASE
 }
