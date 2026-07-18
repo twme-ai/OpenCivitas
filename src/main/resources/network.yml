@@ -1,0 +1,27 @@
+# Cross-server support is optional. Civic records remain authoritative in each
+# node's configured database; this transport carries only live UUID presence
+# and the selected transient chat channels.
+enabled: false
+
+node:
+  # Every concurrently running node must have a unique lowercase id.
+  id: city
+  display-name: City
+
+redis:
+  # The URI is read only from this environment variable so credentials are not
+  # written into plugin configuration or logs. redis:// and rediss:// are valid.
+  uri-environment: OPENCIVITAS_REDIS_URL
+  namespace: opencivitas
+
+heartbeat-seconds: 15
+presence-ttl-seconds: 45
+reconnect-seconds: 8
+
+# Proximity channels are deliberately local. Department authorization is
+# checked on the publishing node and recipient membership on every receiving node.
+bridged-channels:
+  - global
+  - doj
+  - senate
+  - judiciary

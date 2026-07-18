@@ -2,6 +2,8 @@ package dev.opencivitas.chat;
 
 import dev.opencivitas.database.Database;
 import dev.opencivitas.message.MessageService;
+import dev.opencivitas.network.NetworkEnvelope;
+import dev.opencivitas.network.NetworkService;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -27,6 +29,7 @@ public final class ChatRouter implements Listener {
     private final Database database;
     private final ChatRepository chat;
     private final ChatPolicy policy;
+    private final NetworkService network;
     private final MessageService messages;
     private final ConcurrentHashMap<UUID, ChatChannel> preferences = new ConcurrentHashMap<>();
 
@@ -35,12 +38,14 @@ public final class ChatRouter implements Listener {
             Database database,
             ChatRepository chat,
             ChatPolicy policy,
+            NetworkService network,
             MessageService messages
     ) {
         this.plugin = plugin;
         this.database = database;
         this.chat = chat;
         this.policy = policy;
+        this.network = network;
         this.messages = messages;
     }
 
@@ -66,6 +71,25 @@ public final class ChatRouter implements Listener {
                 Placeholder.component("message", content)));
         Bukkit.getConsoleSender().sendMessage(messages.component("en_US", formatKey,
                 Placeholder.unparsed("player", sender.getName()), Placeholder.component("message", content)));
+    }
+
+    public void receiveNetworkChat(NetworkEnvelope envelope) {
+        DepartmentChannelDefinition department = policy.department(envelope.channel()).orElse(null);
+        if (department == null) {
+            if (envelope.channel() == ChatChannel.GLOBAL) {
+                deliverNetwork(envelope, Bukkit.getOnlinePlayers());
+            }
+            return;
+        }
+        database.submit(() -> chat.departmentMembers(department, System.currentTimeMillis()))
+                .whenComplete((members, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (error != null) {
+                        plugin.getLogger().log(Level.WARNING, "Could not resolve network department chat", error);
+                        return;
+                    }
+                    deliverNetwork(envelope, Bukkit.getOnlinePlayers().stream()
+                            .filter(player -> members.contains(player.getUniqueId())).toList());
+                }));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -148,9 +172,27 @@ public final class ChatRouter implements Listener {
         Bukkit.getConsoleSender().sendMessage(messages.component("en_US",
                 "chat.format." + channel.name().toLowerCase(java.util.Locale.ROOT),
                 Placeholder.unparsed("player", sender.getName()), Placeholder.component("message", content)));
+        if (network.bridges(channel)) network.publishChat(sender, channel,
+                PlainTextComponentSerializer.plainText().serialize(content));
         long otherRecipients = selected.stream()
                 .filter(player -> !player.getUniqueId().equals(sender.getUniqueId())).count();
-        if (otherRecipients == 0 && channel != ChatChannel.GLOBAL) messages.send(sender, "chat.no-recipients");
+        if (otherRecipients == 0 && channel != ChatChannel.GLOBAL && !network.bridges(channel)) {
+            messages.send(sender, "chat.no-recipients");
+        }
+    }
+
+    private void deliverNetwork(NetworkEnvelope envelope, Collection<? extends Player> recipients) {
+        Component content = Component.text(envelope.content());
+        String key = "network.chat-format."
+                + envelope.channel().name().toLowerCase(java.util.Locale.ROOT);
+        for (Player recipient : recipients) recipient.sendMessage(messages.component(recipient, key,
+                Placeholder.unparsed("server", envelope.sourceDisplayName()),
+                Placeholder.unparsed("player", envelope.playerName()),
+                Placeholder.component("message", content)));
+        Bukkit.getConsoleSender().sendMessage(messages.component("en_US", key,
+                Placeholder.unparsed("server", envelope.sourceDisplayName()),
+                Placeholder.unparsed("player", envelope.playerName()),
+                Placeholder.component("message", content)));
     }
 
     private record JoinState(ChatChannel channel, int unreadMail) {

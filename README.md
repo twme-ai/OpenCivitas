@@ -61,6 +61,9 @@ The first playable foundation includes:
 - business-owned private stock exchanges with issuer applications, named share
   registers, price-time limit orders, cash/share escrow, configurable fees,
   portfolios, trade history, regulatory halts, and issuer-funded dividends
+- optional Redis-backed multi-node presence with stable UUID/name identity,
+  node leases, `/network` diagnostics, and replay-filtered global and department
+  chat bridging that leaves proximity chat local
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
@@ -72,21 +75,38 @@ The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
 ```
 
 Copy `build/libs/opencivitas-0.1.0-SNAPSHOT.jar` to a Paper 1.21.11 server's
-`plugins` directory. The SQLite JDBC driver is resolved by Paper from the
-`libraries` declaration in `plugin.yml`.
+`plugins` directory. The SQLite JDBC driver and Jedis transport client are
+resolved by Paper from the `libraries` declaration in `plugin.yml`.
 
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml` and `stocks.yml`. Language files are generated at
-`plugins/OpenCivitas/lang/`. MiniMessage tags are supported in all catalog
-strings.
+files including `vehicles.yml`, `stocks.yml`, and `network.yml`. Language files
+are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are supported in
+all catalog strings.
+
+## Network deployment
+
+Networking is disabled by default. To bridge live presence and configured chat
+channels, set `enabled: true` in `network.yml`, give every concurrent Paper node
+a unique node id, and expose a `redis://` or `rediss://` URI through the
+environment variable named by `redis.uri-environment` (default
+`OPENCIVITAS_REDIS_URL`). Credentials are never stored in configuration or
+written to logs.
+
+Every server sharing a Redis namespace is part of the same trust boundary.
+Network chat is deliberately transient and is not queued while a node is
+disconnected. SQLite civic records, balances, inventories, mail, and other
+persistent state are not synchronized by this transport. `/network status`,
+`/network servers`, and `/network who <player|uuid>` expose its live state.
 
 ## Design rules
 
 - All currency is stored as integer cents; floating-point money is never used.
 - Database operations never run on the server tick thread after startup.
 - Persistent state changes are transactional and auditable.
+- Cross-server chat carries no history and presence keys expire after missed
+  heartbeats; transport failure never disables standalone civic behavior.
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
   so it is not justified for the current vehicle renderer or control path.

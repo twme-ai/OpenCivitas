@@ -326,6 +326,39 @@ behavioral reference, not a source of copyable implementation or content.
   OpenCivitas uses an original integer-cent SQLite matching engine tied to its
   own business and account ledgers; no GPL source or UI assets were copied.
 
+## Network references
+
+- Public DemocracyCraft wiki searches for network, hub, realm, proxy, and
+  cross-server behavior did not expose a player-facing command or durable
+  messaging contract. The only server-related result was internal control-panel
+  administration. OpenCivitas therefore treats this domain as optional operator
+  infrastructure and does not invent proprietary topology, server names, or
+  routing behavior.
+- [Redis Pub/Sub](https://redis.io/docs/latest/develop/pubsub/) documents ordered,
+  at-most-once live delivery: a message missed during a disconnect is not
+  replayed. That matches chat's privacy boundary, so OpenCivitas does not persist
+  or queue network chat. Its message UUID/time filter additionally rejects
+  duplicate, stale, and implausibly future envelopes.
+- Redis [key expiry](https://redis.io/docs/latest/commands/expire/) provides the
+  failure detector for node and player presence. Heartbeats refresh bounded TTLs;
+  Lua compare-and-delete operations ensure shutdown cannot remove a newer process
+  or another node's identity lease.
+- [Jedis 7.5.3](https://github.com/redis/jedis/releases/tag/v7.5.3) was selected as
+  the current stable, MIT-licensed Java client. OpenCivitas uses its pooled
+  command client plus a dedicated subscriber connection and keeps the secret URI
+  in an operator-selected environment variable rather than YAML or logs.
+- [HuskSync's Redis manager](https://github.com/WiIIiam278/HuskSync/blob/62d8b7a8173c48b94b9e1b33635498ea1c143614/common/src/main/java/net/william278/husksync/redis/RedisManager.java)
+  was inspected as a current Apache-2.0 Minecraft reference for a separate
+  subscriber connection, reconnect handling, namespaced channels, and target
+  identity in cross-server messages. OpenCivitas uses an original bounded binary
+  chat envelope and presence lease model; no player snapshot synchronization or
+  source was copied.
+- Paper's [Velocity plugin messaging documentation](https://docs.papermc.io/velocity/dev/plugin-messaging/)
+  shows that proxy plugin messages depend on proxy configuration and player
+  connections. Redis is used for server-to-server presence and chat so an empty
+  backend can still participate. Proxy transfers remain operator infrastructure
+  rather than an assumed network topology.
+
 ## Build automation references
 
 - [actions/checkout](https://github.com/actions/checkout),

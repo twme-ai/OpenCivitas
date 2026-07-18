@@ -7,6 +7,7 @@ authors: [OpenCivitas contributors]
 website: https://github.com/twme-ai/OpenCivitas
 libraries:
   - org.xerial:sqlite-jdbc:3.53.2.0
+  - redis.clients:jedis:7.5.3
 commands:
   balance:
     description: View an account balance.
@@ -267,6 +268,10 @@ commands:
     description: Use private exchanges, limit orders, portfolios, shareholder registers, and dividends.
     usage: /stock <listings|quote|portfolio|orders|buy|sell|cancel|trades|holders>
     aliases: [stocks, exchange, market]
+  network:
+    description: Inspect this OpenCivitas node and live network presence.
+    usage: /network [status|servers|who <player>]
+    aliases: [net]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -322,3 +327,6 @@ permissions:
   opencivitas.navigation.configure:
     description: Create and remove civic warp destinations.
     default: op
+  opencivitas.network.inspect:
+    description: Inspect UUID-based player presence across configured OpenCivitas nodes.
+    default: true

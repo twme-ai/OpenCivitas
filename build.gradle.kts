@@ -12,11 +12,13 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("redis.clients:jedis:7.5.3")
 
     testCompileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.2")
     testImplementation("org.xerial:sqlite-jdbc:3.53.2.0")
+    testImplementation("redis.clients:jedis:7.5.3")
 }
 
 java {

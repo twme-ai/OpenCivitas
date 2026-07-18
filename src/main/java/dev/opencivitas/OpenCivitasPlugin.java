@@ -21,6 +21,7 @@ import dev.opencivitas.command.NavigationCommand;
 import dev.opencivitas.command.FamilyCommand;
 import dev.opencivitas.command.VehicleCommand;
 import dev.opencivitas.command.StockCommand;
+import dev.opencivitas.command.NetworkCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -58,6 +59,8 @@ import dev.opencivitas.vehicle.VehicleRepository;
 import dev.opencivitas.vehicle.VehicleStorageService;
 import dev.opencivitas.stock.StockPolicy;
 import dev.opencivitas.stock.StockRepository;
+import dev.opencivitas.network.NetworkPolicy;
+import dev.opencivitas.network.NetworkService;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -86,6 +89,7 @@ public final class OpenCivitasPlugin extends JavaPlugin {
     private Database database;
     private VehicleManager vehicleManager;
     private VehicleStorageService vehicleStorage;
+    private NetworkService networkService;
 
     @Override
     public void onEnable() {
@@ -447,7 +451,17 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             return;
         }
         ChatRepository chatRepository = new ChatRepository(database);
-        ChatRouter chatRouter = new ChatRouter(this, database, chatRepository, chatPolicy, messages);
+        NetworkPolicy networkPolicy;
+        try {
+            networkPolicy = new NetworkPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load network.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        networkService = new NetworkService(this, networkPolicy);
+        ChatRouter chatRouter = new ChatRouter(
+                this, database, chatRepository, chatPolicy, networkService, messages);
         ChatCommand chatCommands = new ChatCommand(
                 this, database, citizens, chatRepository, chatPolicy, chatRouter, messages);
         for (String name : List.of(
@@ -458,6 +472,13 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setTabCompleter(chatCommands);
         }
         getServer().getPluginManager().registerEvents(chatRouter, this);
+        getServer().getPluginManager().registerEvents(networkService, this);
+        networkService.setChatConsumer(chatRouter::receiveNetworkChat);
+        NetworkCommand networkCommand = new NetworkCommand(this, networkService, messages);
+        PluginCommand network = Objects.requireNonNull(getCommand("network"), "Missing command network");
+        network.setExecutor(networkCommand);
+        network.setTabCompleter(networkCommand);
+        networkService.start();
 
         NavigationPolicy navigationPolicy;
         try {
@@ -594,6 +615,9 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (networkService != null) {
+            networkService.close();
+        }
         if (vehicleStorage != null) {
             vehicleStorage.stop();
         }
