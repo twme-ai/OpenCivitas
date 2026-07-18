@@ -822,3 +822,41 @@ CREATE TABLE IF NOT EXISTS pharmacy_counters (
     registered_at INTEGER NOT NULL,
     PRIMARY KEY (world_name, x, y, z)
 );
+
+CREATE TABLE IF NOT EXISTS chat_preferences (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    active_channel TEXT NOT NULL CHECK (active_channel IN (
+        'GLOBAL', 'LOCAL', 'MURMUR', 'DOJ', 'SENATE', 'JUDICIARY')),
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS chat_contacts (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    reply_target_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    updated_at INTEGER NOT NULL,
+    CHECK (player_uuid != reply_target_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS mail_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    recipient_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 500),
+    sent_at INTEGER NOT NULL,
+    read_at INTEGER,
+    deleted_at INTEGER,
+    CHECK (sender_uuid != recipient_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mail_recipient_sent
+    ON mail_messages(recipient_uuid, deleted_at, sent_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS advertisements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    advertiser_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 500),
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_advertisements_advertiser_created
+    ON advertisements(advertiser_uuid, created_at DESC, id DESC);

@@ -49,6 +49,8 @@ The first playable foundation includes:
 - persistent injuries and diseases, symptom-only patient views, doctor diagnosis,
   contagious spread, temperature illness, crafted treatments, hospital call
   monitors, pharmacy counters, Medicare benefits, and Department of Health chat
+- persisted global, local, murmur, and government channels, private messaging
+  and replies, offline mail, help questions, and qualification-gated advertising
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

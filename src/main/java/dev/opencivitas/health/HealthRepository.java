@@ -107,10 +107,11 @@ public final class HealthRepository {
                 List<PatientCondition> conditions = new ArrayList<>();
                 while (results.next()) {
                     long resolved = results.getLong("resolved_at");
+                    boolean active = results.wasNull();
                     conditions.add(new PatientCondition(results.getLong("id"), patientId,
                             results.getString("condition_id"), results.getString("source"),
                             Instant.ofEpochMilli(results.getLong("acquired_at")),
-                            results.wasNull() ? null : Instant.ofEpochMilli(resolved)));
+                            active ? null : Instant.ofEpochMilli(resolved)));
                 }
                 return List.copyOf(conditions);
             }

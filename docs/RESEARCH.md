@@ -233,6 +233,22 @@ behavioral reference, not a source of copyable implementation or content.
   illness state. OpenCivitas uses an original SQLite model with one active row
   per condition, immutable treatment history, exclusive medical-call claims,
   and exactly-once Medicare ledger settlement; no reference source was copied.
+- The [24 May 2026 Useful Commands archive](https://web.archive.org/web/20260524145749/https://wiki.democracycraft.net/Useful_commands)
+  was rechecked for `/g`, `/l`, `/murmur`, `/vc`, `/msg`, `/tell`, `/r`,
+  offline `/mail send`, `/ask`, entrepreneur-qualified `/ad` with a ten-minute
+  cooldown, emoji discovery, and government channels including `/doj`, `/sen`,
+  and `/jud`. The public page does not disclose local or murmur radii, so
+  OpenCivitas uses conservative original defaults of 100 and 8 blocks in
+  `chat.yml`; operators can change both without code changes.
+- [Carbon](https://github.com/Hexaoxide/Carbon) and
+  [VentureChat](https://github.com/Aust1n46/VentureChat) are GPL-3.0 channel
+  references. Carbon's current public channel, whisper, and reply models were
+  inspected for per-channel commands, read/speak authorization, configurable
+  radii, empty-radius feedback, cooldowns, recipient-specific rendering,
+  reciprocal reply targets, and online-target validation. OpenCivitas uses an
+  original Paper event router and SQLite repository; no GPL source was copied.
+  Direct-message content is deliberately not stored, while offline mail is
+  persisted with recipient ownership, read state, and soft deletion.
 
 ## Build automation references
 

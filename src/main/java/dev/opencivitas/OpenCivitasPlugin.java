@@ -16,6 +16,7 @@ import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.command.HealthCommand;
+import dev.opencivitas.command.ChatCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -33,6 +34,9 @@ import dev.opencivitas.health.HealthItems;
 import dev.opencivitas.health.HealthListener;
 import dev.opencivitas.health.HealthRegistry;
 import dev.opencivitas.health.HealthRepository;
+import dev.opencivitas.chat.ChatPolicy;
+import dev.opencivitas.chat.ChatRepository;
+import dev.opencivitas.chat.ChatRouter;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -410,6 +414,27 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                     if (isEnabled()) getLogger().log(Level.WARNING, "Could not release stale medical calls", error);
                     return 0;
                 }), 1_200L, 1_200L);
+
+        ChatPolicy chatPolicy;
+        try {
+            chatPolicy = new ChatPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load chat.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ChatRepository chatRepository = new ChatRepository(database);
+        ChatRouter chatRouter = new ChatRouter(this, database, chatRepository, chatPolicy, messages);
+        ChatCommand chatCommands = new ChatCommand(
+                this, database, citizens, chatRepository, chatPolicy, chatRouter, messages);
+        for (String name : List.of(
+                "g", "l", "murmur", "doj", "sen", "jud",
+                "msg", "r", "mail", "ad", "ask")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(chatCommands);
+            command.setTabCompleter(chatCommands);
+        }
+        getServer().getPluginManager().registerEvents(chatRouter, this);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

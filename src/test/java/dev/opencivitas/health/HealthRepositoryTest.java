@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HealthRepositoryTest {
@@ -76,6 +77,7 @@ class HealthRepositoryTest {
         assertEquals(HealthResult.SUCCESS, health.expose(PATIENT, COLD, "cold", NOW).result());
         assertEquals(HealthResult.ALREADY_AFFECTED,
                 health.expose(PATIENT, COLD, "contagion", NOW + 1).result());
+        assertNull(health.conditionHistory(PATIENT, 10).getFirst().resolvedAt());
 
         assertEquals(HealthResult.NOT_DOCTOR,
                 health.treat(PATIENT, PATIENT, SYRUP, List.of(COLD.id()), NOW + 2).result());

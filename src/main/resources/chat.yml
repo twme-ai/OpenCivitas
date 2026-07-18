@@ -1,0 +1,16 @@
+local-radius: 100
+murmur-radius: 8
+advertisement-cooldown-seconds: 600
+maximum-message-length: 500
+mail-page-size: 10
+
+department-channels:
+  doj:
+    jobs: [prosecutor, police-officer, detective, investigator]
+    offices: []
+  senate:
+    jobs: []
+    offices: [senator]
+  judiciary:
+    jobs: [magistrate, judge, justice, chief-justice]
+    offices: []

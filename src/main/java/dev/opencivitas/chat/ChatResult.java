@@ -1,0 +1,13 @@
+package dev.opencivitas.chat;
+
+public enum ChatResult {
+    SUCCESS,
+    CITIZEN_NOT_FOUND,
+    TARGET_OFFLINE,
+    CANNOT_MESSAGE_SELF,
+    NOT_AUTHORIZED,
+    MISSING_QUALIFICATION,
+    COOLDOWN,
+    MAIL_NOT_FOUND,
+    INVALID_CONTENT
+}

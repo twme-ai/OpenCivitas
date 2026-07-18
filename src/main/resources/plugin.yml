@@ -139,6 +139,42 @@ commands:
   doh:
     description: Toggle or send a Department of Health channel message.
     usage: /doh [message]
+  g:
+    description: Switch to global chat.
+    usage: /g
+    aliases: [global]
+  l:
+    description: Switch to local chat.
+    usage: /l
+    aliases: [local]
+  murmur:
+    description: Switch to close-range murmur chat.
+    usage: /murmur
+  doj:
+    description: Switch to the Department of Justice channel.
+    usage: /doj
+  sen:
+    description: Switch to the Senate channel.
+    usage: /sen
+  jud:
+    description: Switch to the judiciary channel.
+    usage: /jud
+  msg:
+    description: Send a private message to an online player.
+    usage: /msg <player> <message>
+    aliases: [tell]
+  r:
+    description: Reply to your most recent private-message contact.
+    usage: /r <message>
+  mail:
+    description: Send and read persistent offline mail.
+    usage: /mail <send|inbox|read|delete>
+  ad:
+    description: Broadcast a qualification-gated advertisement.
+    usage: /ad <message>
+  ask:
+    description: Ask the server help channel a question.
+    usage: /ask <message>
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
