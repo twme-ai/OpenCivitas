@@ -263,6 +263,10 @@ commands:
   recipes:
     description: Browse mechanic parts, vehicle, fuel, and repair recipes.
     usage: /recipes
+  stock:
+    description: Use private exchanges, limit orders, portfolios, shareholder registers, and dividends.
+    usage: /stock <listings|quote|portfolio|orders|buy|sell|cancel|trades|holders>
+    aliases: [stocks, exchange, market]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -287,6 +291,9 @@ permissions:
     default: op
   opencivitas.vehicles.manage:
     description: Give vehicle items, fuel, and repair kits.
+    default: op
+  opencivitas.stocks.manage:
+    description: Halt or resume any stock listing for regulatory administration.
     default: op
   opencivitas.business.list.others:
     description: View another citizen's businesses.

@@ -20,6 +20,7 @@ import dev.opencivitas.command.ChatCommand;
 import dev.opencivitas.command.NavigationCommand;
 import dev.opencivitas.command.FamilyCommand;
 import dev.opencivitas.command.VehicleCommand;
+import dev.opencivitas.command.StockCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -55,6 +56,8 @@ import dev.opencivitas.vehicle.VehicleManager;
 import dev.opencivitas.vehicle.VehicleRegistry;
 import dev.opencivitas.vehicle.VehicleRepository;
 import dev.opencivitas.vehicle.VehicleStorageService;
+import dev.opencivitas.stock.StockPolicy;
+import dev.opencivitas.stock.StockRepository;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -555,6 +558,21 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this,
                 () -> getServer().getOnlinePlayers().forEach(
                         player -> vehicleAccess.refresh(player.getUniqueId())), 600L, 600L);
+
+        StockPolicy stockPolicy;
+        try {
+            stockPolicy = new StockPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load stocks.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        StockCommand stockCommands = new StockCommand(
+                this, database, citizens, new StockRepository(database),
+                stockPolicy, messages, currencySymbol);
+        PluginCommand stockCommand = Objects.requireNonNull(getCommand("stock"), "Missing command stock");
+        stockCommand.setExecutor(stockCommands);
+        stockCommand.setTabCompleter(stockCommands);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

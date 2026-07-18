@@ -994,3 +994,109 @@ CREATE TABLE IF NOT EXISTS vehicle_storage (
     contents BLOB NOT NULL,
     updated_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS stock_exchanges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    display_name TEXT NOT NULL,
+    operator_business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+    fee_basis_points INTEGER NOT NULL CHECK (fee_basis_points BETWEEN 0 AND 5000),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'SUSPENDED', 'CLOSED')),
+    created_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_listings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exchange_id INTEGER NOT NULL REFERENCES stock_exchanges(id) ON DELETE RESTRICT,
+    issuer_business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+    symbol TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    authorized_shares INTEGER NOT NULL CHECK (authorized_shares > 0),
+    treasury_shares INTEGER NOT NULL CHECK (treasury_shares >= 0 AND treasury_shares <= authorized_shares),
+    status TEXT NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'ACTIVE', 'HALTED', 'REJECTED', 'DELISTED')),
+    initial_price_cents INTEGER NOT NULL CHECK (initial_price_cents > 0),
+    last_price_cents INTEGER NOT NULL CHECK (last_price_cents > 0),
+    last_trade_at INTEGER,
+    applied_by TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    applied_at INTEGER NOT NULL,
+    approved_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    approved_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_listings_exchange_status
+    ON stock_listings(exchange_id, status, symbol);
+
+CREATE TABLE IF NOT EXISTS stock_holdings (
+    listing_id INTEGER NOT NULL REFERENCES stock_listings(id) ON DELETE RESTRICT,
+    holder_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (listing_id, holder_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_holdings_holder
+    ON stock_holdings(holder_uuid, listing_id);
+
+CREATE TABLE IF NOT EXISTS stock_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listing_id INTEGER NOT NULL REFERENCES stock_listings(id) ON DELETE RESTRICT,
+    owner_uuid TEXT REFERENCES players(uuid) ON DELETE RESTRICT,
+    issuer_sale INTEGER NOT NULL DEFAULT 0 CHECK (issuer_sale IN (0, 1)),
+    side TEXT NOT NULL CHECK (side IN ('BUY', 'SELL')),
+    limit_price_cents INTEGER NOT NULL CHECK (limit_price_cents > 0),
+    original_quantity INTEGER NOT NULL CHECK (original_quantity > 0),
+    remaining_quantity INTEGER NOT NULL CHECK (
+        remaining_quantity >= 0 AND remaining_quantity <= original_quantity),
+    escrow_cents INTEGER NOT NULL DEFAULT 0 CHECK (escrow_cents >= 0),
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'PARTIAL', 'FILLED', 'CANCELLED')),
+    created_at INTEGER NOT NULL,
+    closed_at INTEGER,
+    CHECK ((issuer_sale = 1 AND owner_uuid IS NULL AND side = 'SELL')
+        OR (issuer_sale = 0 AND owner_uuid IS NOT NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_orders_book
+    ON stock_orders(listing_id, side, status, limit_price_cents, created_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_stock_orders_owner
+    ON stock_orders(owner_uuid, status, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS stock_trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listing_id INTEGER NOT NULL REFERENCES stock_listings(id) ON DELETE RESTRICT,
+    buy_order_id INTEGER NOT NULL REFERENCES stock_orders(id) ON DELETE RESTRICT,
+    sell_order_id INTEGER NOT NULL REFERENCES stock_orders(id) ON DELETE RESTRICT,
+    buyer_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    seller_uuid TEXT REFERENCES players(uuid) ON DELETE RESTRICT,
+    seller_business_id INTEGER REFERENCES businesses(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_cents INTEGER NOT NULL CHECK (price_cents > 0),
+    buyer_fee_cents INTEGER NOT NULL CHECK (buyer_fee_cents >= 0),
+    seller_fee_cents INTEGER NOT NULL CHECK (seller_fee_cents >= 0),
+    executed_at INTEGER NOT NULL,
+    CHECK ((seller_uuid IS NULL) != (seller_business_id IS NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_trades_listing_executed
+    ON stock_trades(listing_id, executed_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS stock_dividends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listing_id INTEGER NOT NULL REFERENCES stock_listings(id) ON DELETE RESTRICT,
+    issuer_business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+    declared_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    per_share_cents INTEGER NOT NULL CHECK (per_share_cents > 0),
+    paid_shares INTEGER NOT NULL CHECK (paid_shares > 0),
+    total_cents INTEGER NOT NULL CHECK (total_cents > 0),
+    recipient_count INTEGER NOT NULL CHECK (recipient_count > 0),
+    paid_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_dividend_payments (
+    dividend_id INTEGER NOT NULL REFERENCES stock_dividends(id) ON DELETE RESTRICT,
+    holder_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    shares INTEGER NOT NULL CHECK (shares > 0),
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+    PRIMARY KEY (dividend_id, holder_uuid)
+);

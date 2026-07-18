@@ -296,6 +296,35 @@ behavioral reference, not a source of copyable implementation or content.
   exposes forward, backward, left, right, jump, sneak, and sprint state on the
   server thread. It replaces the older steer-packet interception used by
   multi-version vehicle projects for the fixed Paper 1.21.11 target.
+- The current [DemocracyCraft Stock Exchange page](https://wiki.democracycraft.net/Stock_Exchange)
+  revision 9492 was inspected for private exchange ownership, stocks and ETFs,
+  shares as registered company ownership, primary issuance used to finance
+  company expansion, investor loss risk, exchange-specific buy/sell procedures,
+  transfer fees, activity limits, and the absence of any guaranteed repurchase.
+  OpenCivitas implements the disclosed common behavior in-game while leaving
+  each operator free to set its fee and decide which issuer applications to
+  approve.
+- The public record in
+  [Admin23 v. The Exchange](https://www.democracycraft.net/threads/admin23-v-the-exchange-2022-scr-17.14483/)
+  was cross-checked for customer-defined sale prices, exchange cash accounts,
+  commissions, direct share transfers, supply-and-demand price formation,
+  periodic market-price duties, and disclosure of holdings over 20 percent.
+  Current 2026 forum legislation was also checked for Department of Commerce
+  trading halts and the requirement that every share be registered to a named
+  holder rather than bearer. The public shareholder register exposes all
+  holdings and percentages, including beneficial shares escrowed in sell
+  orders, so large positions are directly auditable.
+- [StockMarketPlugin](https://github.com/Antidino72/StockMarketPlugin) is a
+  current MIT-licensed Minecraft reference for quote caching, buy/sell menus,
+  portfolios, and bilingual market presentation. Its synthetic external-price
+  and separate Vault/YAML writes do not meet OpenCivitas's company-share or
+  atomic-conservation requirements, so only its public feature boundaries were
+  used.
+- [stock-market](https://github.com/maldahleh/stock-market) is a current
+  GPL-3.0 Minecraft reference for broker fees, persisted transactions,
+  portfolios, price history, purchase/sale preflights, and test coverage.
+  OpenCivitas uses an original integer-cent SQLite matching engine tied to its
+  own business and account ledgers; no GPL source or UI assets were copied.
 
 ## Build automation references
 

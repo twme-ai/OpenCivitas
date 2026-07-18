@@ -1,0 +1,5 @@
+default-fee-basis-points: 100
+maximum-fee-basis-points: 1000
+maximum-open-orders: 20
+maximum-order-quantity: 1000000
+maximum-listing-shares: 1000000000

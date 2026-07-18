@@ -272,6 +272,10 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
                 case POLICE_FINE -> messages.component(sender, "transactions.police-fine");
                 case MEDICARE_BENEFIT -> messages.component(sender, "transactions.medicare-benefit");
                 case PHARMACY_COPAY -> messages.component(sender, "transactions.pharmacy-copay");
+                case STOCK_ESCROW -> messages.component(sender, "transactions.stock-escrow");
+                case STOCK_REFUND -> messages.component(sender, "transactions.stock-refund");
+                case STOCK_SALE -> messages.component(sender, "transactions.stock-sale");
+                case STOCK_DIVIDEND -> messages.component(sender, "transactions.stock-dividend");
             };
             messages.send(sender, "transactions.entry",
                     Placeholder.unparsed("date", DATE.format(entry.createdAt())),

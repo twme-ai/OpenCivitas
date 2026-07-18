@@ -58,6 +58,9 @@ The first playable foundation includes:
 - config-driven road, water, and air vehicles with native Paper controls,
   permanent driver/pilot qualifications, owner locks and transfers, persistent
   fuel, damage, repair, trunk storage, mechanic recipes, and chunk recovery
+- business-owned private stock exchanges with issuer applications, named share
+  registers, price-time limit orders, cash/share escrow, configurable fees,
+  portfolios, trade history, regulatory halts, and issuer-funded dividends
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
@@ -75,7 +78,7 @@ Copy `build/libs/opencivitas-0.1.0-SNAPSHOT.jar` to a Paper 1.21.11 server's
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml`. Language files are generated at
+files including `vehicles.yml` and `stocks.yml`. Language files are generated at
 `plugins/OpenCivitas/lang/`. MiniMessage tags are supported in all catalog
 strings.
 
