@@ -83,6 +83,31 @@ behavioral reference, not a source of copyable implementation or content.
   model was used to compare case lifecycle expectations; OpenCivitas uses an
   original transactional schema with explicit jurisdiction, immutable docket
   entries, linked appeals, and concurrence-based Supreme Court decisions.
+- A [28 May 2026 archive of the DemocracyCraft Police Officer page](https://web.archive.org/web/20260528032707/https://wiki.democracycraft.net/Police_officer)
+  documents arresting from in-game reports, resolving open charges, responding
+  to department tickets and alarms, and the police hierarchy. The
+  [24 May 2026 Useful Commands archive](https://web.archive.org/web/20260524145749/https://wiki.democracycraft.net/Useful_commands)
+  documents `/911` after a player is murdered.
+- The public record in
+  [RaiTheGuy07 v. Department of Homeland Security](https://www.democracycraft.net/threads/raitheguy07-v-department-of-homeland-security-2025-fcr-21.24901/)
+  was cross-checked for `/police consent`, suppression of forensic clues for
+  consented killings, wanted status, arrests, jail, and record disputes. The
+  current Constitution separately protects self-defense-related due process,
+  confrontation of evidence, freedom from unreasonable search or seizure, and
+  notice of the reason for detention or arrest.
+- [BodyCam](https://github.com/DEV-AdriBOT/BodyCam): MIT-licensed Paper
+  1.21.11 evidence capture, immutable identifier, bounded asynchronous writer,
+  audit index, and evidence export reference. OpenCivitas currently records
+  structured combat snapshots and PDC-tagged physical clues rather than video;
+  no packet interception is required.
+- [Jail](https://github.com/graywolf336/Jail): GPL-2.0 UUID custody, timed
+  release, restart persistence, movement/escape protection, reason display, and
+  record-keeping reference. OpenCivitas uses original SQLite transactions and a
+  main-thread custody snapshot; no GPL source was copied.
+- [PolicePlus](https://github.com/mrpaster12/PolicePlus) was inspected only as
+  a public behavioral comparison for wanted status, proximity arrest,
+  PDC-tagged police items, configurable jail time, and containment. Its source
+  is proprietary, so no implementation code was used.
 - [single-transferable-vote](https://github.com/buzzlawless/single-transferable-vote):
   MIT-licensed Droop quota, candidate elimination, surplus transfer, and result
   test reference. OpenCivitas implements its own immutable ballots and

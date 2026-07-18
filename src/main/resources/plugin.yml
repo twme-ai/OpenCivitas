@@ -118,6 +118,15 @@ commands:
   warrants:
     description: View a citizen's active court warrants.
     usage: /warrants [player]
+  police:
+    description: Manage combat consent, police reports, evidence, charges, arrests, and custody.
+    usage: /police <consent|reports|report|claim|dismiss|charge|charge-report|void|arrest|evidence|offenses|wanted|custody|setjail|setrelease>
+  911:
+    description: Report your latest unlawful PvP death to police.
+    usage: /911
+  wanted:
+    description: View a citizen's active police charges.
+    usage: /wanted [player]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -157,4 +166,7 @@ permissions:
     default: op
   opencivitas.elections.manage:
     description: Create, close, and cancel elections and referendums.
+    default: op
+  opencivitas.police.configure:
+    description: Configure police jail and release locations.
     default: op

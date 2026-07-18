@@ -1,0 +1,22 @@
+self-defense-window-seconds: 300
+report-window-seconds: 300
+arrest-distance: 5
+warrant-hold-minutes: 10
+maximum-combined-jail-minutes: 120
+
+offenses:
+  assault:
+    fine: '250.00'
+    jail-minutes: 2
+  attempted-murder:
+    fine: '750.00'
+    jail-minutes: 5
+  murder:
+    fine: '500.00'
+    jail-minutes: 10
+  robbery:
+    fine: '1000.00'
+    jail-minutes: 5
+  trespass:
+    fine: '200.00'
+    jail-minutes: 2

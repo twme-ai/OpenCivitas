@@ -37,3 +37,8 @@ auction:
 legislature:
   presidential-action-days: 14
   constitutional-referendum-hours: 48
+
+law-enforcement:
+  jail-radius: 8
+  jail: {}
+  release: {}

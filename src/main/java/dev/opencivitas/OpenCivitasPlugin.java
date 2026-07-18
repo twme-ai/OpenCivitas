@@ -13,6 +13,7 @@ import dev.opencivitas.command.ElectionCommand;
 import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.command.LegislatureCommand;
 import dev.opencivitas.command.PropertyCommand;
+import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
@@ -31,6 +32,10 @@ import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
+import dev.opencivitas.police.CustodyService;
+import dev.opencivitas.police.PoliceListener;
+import dev.opencivitas.police.PolicePolicy;
+import dev.opencivitas.police.PoliceRepository;
 import dev.opencivitas.shop.ShopListener;
 import dev.opencivitas.shop.ShopRepository;
 import dev.opencivitas.property.PropertyListener;
@@ -326,11 +331,40 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
         CourtCommand courtCommands = new CourtCommand(
                 this, database, citizens, new CourtRepository(database), messages, currencySymbol);
-        for (String name : List.of("case", "records", "warrants")) {
+        for (String name : List.of("case", "warrants")) {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(courtCommands);
             command.setTabCompleter(courtCommands);
         }
+
+        PolicePolicy policePolicy;
+        try {
+            policePolicy = new PolicePolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load law-enforcement.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        PoliceRepository policeRepository = new PoliceRepository(
+                database, policePolicy.selfDefenseWindow(), policePolicy.reportWindow());
+        CustodyService custody = new CustodyService(this, database, policeRepository, messages);
+        try {
+            custody.start(policeRepository.activeDetentions());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore active police detentions", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        PoliceCommand policeCommands = new PoliceCommand(
+                this, database, citizens, policeRepository, policePolicy,
+                custody, messages, currencySymbol);
+        for (String name : List.of("police", "911", "wanted", "records")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(policeCommands);
+            command.setTabCompleter(policeCommands);
+        }
+        getServer().getPluginManager().registerEvents(
+                new PoliceListener(this, database, policeRepository, custody, messages), this);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

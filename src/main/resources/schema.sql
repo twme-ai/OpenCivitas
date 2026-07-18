@@ -357,6 +357,125 @@ CREATE TABLE IF NOT EXISTS criminal_records (
 CREATE INDEX IF NOT EXISTS idx_criminal_records_defendant
     ON criminal_records(defendant_uuid, convicted_at DESC);
 
+CREATE TABLE IF NOT EXISTS pvp_preferences (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    consent_enabled INTEGER NOT NULL DEFAULT 0 CHECK (consent_enabled IN (0, 1)),
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS combat_incidents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    attacker_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    victim_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    world_name TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    damage_millihearts INTEGER NOT NULL CHECK (damage_millihearts >= 0),
+    damage_cause TEXT NOT NULL,
+    weapon_data BLOB,
+    legal_basis TEXT NOT NULL CHECK (legal_basis IN ('UNLAWFUL', 'CONSENT', 'SELF_DEFENSE')),
+    attacked_at INTEGER NOT NULL,
+    fatal INTEGER NOT NULL DEFAULT 0 CHECK (fatal IN (0, 1)),
+    death_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_combat_incidents_pair_time
+    ON combat_incidents(attacker_uuid, victim_uuid, attacked_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_combat_incidents_victim_death
+    ON combat_incidents(victim_uuid, fatal, death_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS forensic_clues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id INTEGER NOT NULL UNIQUE REFERENCES combat_incidents(id) ON DELETE RESTRICT,
+    status TEXT NOT NULL DEFAULT 'AVAILABLE' CHECK (status IN ('AVAILABLE', 'COLLECTED', 'VOIDED')),
+    collector_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL,
+    collected_at INTEGER,
+    CHECK ((status = 'COLLECTED' AND collector_uuid IS NOT NULL AND collected_at IS NOT NULL)
+        OR status != 'COLLECTED')
+);
+
+CREATE TABLE IF NOT EXISTS police_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id INTEGER NOT NULL UNIQUE REFERENCES combat_incidents(id) ON DELETE RESTRICT,
+    reporter_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    suspect_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLAIMED', 'CHARGED', 'DISMISSED')),
+    assigned_officer_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    filed_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    resolution TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_police_reports_status_filed
+    ON police_reports(status, filed_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS police_report_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL REFERENCES police_reports(id) ON DELETE CASCADE,
+    actor_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    event_type TEXT NOT NULL,
+    event_text TEXT,
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_police_report_events_report_created
+    ON police_report_events(report_id, created_at, id);
+
+CREATE TABLE IF NOT EXISTS police_charges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER UNIQUE REFERENCES police_reports(id) ON DELETE SET NULL,
+    suspect_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    officer_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    offense_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    fine_cents INTEGER NOT NULL CHECK (fine_cents >= 0),
+    jail_minutes INTEGER NOT NULL CHECK (jail_minutes >= 0),
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'SERVED', 'VOIDED')),
+    charged_at INTEGER NOT NULL,
+    resolved_at INTEGER,
+    resolution TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_police_charges_suspect_status
+    ON police_charges(suspect_uuid, status, charged_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS police_arrests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    suspect_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    officer_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    reason TEXT NOT NULL,
+    fine_assessed_cents INTEGER NOT NULL CHECK (fine_assessed_cents >= 0),
+    fine_collected_cents INTEGER NOT NULL CHECK (fine_collected_cents >= 0),
+    jail_minutes INTEGER NOT NULL CHECK (jail_minutes >= 0),
+    arrested_at INTEGER NOT NULL,
+    release_at INTEGER NOT NULL,
+    released_at INTEGER,
+    status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'RELEASED', 'OVERTURNED')),
+    CHECK (fine_collected_cents <= fine_assessed_cents),
+    CHECK (release_at >= arrested_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_police_arrests_status_release
+    ON police_arrests(status, release_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_police_arrests_suspect
+    ON police_arrests(suspect_uuid, arrested_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS police_arrest_charges (
+    arrest_id INTEGER NOT NULL REFERENCES police_arrests(id) ON DELETE CASCADE,
+    charge_id INTEGER NOT NULL UNIQUE REFERENCES police_charges(id) ON DELETE RESTRICT,
+    PRIMARY KEY (arrest_id, charge_id)
+);
+
+CREATE TABLE IF NOT EXISTS police_arrest_warrants (
+    arrest_id INTEGER NOT NULL REFERENCES police_arrests(id) ON DELETE CASCADE,
+    warrant_id INTEGER NOT NULL UNIQUE REFERENCES court_warrants(id) ON DELETE RESTRICT,
+    PRIMARY KEY (arrest_id, warrant_id)
+);
+
 CREATE TABLE IF NOT EXISTS exam_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,

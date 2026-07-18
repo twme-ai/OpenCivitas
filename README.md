@@ -44,6 +44,8 @@ The first playable foundation includes:
   veto, veto overrides, constitutional referendums, and an enacted law codex
 - persistent three-level courts with civil, criminal, constitutional, and
   institutional cases, evidence, orders, warrants, verdicts, records, and appeals
+- consent-aware PvP incident tracking, forensic clues, `/911` reports, police
+  charges, wanted status, court-warrant arrests, fines, and restart-safe custody
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
