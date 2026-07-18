@@ -50,8 +50,15 @@ commands:
     usage: /university [setwarp]
   business:
     description: Create and manage player businesses.
-    usage: /business <create|info|list|deposit|withdraw|pay|offer|accept|deny|offers|staff|fire|resign|role|wage|payroll|transferproprietorship|transactions|disband>
+    usage: /business <create|info|list|deposit|withdraw|pay|offer|accept|deny|offers|staff|fire|resign|role|wage|payroll|transferproprietorship|transactions|sales|disband>
     aliases: [democracybusiness, db, firm, company]
+  find:
+    description: Find active chest shops selling or buying an item.
+    usage: /find <item>
+  chestshop:
+    description: View chest shop transaction history.
+    usage: /chestshop history [page]
+    aliases: [csn, shop]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.

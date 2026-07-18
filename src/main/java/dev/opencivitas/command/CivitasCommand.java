@@ -222,6 +222,8 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
                         entry.amountCents() < 0
                                 ? "transactions.business-deposit" : "transactions.business-withdrawal");
                 case BUSINESS_PAYMENT -> messages.component(sender, "transactions.business-payment");
+                case SHOP_PURCHASE -> messages.component(sender, "transactions.shop-purchase");
+                case SHOP_SALE -> messages.component(sender, "transactions.shop-sale");
             };
             messages.send(sender, "transactions.entry",
                     Placeholder.unparsed("date", DATE.format(entry.createdAt())),

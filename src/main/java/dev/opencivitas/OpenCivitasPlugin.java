@@ -6,6 +6,7 @@ import dev.opencivitas.command.BusinessCommand;
 import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.JobCommand;
+import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.exam.ExamRegistry;
@@ -15,6 +16,8 @@ import dev.opencivitas.job.JobRegistry;
 import dev.opencivitas.job.JobRepository;
 import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
+import dev.opencivitas.shop.ShopListener;
+import dev.opencivitas.shop.ShopRepository;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -116,11 +119,13 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(examCommands, this);
 
         PluginCommand businessCommand = Objects.requireNonNull(getCommand("business"), "Missing command business");
+        ShopRepository shops = new ShopRepository(database);
         BusinessCommand businessCommands = new BusinessCommand(
                 this,
                 database,
                 citizens,
                 new BusinessRepository(database),
+                shops,
                 messages,
                 currencySymbol,
                 pageSize,
@@ -128,6 +133,16 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         );
         businessCommand.setExecutor(businessCommands);
         businessCommand.setTabCompleter(businessCommands);
+
+        ShopCommand shopCommands = new ShopCommand(
+                this, database, shops, messages, currencySymbol, pageSize);
+        for (String name : List.of("find", "chestshop")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(shopCommands);
+            command.setTabCompleter(shopCommands);
+        }
+        getServer().getPluginManager().registerEvents(
+                new ShopListener(this, database, shops, messages, currencySymbol), this);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);

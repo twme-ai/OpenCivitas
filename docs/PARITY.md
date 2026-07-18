@@ -12,8 +12,8 @@ legally or meaningfully copied from another server.
 | Economy | `$1,200` start, balances, payments, transaction history | implemented |
 | Jobs | two trades, one profession, unlimited government jobs | in progress: persistent membership, qualification gates, limits, appointments |
 | University | exams and qualifications for jobs/licenses | in progress: localized exam engine, attempt ledger, qualification awards, warp |
-| Shops | chest buy/sell, stack modifiers, item search, sales history | planned |
-| Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: accounts, offers, five ranks, wages/payroll, ownership, ledgers; custom roles and shop sales remain |
+| Shops | chest buy/sell, stack modifiers, item search, sales history | in progress: persistent personal/firm shops, sign creation, click/shift-click settlement, search, history, stock and capacity checks |
+| Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: accounts, offers, five ranks, wages/payroll, ownership, ledgers, firm shops and sales history; custom roles remain |
 | Auctions | item listings, bids, settlement | planned |
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | planned |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | planned |

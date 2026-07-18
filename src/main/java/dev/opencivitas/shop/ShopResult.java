@@ -1,0 +1,16 @@
+package dev.opencivitas.shop;
+
+public enum ShopResult {
+    SUCCESS,
+    CITIZEN_NOT_FOUND,
+    BUSINESS_NOT_FOUND,
+    BUSINESS_INACTIVE,
+    NO_PERMISSION,
+    LOCATION_OCCUPIED,
+    SHOP_NOT_FOUND,
+    SHOP_INACTIVE,
+    PRICE_UNAVAILABLE,
+    SELF_TRADE,
+    CUSTOMER_FUNDS,
+    OWNER_FUNDS
+}

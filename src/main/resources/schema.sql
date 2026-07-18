@@ -110,3 +110,54 @@ CREATE TABLE IF NOT EXISTS business_ledger_entries (
 
 CREATE INDEX IF NOT EXISTS idx_business_ledger_created
     ON business_ledger_entries(business_id, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS chest_shops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    world_name TEXT NOT NULL,
+    sign_x INTEGER NOT NULL,
+    sign_y INTEGER NOT NULL,
+    sign_z INTEGER NOT NULL,
+    container_x INTEGER NOT NULL,
+    container_y INTEGER NOT NULL,
+    container_z INTEGER NOT NULL,
+    owner_type TEXT NOT NULL CHECK (owner_type IN ('PLAYER', 'BUSINESS')),
+    owner_uuid TEXT REFERENCES players(uuid),
+    business_id INTEGER REFERENCES businesses(id),
+    item_key TEXT NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    buy_price_cents INTEGER CHECK (buy_price_cents > 0),
+    sell_price_cents INTEGER CHECK (sell_price_cents > 0),
+    active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    deactivated_at INTEGER,
+    CHECK (buy_price_cents IS NOT NULL OR sell_price_cents IS NOT NULL),
+    CHECK ((owner_type = 'PLAYER' AND owner_uuid IS NOT NULL AND business_id IS NULL)
+        OR (owner_type = 'BUSINESS' AND owner_uuid IS NULL AND business_id IS NOT NULL))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chest_shops_active_sign
+    ON chest_shops(world_name, sign_x, sign_y, sign_z)
+    WHERE active = 1;
+
+CREATE INDEX IF NOT EXISTS idx_chest_shops_item
+    ON chest_shops(item_key, active, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_chest_shops_container
+    ON chest_shops(world_name, container_x, container_y, container_z, active);
+
+CREATE TABLE IF NOT EXISTS shop_sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    shop_id INTEGER NOT NULL REFERENCES chest_shops(id),
+    customer_uuid TEXT NOT NULL REFERENCES players(uuid),
+    direction TEXT NOT NULL CHECK (direction IN ('BUY', 'SELL')),
+    item_key TEXT NOT NULL,
+    item_amount INTEGER NOT NULL CHECK (item_amount > 0),
+    total_cents INTEGER NOT NULL CHECK (total_cents > 0),
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_shop_sales_shop_created
+    ON shop_sales(shop_id, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_shop_sales_customer_created
+    ON shop_sales(customer_uuid, created_at DESC, id DESC);

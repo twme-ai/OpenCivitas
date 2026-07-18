@@ -1,19 +1,21 @@
 package dev.opencivitas.business;
 
 public enum BusinessRole {
-    PROPRIETOR(true, true, 5),
-    CO_PROPRIETOR(true, true, 4),
-    MANAGER(true, false, 3),
-    SUPERVISOR(false, false, 2),
-    EMPLOYEE(false, false, 1);
+    PROPRIETOR(true, true, true, 5),
+    CO_PROPRIETOR(true, true, true, 4),
+    MANAGER(true, false, false, 3),
+    SUPERVISOR(false, false, true, 2),
+    EMPLOYEE(false, false, false, 1);
 
     private final boolean financial;
     private final boolean staffManagement;
+    private final boolean shopManagement;
     private final int authority;
 
-    BusinessRole(boolean financial, boolean staffManagement, int authority) {
+    BusinessRole(boolean financial, boolean staffManagement, boolean shopManagement, int authority) {
         this.financial = financial;
         this.staffManagement = staffManagement;
+        this.shopManagement = shopManagement;
         this.authority = authority;
     }
 
@@ -23,6 +25,10 @@ public enum BusinessRole {
 
     public boolean canManageStaff() {
         return staffManagement;
+    }
+
+    public boolean canManageShops() {
+        return shopManagement;
     }
 
     public boolean canManage(BusinessRole target) {

@@ -71,6 +71,24 @@ behavioral reference, not a source of copyable implementation or content.
 - [QuickShop permission groups](https://github.com/QuickShop-Community/QuickShop-Hikari/blob/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/shop/SimpleShopPermissionManager.java):
   named permission group and least-privilege shop access reference for the firm
   hierarchy and the upcoming custom-role/shop integration.
+- [ChestShop sign model](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Signs/ChestShopSign.java),
+  [amount/price checks](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PreTransaction/AmountAndPriceChecker.java),
+  and [stock fitting checks](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PreTransaction/StockFittingChecker.java):
+  the documented four-line format, explicit transaction direction, payer
+  preflight, source stock check, and destination capacity check were inspected
+  before the OpenCivitas shop parser and inventory reservation lifecycle were
+  implemented. No LGPL source was copied.
+- [ChestShop item transfer](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PostTransaction/ItemManager.java)
+  and [transaction logging](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PostTransaction/TransactionLogger.java):
+  inventory updates and auditable sale records informed OpenCivitas's own
+  clean-room implementation. SQLite settlement is atomic; Bukkit items are
+  reserved before payment and restored on rejection, with overflow dropped at
+  the relevant inventory instead of being deleted.
+- [Paper Sign API](https://jd.papermc.io/paper/1.21.11/org/bukkit/block/Sign.html)
+  and [PlayerInteractEvent API](https://jd.papermc.io/paper/1.21.11/org/bukkit/event/player/PlayerInteractEvent.html):
+  persistent tile-state data, front-side Adventure components, waxed signs,
+  main-hand filtering, and left/right block actions cover shop creation and
+  interaction without packet interception.
 
 ## Build automation references
 

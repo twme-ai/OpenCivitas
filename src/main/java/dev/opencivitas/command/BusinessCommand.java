@@ -13,6 +13,8 @@ import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.message.MessageService;
+import dev.opencivitas.shop.ShopRepository;
+import dev.opencivitas.shop.ShopSale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
@@ -46,6 +48,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
     private final Database database;
     private final CitizenRepository citizens;
     private final BusinessRepository businesses;
+    private final ShopRepository shops;
     private final MessageService messages;
     private final String currencySymbol;
     private final int pageSize;
@@ -56,6 +59,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             Database database,
             CitizenRepository citizens,
             BusinessRepository businesses,
+            ShopRepository shops,
             MessageService messages,
             String currencySymbol,
             int pageSize,
@@ -65,6 +69,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         this.database = database;
         this.citizens = citizens;
         this.businesses = businesses;
+        this.shops = shops;
         this.messages = messages;
         this.currencySymbol = currencySymbol;
         this.pageSize = pageSize;
@@ -101,6 +106,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             case "payroll" -> payroll(sender, args);
             case "transferproprietorship" -> transferProprietorship(sender, args);
             case "transactions" -> transactions(sender, args);
+            case "sales" -> sales(sender, args);
             case "disband" -> disband(sender, args);
             default -> {
                 messages.send(sender, "business.usage");
@@ -694,6 +700,8 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
                 case "PAYMENT" -> "business.ledger-payment";
                 case "DISBAND_REFUND" -> "business.ledger-disband";
                 case "WAGE" -> "business.ledger-wage";
+                case "SHOP_SALE" -> "business.ledger-shop-sale";
+                case "SHOP_PURCHASE" -> "business.ledger-shop-purchase";
                 default -> "business.ledger-withdrawal";
             };
             Component description = messages.component(sender, key,
@@ -705,6 +713,63 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
                     Placeholder.unparsed("amount", Money.format(entry.amountCents(), currencySymbol)),
                     Placeholder.component("description", description));
         }
+    }
+
+    private boolean sales(CommandSender sender, String[] args) {
+        if (args.length < 2 || args.length > 3) {
+            usage(sender, "/business sales <business> [page]");
+            return true;
+        }
+        Optional<Integer> page = page(sender, args.length == 3 ? args[2] : null);
+        if (page.isEmpty()) {
+            return true;
+        }
+        int offset;
+        try {
+            offset = Math.multiplyExact(page.get() - 1, pageSize);
+        } catch (ArithmeticException exception) {
+            messages.send(sender, "error.invalid-page");
+            return true;
+        }
+        UUID viewer = sender instanceof Player player ? player.getUniqueId() : null;
+        boolean auditor = sender.hasPermission("opencivitas.business.audit");
+        complete(sender, database.submit(() -> {
+            Optional<Business> business = businesses.find(args[1]);
+            Optional<BusinessRole> role = business.isPresent() && viewer != null
+                    ? businesses.role(args[1], viewer) : Optional.empty();
+            boolean authorized = auditor || role
+                    .map(value -> value.canManageFunds() || value.canManageShops())
+                    .orElse(false);
+            List<ShopSale> entries = business.isPresent() && authorized
+                    ? shops.businessSales(args[1], pageSize, offset) : List.of();
+            return new SalesView(business, authorized, entries);
+        }), view -> {
+            if (view.business().isEmpty()) {
+                businessNotFound(sender, args[1]);
+                return;
+            }
+            if (!view.authorized()) {
+                messages.send(sender, "business.no-permission");
+                return;
+            }
+            messages.send(sender, "shops.business-sales.header",
+                    Placeholder.unparsed("business", view.business().get().displayName()),
+                    Placeholder.unparsed("page", Integer.toString(page.get())));
+            if (view.sales().isEmpty()) {
+                messages.send(sender, "shops.business-sales.empty");
+                return;
+            }
+            for (ShopSale sale : view.sales()) {
+                messages.send(sender, sale.direction() == dev.opencivitas.shop.ShopDirection.BUY
+                                ? "shops.business-sales.entry-buy" : "shops.business-sales.entry-sell",
+                        Placeholder.unparsed("date", DATE.format(sale.createdAt())),
+                        Placeholder.unparsed("player", sale.customerName()),
+                        Placeholder.unparsed("amount", Integer.toString(sale.itemAmount())),
+                        Placeholder.unparsed("item", sale.itemKey().toLowerCase(Locale.ROOT).replace('_', ' ')),
+                        Placeholder.unparsed("price", Money.format(sale.totalCents(), currencySymbol)));
+            }
+        });
+        return true;
     }
 
     private boolean disband(CommandSender sender, String[] args) {
@@ -846,7 +911,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             return filter(args[0], List.of(
                     "create", "info", "list", "deposit", "withdraw", "pay", "offer", "accept", "deny",
                     "offers", "staff", "fire", "resign", "role", "wage", "payroll",
-                    "transferproprietorship", "transactions", "disband"));
+                    "transferproprietorship", "transactions", "sales", "disband"));
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
             List<String> options = new ArrayList<>(onlineNames());
@@ -944,6 +1009,13 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             Optional<Business> business,
             boolean authorized,
             List<BusinessLedgerEntry> entries
+    ) {
+    }
+
+    private record SalesView(
+            Optional<Business> business,
+            boolean authorized,
+            List<ShopSale> sales
     ) {
     }
 }
