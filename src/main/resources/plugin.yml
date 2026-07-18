@@ -272,6 +272,10 @@ commands:
     description: Inspect this OpenCivitas node and live network presence.
     usage: /network [status|servers|who <player>]
     aliases: [net]
+  cctv:
+    description: Craft, register, group, authorize, and view security cameras.
+    usage: /cctv <group|camera|computer|view|next|previous|exit>
+    aliases: [securitycamera, cameras]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -330,3 +334,6 @@ permissions:
   opencivitas.network.inspect:
     description: Inspect UUID-based player presence across configured OpenCivitas nodes.
     default: true
+  opencivitas.security.give:
+    description: Give crafted security cameras and computers administratively.
+    default: op

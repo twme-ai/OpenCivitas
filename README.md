@@ -64,6 +64,9 @@ The first playable foundation includes:
 - optional Redis-backed multi-node presence with stable UUID/name identity,
   node leases, `/network` diagnostics, and replay-filtered global and department
   chat bridging that leaves proximity chat local
+- craftable wall-mounted security cameras and computers with persistent owner
+  registration, groups, public/private allow lists, dashboard controls, native
+  spectator feeds, camera switching and rotation, and crash-safe player recovery
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
@@ -81,9 +84,9 @@ resolved by Paper from the `libraries` declaration in `plugin.yml`.
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml`, `stocks.yml`, and `network.yml`. Language files
-are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are supported in
-all catalog strings.
+files including `vehicles.yml`, `stocks.yml`, `network.yml`, and `security.yml`.
+Language files are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are
+supported in all catalog strings.
 
 ## Network deployment
 
@@ -109,7 +112,8 @@ persistent state are not synchronized by this transport. `/network status`,
   heartbeats; transport failure never disables standalone civic behavior.
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
-  so it is not justified for the current vehicle renderer or control path.
+  and exposes native spectator targets for camera feeds, so it is not justified
+  for the current vehicle or security-camera paths.
 
 ## License
 

@@ -1,0 +1,18 @@
+package dev.opencivitas.security;
+
+public enum SecurityResult {
+    SUCCESS,
+    CITIZEN_NOT_FOUND,
+    CAMERA_NOT_FOUND,
+    COMPUTER_NOT_FOUND,
+    GROUP_NOT_FOUND,
+    NAME_TAKEN,
+    LOCATION_OCCUPIED,
+    NOT_OWNER,
+    ALREADY_MEMBER,
+    NOT_MEMBER,
+    ACCESS_EXISTS,
+    ACCESS_NOT_FOUND,
+    CANNOT_TARGET_SELF,
+    LIMIT_REACHED
+}

@@ -1,0 +1,6 @@
+limits:
+  cameras-per-player: 32
+  computers-per-player: 16
+  groups-per-player: 16
+
+maximum-view-seconds: 300

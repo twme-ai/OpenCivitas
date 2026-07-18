@@ -359,6 +359,31 @@ behavioral reference, not a source of copyable implementation or content.
   backend can still participate. Proxy transfers remain operator infrastructure
   rather than an assumed network topology.
 
+## Security-camera references
+
+- DemocracyCraft's current [Security Cameras](https://wiki.democracycraft.net/wiki/Security_Cameras)
+  page, revision 11293 from June 26, 2026, documents the two crafting recipes,
+  wall-mounted cameras, camera names exposed by right-click, `/cctv group create`
+  and `/cctv group addcamera`, computer dashboards, per-computer player access,
+  private/public toggling, group selection, camera addition, remote viewing, and
+  drop-to-remove GUI behavior. The recipe screenshots were inspected rather than
+  redistributed; the inputs use Minecraft materials and OpenCivitas supplies no
+  copied textures or models.
+- [Tanguygab/CCTV](https://github.com/Tanguygab/CCTV/tree/91affaa1b8a8d0e3a3c5445418388a74e101c177)
+  is the current GPL-3.0 continuation of the publicly identified CCTV behavior.
+  It was inspected for observable boundaries including random names, owner-only
+  editing, groups, public/allow-listed computers, ordered dashboard entries,
+  rotation, switching, sneak disconnect, viewer restoration, chunk recovery,
+  computer pickup protection, and the exact published recipe materials.
+  OpenCivitas uses an original normalized SQLite model, asynchronous controller,
+  entity lifecycle, menus, and recovery format; no GPL source, language text,
+  custom-head data, or NMS implementation was copied.
+- Paper 1.21.11's [`Player.setSpectatorTarget`](https://jd.papermc.io/paper/1.21.11/org/bukkit/entity/Player.html#setSpectatorTarget(org.bukkit.entity.Entity))
+  directly supports following an entity as the spectator camera. OpenCivitas
+  targets a native invisible armor stand, renders an original player-head item
+  display, and restores the viewer through Paper APIs. ProtocolLib, NMS, and
+  PacketEvents are therefore unnecessary for the disclosed camera contract.
+
 ## Build automation references
 
 - [actions/checkout](https://github.com/actions/checkout),
@@ -373,6 +398,6 @@ behavioral reference, not a source of copyable implementation or content.
 The implementation does not intercept, rewrite, or synthesize protocol packets.
 Paper APIs are sufficient for commands, components, locale selection, joins,
 SQLite persistence, complete vehicle input, persistent interaction hitboxes,
-and item-display rendering. PacketEvents would duplicate the native input path
-and add lifecycle and versioning risk with no benefit. Re-evaluate it only for
-security-camera viewpoints or another feature that proves packet-only.
+item-display rendering, spectator game mode, and native entity camera targets.
+PacketEvents would duplicate these paths and add lifecycle and versioning risk
+with no benefit. Re-evaluate it only for a future feature that proves packet-only.

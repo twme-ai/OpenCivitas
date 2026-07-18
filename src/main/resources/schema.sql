@@ -1100,3 +1100,66 @@ CREATE TABLE IF NOT EXISTS stock_dividend_payments (
     amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
     PRIMARY KEY (dividend_id, holder_uuid)
 );
+
+CREATE TABLE IF NOT EXISTS security_cameras (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    name TEXT NOT NULL COLLATE NOCASE,
+    world TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    yaw REAL NOT NULL,
+    pitch REAL NOT NULL,
+    created_at INTEGER NOT NULL,
+    UNIQUE (owner_uuid, name),
+    UNIQUE (world, x, y, z)
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_cameras_owner
+    ON security_cameras(owner_uuid, name COLLATE NOCASE);
+
+CREATE TABLE IF NOT EXISTS camera_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    name TEXT NOT NULL COLLATE NOCASE,
+    created_at INTEGER NOT NULL,
+    UNIQUE (owner_uuid, name)
+);
+
+CREATE TABLE IF NOT EXISTS camera_group_members (
+    group_id INTEGER NOT NULL REFERENCES camera_groups(id) ON DELETE CASCADE,
+    camera_id INTEGER NOT NULL REFERENCES security_cameras(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL CHECK (position >= 0),
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (group_id, camera_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_camera_group_members_order
+    ON camera_group_members(group_id, position, camera_id);
+
+CREATE TABLE IF NOT EXISTS security_computers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    name TEXT NOT NULL COLLATE NOCASE,
+    world TEXT NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    z INTEGER NOT NULL,
+    group_id INTEGER REFERENCES camera_groups(id) ON DELETE SET NULL,
+    public_access INTEGER NOT NULL DEFAULT 0 CHECK (public_access IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    UNIQUE (world, x, y, z),
+    UNIQUE (owner_uuid, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_computers_owner
+    ON security_computers(owner_uuid, name COLLATE NOCASE);
+
+CREATE TABLE IF NOT EXISTS computer_access (
+    computer_id INTEGER NOT NULL REFERENCES security_computers(id) ON DELETE CASCADE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    granted_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    granted_at INTEGER NOT NULL,
+    PRIMARY KEY (computer_id, player_uuid)
+);

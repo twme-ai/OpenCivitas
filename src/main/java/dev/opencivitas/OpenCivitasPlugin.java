@@ -22,6 +22,7 @@ import dev.opencivitas.command.FamilyCommand;
 import dev.opencivitas.command.VehicleCommand;
 import dev.opencivitas.command.StockCommand;
 import dev.opencivitas.command.NetworkCommand;
+import dev.opencivitas.command.SecurityCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -61,6 +62,14 @@ import dev.opencivitas.stock.StockPolicy;
 import dev.opencivitas.stock.StockRepository;
 import dev.opencivitas.network.NetworkPolicy;
 import dev.opencivitas.network.NetworkService;
+import dev.opencivitas.security.CameraManager;
+import dev.opencivitas.security.CameraViewService;
+import dev.opencivitas.security.SecurityItems;
+import dev.opencivitas.security.SecurityListener;
+import dev.opencivitas.security.SecurityMenuService;
+import dev.opencivitas.security.SecurityPolicy;
+import dev.opencivitas.security.SecurityRegistry;
+import dev.opencivitas.security.SecurityRepository;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -90,6 +99,8 @@ public final class OpenCivitasPlugin extends JavaPlugin {
     private VehicleManager vehicleManager;
     private VehicleStorageService vehicleStorage;
     private NetworkService networkService;
+    private CameraViewService cameraViews;
+    private CameraManager cameraManager;
 
     @Override
     public void onEnable() {
@@ -595,6 +606,46 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         stockCommand.setExecutor(stockCommands);
         stockCommand.setTabCompleter(stockCommands);
 
+        SecurityPolicy securityPolicy;
+        try {
+            securityPolicy = new SecurityPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load security.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        SecurityRepository securityRepository = new SecurityRepository(database, securityPolicy);
+        SecurityRegistry securityRegistry = new SecurityRegistry();
+        try {
+            securityRegistry.replaceAll(
+                    securityRepository.allCameras(), securityRepository.allComputers());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore security cameras and computers", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        SecurityItems securityItems = new SecurityItems(this);
+        securityItems.registerRecipes(this);
+        cameraManager = new CameraManager(this, securityRegistry, securityItems);
+        cameraManager.start();
+        cameraViews = new CameraViewService(
+                this, securityRegistry, cameraManager, securityPolicy, messages);
+        cameraViews.start();
+        SecurityMenuService securityMenus = new SecurityMenuService(
+                this, database, securityRepository, securityRegistry, cameraManager,
+                cameraViews, securityItems, messages);
+        SecurityCommand securityCommands = new SecurityCommand(
+                this, database, citizens, securityRepository, securityRegistry,
+                cameraManager, cameraViews, securityMenus, securityItems, messages);
+        PluginCommand cctv = Objects.requireNonNull(getCommand("cctv"), "Missing command cctv");
+        cctv.setExecutor(securityCommands);
+        cctv.setTabCompleter(securityCommands);
+        getServer().getPluginManager().registerEvents(cameraViews, this);
+        getServer().getPluginManager().registerEvents(securityMenus, this);
+        getServer().getPluginManager().registerEvents(new SecurityListener(
+                this, database, securityRepository, securityRegistry, securityItems,
+                cameraManager, cameraViews, securityMenus, messages), this);
+
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();
             List<java.util.UUID> online = getServer().getOnlinePlayers().stream()
@@ -615,6 +666,12 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (cameraViews != null) {
+            cameraViews.stop();
+        }
+        if (cameraManager != null) {
+            cameraManager.stop();
+        }
         if (networkService != null) {
             networkService.close();
         }
