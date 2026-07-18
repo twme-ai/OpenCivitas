@@ -1145,3 +1145,7 @@ security:
     access_not_found: '<red>該市民沒有存取權。</red>'
     cannot_target_self: '<red>所有人已永久擁有存取權。</red>'
     limit_reached: '<red>你已達安全裝置設定上限。</red>'
+
+elevator:
+  destination-obstructed: '<red>下一個電梯樓層受到阻擋。</red>'
+  teleport-failed: '<red>電梯無法移動你。</red>'

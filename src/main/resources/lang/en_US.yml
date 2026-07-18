@@ -1145,3 +1145,7 @@ security:
     access_not_found: '<red>That citizen does not have access.</red>'
     cannot_target_self: '<red>The owner already has permanent access.</red>'
     limit_reached: '<red>You have reached the configured security-device limit.</red>'
+
+elevator:
+  destination-obstructed: '<red>The next elevator floor is obstructed.</red>'
+  teleport-failed: '<red>The elevator could not move you.</red>'

@@ -1,0 +1,7 @@
+enabled: true
+floor-material: IRON_BLOCK
+maximum-distance: 384
+cooldown-ticks: 10
+
+# Empty enables elevators in every world. World names are matched case-insensitively.
+enabled-worlds: []

@@ -130,6 +130,25 @@ behavioral reference, not a source of copyable implementation or content.
   implementing immutable options and direct, transactional rewards.
 - [Paper asynchronous teleport documentation](https://docs.papermc.io/paper/dev/entity-teleport/):
   chunk-safe university travel using `teleportAsync`.
+- [DemocracyCraft Elevators](https://wiki.democracycraft.net/Elevators), revision
+  649 and its published tutorial image: an elevator floor is an iron block;
+  aligned blocks form the column, jumping travels upward, and sneaking travels
+  downward. The image confirms open standing space above each aligned floor and
+  does not document a recipe, sign, menu, or registration step.
+- [Elevators](https://github.com/keehl254/Elevators), a current GPL-3.0
+  Spigot/Paper/Folia implementation, was inspected as a behavioral reference for
+  native Paper jump handling, directional nearest-floor search, bounded reuse,
+  world-height limits, and destination hitbox obstruction checks. The smaller
+  [CraftiumMC Elevator](https://github.com/CraftiumMC/Elevator) GPL-3.0 project
+  was cross-checked for same-column search and two-block destination clearance.
+  OpenCivitas uses an original stateless iron-block implementation; no source,
+  item model, recipe, configuration, or assets were copied.
+- Paper 1.21.11's
+  [PlayerJumpEvent](https://jd.papermc.io/paper/1.21.11/com/destroystokyo/paper/event/player/PlayerJumpEvent.html)
+  and [Entity collision API](https://jd.papermc.io/paper/1.21.11/org/bukkit/entity/Entity.html#wouldCollideUsing(org.bukkit.util.BoundingBox))
+  provide the complete elevator trigger and destination-safety surface. Aligned
+  floors share the player's already-loaded chunk, so same-column teleport does
+  not need an asynchronous chunk load. Packet interception is not justified.
 - [DemocracyCraft Business](https://wiki.democracycraft.net/Business): public
   firm lifecycle, account, employee, role, wage, and chest-shop command behavior.
 - [DemocracyCraft Chestshops](https://wiki.democracycraft.net/Chestshops): sign

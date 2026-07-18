@@ -67,6 +67,8 @@ The first playable foundation includes:
 - craftable wall-mounted security cameras and computers with persistent owner
   registration, groups, public/private allow lists, dashboard controls, native
   spectator feeds, camera switching and rotation, and crash-safe player recovery
+- aligned iron-block elevators with jump-up, sneak-down, nearest-floor routing,
+  collision-safe arrival, per-world controls, and a bounded reuse cooldown
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
@@ -84,7 +86,8 @@ resolved by Paper from the `libraries` declaration in `plugin.yml`.
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml`, `stocks.yml`, `network.yml`, and `security.yml`.
+files including `vehicles.yml`, `stocks.yml`, `network.yml`, `security.yml`, and
+`elevators.yml`.
 Language files are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are
 supported in all catalog strings.
 
@@ -112,8 +115,8 @@ persistent state are not synchronized by this transport. `/network status`,
   heartbeats; transport failure never disables standalone civic behavior.
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
-  and exposes native spectator targets for camera feeds, so it is not justified
-  for the current vehicle or security-camera paths.
+  native spectator targets for camera feeds, and a cancellable player jump event,
+  so it is not justified for the current vehicle, camera, or elevator paths.
 
 ## License
 

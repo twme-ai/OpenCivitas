@@ -331,6 +331,9 @@ permissions:
   opencivitas.navigation.configure:
     description: Create and remove civic warp destinations.
     default: op
+  opencivitas.elevators.use:
+    description: Travel between aligned elevator floors by jumping or sneaking.
+    default: true
   opencivitas.network.inspect:
     description: Inspect UUID-based player presence across configured OpenCivitas nodes.
     default: true

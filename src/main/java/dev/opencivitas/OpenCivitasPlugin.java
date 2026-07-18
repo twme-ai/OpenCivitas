@@ -31,6 +31,8 @@ import dev.opencivitas.claim.ClaimRepository;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.election.ElectionRegistry;
 import dev.opencivitas.election.ElectionRepository;
+import dev.opencivitas.elevator.ElevatorListener;
+import dev.opencivitas.elevator.ElevatorPolicy;
 import dev.opencivitas.exam.ExamRegistry;
 import dev.opencivitas.exam.ExamRepository;
 import dev.opencivitas.exam.UniversityService;
@@ -517,6 +519,17 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(navigationService, this);
         navigationService.start();
+
+        ElevatorPolicy elevatorPolicy;
+        try {
+            elevatorPolicy = new ElevatorPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load elevators.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        getServer().getPluginManager().registerEvents(
+                new ElevatorListener(elevatorPolicy, messages), this);
 
         FamilyPolicy familyPolicy;
         try {
