@@ -7,6 +7,7 @@ import dev.opencivitas.command.ClaimCommand;
 import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.JobCommand;
+import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.claim.ClaimListener;
@@ -22,6 +23,9 @@ import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
 import dev.opencivitas.shop.ShopListener;
 import dev.opencivitas.shop.ShopRepository;
+import dev.opencivitas.property.PropertyListener;
+import dev.opencivitas.property.PropertyRegistry;
+import dev.opencivitas.property.PropertyRepository;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -59,6 +63,8 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         int maximumClaimBlocks = Math.max(1, getConfig().getInt("claims.maximum-blocks", 4_096));
         int freeClaimBlocks = Math.max(0, Math.min(
                 maximumClaimBlocks, getConfig().getInt("claims.free-blocks", 10)));
+        int defaultRentalDays = Math.max(1, Math.min(
+                3_650, getConfig().getInt("property.default-rental-days", 30)));
         List<String> claimWorlds = getConfig().getStringList("claims.enabled-worlds");
         if (claimWorlds.isEmpty()) {
             claimWorlds = List.of("wilderness");
@@ -179,6 +185,39 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new ClaimListener(this, database, claimRepository, claimRegistry, messages), this);
         getServer().getPluginManager().registerEvents(claimCommands, this);
+
+        PropertyRepository propertyRepository = new PropertyRepository(database);
+        PropertyRegistry propertyRegistry = new PropertyRegistry();
+        try {
+            propertyRegistry.replaceAll(propertyRepository.expireRentals(System.currentTimeMillis()));
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not load real-estate properties", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        PropertyCommand propertyCommands = new PropertyCommand(
+                this, database, citizens, propertyRepository, propertyRegistry,
+                messages, currencySymbol, defaultRentalDays);
+        PluginCommand propertyCommand = Objects.requireNonNull(
+                getCommand("realestate"), "Missing command realestate");
+        propertyCommand.setExecutor(propertyCommands);
+        propertyCommand.setTabCompleter(propertyCommands);
+        getServer().getPluginManager().registerEvents(
+                new PropertyListener(propertyRegistry, messages), this);
+        getServer().getScheduler().runTaskTimer(this, () -> database.submit(
+                () -> propertyRepository.expireRentals(System.currentTimeMillis()))
+                .whenComplete((loaded, error) -> {
+                    if (!isEnabled()) {
+                        return;
+                    }
+                    getServer().getScheduler().runTask(this, () -> {
+                        if (error != null) {
+                            getLogger().log(Level.SEVERE, "Could not settle expired property rentals", error);
+                        } else {
+                            propertyRegistry.replaceAll(loaded);
+                        }
+                    });
+                }), 1_200L, 1_200L);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);

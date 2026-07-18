@@ -15,7 +15,7 @@ legally or meaningfully copied from another server.
 | Shops | chest buy/sell, stack modifiers, item search, sales history | in progress: persistent personal/firm shops, sign creation, click/shift-click settlement, search, history, stock and capacity checks |
 | Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: accounts, offers, five ranks, wages/payroll, ownership, ledgers, firm shops and sales history; custom roles remain |
 | Auctions | item listings, bids, settlement | planned |
-| Property | buy, rent, refund, titleholder, tenant, trusted builders, search | planned |
+| Property | buy, rent, refund, titleholder, tenant, trusted builders, search | in progress: registered 3D plots, purchase, fixed-term escrow/rent expiry, proportional refund, titleholder/tenant/trust, price search, protection |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | in progress: 4,096-block allowance, paid expansion, menu/wand create and resize, trust, transfer, protection, explosion toggle, kick-out |
 | Government | executive, bicameral legislature, judiciary | planned |
 | Elections | STV, instant runoff, terms, eligibility, referendums | planned |

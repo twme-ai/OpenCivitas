@@ -74,6 +74,10 @@ commands:
   claimkickout:
     description: Remove a player from your wilderness claim.
     usage: /claimkickout kickout <player>
+  realestate:
+    description: Search, buy, rent, and manage real-estate plots.
+    usage: /realestate <help|me|buy|rent|unrent|search|info|add|remove|set>
+    aliases: [rl, realty]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -101,4 +105,10 @@ permissions:
     default: op
   opencivitas.claims.bypass:
     description: Build and interact in any wilderness claim.
+    default: op
+  opencivitas.property.manage:
+    description: Register plots and administratively manage titleholders and tenants.
+    default: op
+  opencivitas.property.bypass:
+    description: Build and interact in any registered property.
     default: op

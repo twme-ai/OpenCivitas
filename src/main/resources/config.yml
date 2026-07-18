@@ -24,3 +24,6 @@ claims:
   free-blocks: 10
   maximum-blocks: 4096
   block-cost: '20.00'
+
+property:
+  default-rental-days: 30

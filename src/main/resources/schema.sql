@@ -202,3 +202,62 @@ CREATE TABLE IF NOT EXISTS claim_wands (
     player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
     issued_day TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS properties (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plot_id TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    world_name TEXT NOT NULL,
+    min_x INTEGER NOT NULL,
+    max_x INTEGER NOT NULL,
+    min_y INTEGER NOT NULL,
+    max_y INTEGER NOT NULL,
+    min_z INTEGER NOT NULL,
+    max_z INTEGER NOT NULL,
+    sale_price_cents INTEGER CHECK (sale_price_cents > 0),
+    rent_price_cents INTEGER CHECK (rent_price_cents > 0),
+    rent_duration_millis INTEGER NOT NULL CHECK (rent_duration_millis > 0),
+    titleholder_uuid TEXT REFERENCES players(uuid),
+    tenant_uuid TEXT REFERENCES players(uuid),
+    rental_started_at INTEGER,
+    rental_ends_at INTEGER,
+    rent_paid_cents INTEGER NOT NULL DEFAULT 0 CHECK (rent_paid_cents >= 0),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    CHECK (min_x <= max_x AND min_y <= max_y AND min_z <= max_z),
+    CHECK (sale_price_cents IS NOT NULL OR rent_price_cents IS NOT NULL),
+    CHECK ((rental_started_at IS NULL AND rental_ends_at IS NULL AND rent_paid_cents = 0)
+        OR (rental_started_at IS NOT NULL AND rental_ends_at IS NOT NULL AND rent_paid_cents > 0))
+);
+
+CREATE INDEX IF NOT EXISTS idx_properties_world_bounds
+    ON properties(world_name, min_x, max_x, min_z, max_z);
+
+CREATE INDEX IF NOT EXISTS idx_properties_titleholder
+    ON properties(titleholder_uuid, plot_id);
+
+CREATE INDEX IF NOT EXISTS idx_properties_tenant
+    ON properties(tenant_uuid, plot_id);
+
+CREATE INDEX IF NOT EXISTS idx_properties_rental_expiry
+    ON properties(rental_ends_at)
+    WHERE rental_ends_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS property_trust (
+    property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (property_id, player_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS property_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_id INTEGER NOT NULL REFERENCES properties(id),
+    actor_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    counterparty_uuid TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    transaction_type TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_property_transactions_created
+    ON property_transactions(property_id, created_at DESC, id DESC);

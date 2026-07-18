@@ -33,6 +33,8 @@ The first playable foundation includes:
   stock/capacity checks, item search, owner notices, and sales history
 - wilderness claims with a management menu, paid claim-block allowance,
   golden-shovel create/resize selection, trust, transfer, and protection
+- registered real-estate plots with purchase, fixed-term rent escrow/refunds,
+  titleholders, tenants, trusted builders, search, and region protection
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

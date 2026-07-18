@@ -110,6 +110,19 @@ behavioral reference, not a source of copyable implementation or content.
   sale, rent, lease, auction, exit-offer, and multi-protection-provider model;
   retained as a reference for the upcoming property and auction settlement
   work.
+- The current [DemocracyCraft Useful Commands](https://wiki.democracycraft.net/Useful_commands)
+  real-estate surface was rechecked before implementation: `/rl me`, instant
+  purchase, trusted-player add/remove, fixed-term rent and early unrent refund,
+  price search, plot info, titleholder assignment, and tenant assignment.
+  OpenCivitas adds operator-only cuboid registration so original server worlds
+  can define their own plot inventory without copying proprietary map data.
+- AreaShop's current `RentRegion`, `BuyRegion`, rent/unrent, friend, and owner
+  command implementations were inspected for expiry scheduling, owner-only
+  access changes, available-region filtering, and fixed-term lifecycle.
+  AdvancedRegionMarket's buy/member commands and RealEstate's persisted
+  rent/lease update loop were used to cross-check those behaviors. OpenCivitas
+  holds prepaid rent in an auditable SQLite escrow value and conserves every
+  cent across proportional refund plus landlord payout.
 
 ## Build automation references
 
