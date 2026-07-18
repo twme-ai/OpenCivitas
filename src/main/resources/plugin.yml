@@ -72,6 +72,10 @@ commands:
     description: View chest shop transaction history.
     usage: /chestshop history [page]
     aliases: [csn, shop]
+  bolt:
+    description: Lock blocks and manage protection access lists.
+    usage: /bolt <lock|unlock|edit|modify|group|trust|transfer|password|mode|info>
+    aliases: [lock, unlock, cmodify]
   claim:
     description: Create and manage wilderness claims.
     usage: /claim <list|info|create|buy|trust|untrust|delete>
@@ -319,6 +323,15 @@ permissions:
   opencivitas.property.bypass:
     description: Build and interact in any registered property.
     default: op
+  opencivitas.protection.bypass:
+    description: Use, edit, or destroy any individual block protection.
+    default: op
+  opencivitas.protection.admin-access:
+    description: Grant an ACL source permission to edit a protection.
+    default: true
+  opencivitas.protection.permission-source:
+    description: Add server permission nodes to a protection access list.
+    default: true
   opencivitas.elections.manage:
     description: Create, close, and cancel elections and referendums.
     default: op

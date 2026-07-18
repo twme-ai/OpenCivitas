@@ -14,6 +14,7 @@ import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.command.LegislatureCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.PoliceCommand;
+import dev.opencivitas.command.ProtectionCommand;
 import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.command.ChatCommand;
@@ -85,6 +86,12 @@ import dev.opencivitas.shop.ShopRepository;
 import dev.opencivitas.property.PropertyListener;
 import dev.opencivitas.property.PropertyRegistry;
 import dev.opencivitas.property.PropertyRepository;
+import dev.opencivitas.protection.PasswordHasher;
+import dev.opencivitas.protection.ProtectionListener;
+import dev.opencivitas.protection.ProtectionPolicy;
+import dev.opencivitas.protection.ProtectionRegistry;
+import dev.opencivitas.protection.ProtectionRepository;
+import dev.opencivitas.protection.ProtectionSessionService;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -290,6 +297,35 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                         }
                     });
                 }), 1_200L, 1_200L);
+
+        ProtectionPolicy protectionPolicy;
+        try {
+            protectionPolicy = new ProtectionPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load block-protection.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ProtectionRepository protectionRepository = new ProtectionRepository(database, protectionPolicy);
+        ProtectionRegistry protectionRegistry = new ProtectionRegistry();
+        try {
+            protectionRegistry.replaceAll(protectionRepository.loadState());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore block protections", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ProtectionSessionService protectionSessions = new ProtectionSessionService();
+        PasswordHasher protectionPasswords = new PasswordHasher(protectionPolicy.passwordPepper());
+        ProtectionCommand protectionCommands = new ProtectionCommand(
+                this, database, citizens, protectionRepository, protectionRegistry,
+                protectionSessions, protectionPasswords, messages);
+        PluginCommand bolt = Objects.requireNonNull(getCommand("bolt"), "Missing command bolt");
+        bolt.setExecutor(protectionCommands);
+        bolt.setTabCompleter(protectionCommands);
+        getServer().getPluginManager().registerEvents(new ProtectionListener(
+                this, database, protectionRepository, protectionRegistry, protectionPolicy,
+                protectionSessions, protectionPasswords, messages), this);
 
         AuctionRepository auctionRepository = new AuctionRepository(
                 database, auctionMinimumIncrement, auctionListingLimit);

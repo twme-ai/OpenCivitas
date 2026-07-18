@@ -50,6 +50,29 @@ behavioral reference, not a source of copyable implementation or content.
   container shop interaction and transaction patterns.
 - [ChestShop](https://github.com/ChestShop-authors/ChestShop-3): sign-driven
   shops and transaction history (LGPL-2.1).
+- [DemocracyCraft Block Protection](https://wiki.democracycraft.net/Block_protection),
+  revision 9962 from 2 June 2026: automatic valuable-block protection; private
+  lock default; unlock; player ACL edits; normal permission/group/password ACL
+  sources; custom groups; owner trust; ownership transfer; password entry;
+  persistent, no-lock, and no-spam modes; protection info; and the documented
+  chest, barrel, furnace, lectern, button, lever, hopper, ChestShop, door, and
+  trapdoor surface. Its published `auto_close door True` example was retained.
+- [Bolt](https://github.com/pop4959/Bolt), current GPL-3.0 commit
+  `53b0c95a203aaf11af756fc88d59c8c834996cbd`, was inspected as a behavioral
+  comparison for click-armed actions, auto-protection, private/display/deposit/
+  withdrawal/public policies, normal/admin access strength, transient modes,
+  source resolution, double inventories, hopper boundaries, and event coverage.
+  OpenCivitas uses original immutable snapshots and SQLite transactions; no GPL
+  source, configuration, messages, or assets were copied.
+- Paper 1.21.11's native block, interaction, inventory-open/click/drag/move,
+  piston, explosion, and block-data APIs provide the complete protection and
+  door auto-close surface. Password sources are stored only as unique salted
+  PBKDF2-HMAC-SHA256 hashes, with a server-peppered HMAC index used to bound
+  candidate verification; successful password matches authorize those hashes
+  only until disconnect. The no-argument password forms consume the player's
+  next chat message before broadcast, avoiding Paper's command logging; inline
+  password syntax remains available for compatibility and may be logged by the
+  server. Packet interception is not justified.
 - [Towny](https://github.com/TownyAdvanced/Towny): residents, claims, towns,
   permissions, and taxes.
 - [WorldGuard](https://github.com/EngineHub/WorldGuard): region protection and

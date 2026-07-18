@@ -32,6 +32,9 @@ The first playable foundation includes:
 - persistent sign chest shops for personal or firm accounts
 - left-click sales, right-click purchases, shift-click stack transactions,
   stock/capacity checks, item search, owner notices, and sales history
+- persistent individual block protection with automatic private container locks,
+  five use policies, player/group/permission/password ACLs, owner trust, transfer,
+  auto-closing doors, inventory/hopper safeguards, and piston/explosion resistance
 - wilderness claims with a management menu, paid claim-block allowance,
   golden-shovel create/resize selection, trust, transfer, and protection
 - registered real-estate plots with purchase, fixed-term rent escrow/refunds,
@@ -86,8 +89,8 @@ resolved by Paper from the `libraries` declaration in `plugin.yml`.
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml`, `stocks.yml`, `network.yml`, `security.yml`, and
-`elevators.yml`.
+files including `vehicles.yml`, `stocks.yml`, `network.yml`, `security.yml`,
+`elevators.yml`, and `block-protection.yml`.
 Language files are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are
 supported in all catalog strings.
 
@@ -116,7 +119,8 @@ persistent state are not synchronized by this transport. `/network status`,
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
   native spectator targets for camera feeds, and a cancellable player jump event,
-  so it is not justified for the current vehicle, camera, or elevator paths.
+  plus native block/inventory events for protection, so it is not justified for
+  the current vehicle, camera, elevator, or block-protection paths.
 
 ## License
 

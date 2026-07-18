@@ -1,0 +1,12 @@
+enabled: true
+
+# Generated uniquely on first start. Keep this value stable and private.
+password-pepper: ''
+
+limits:
+  protections-per-player: 5000
+  groups-per-player: 32
+  members-per-group: 100
+
+# Used by /bolt modify add auto_close door true.
+auto-close-ticks: 60

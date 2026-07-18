@@ -1163,3 +1163,59 @@ CREATE TABLE IF NOT EXISTS computer_access (
     granted_at INTEGER NOT NULL,
     PRIMARY KEY (computer_id, player_uuid)
 );
+
+CREATE TABLE IF NOT EXISTS block_protections (
+    world TEXT NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    z INTEGER NOT NULL,
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    protection_type TEXT NOT NULL
+        CHECK (protection_type IN ('PRIVATE', 'DISPLAY', 'DEPOSIT', 'WITHDRAWAL', 'PUBLIC')),
+    auto_close INTEGER NOT NULL DEFAULT 0 CHECK (auto_close IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (world, x, y, z)
+);
+
+CREATE INDEX IF NOT EXISTS idx_block_protections_owner
+    ON block_protections(owner_uuid, world, x, y, z);
+
+CREATE TABLE IF NOT EXISTS block_protection_access (
+    world TEXT NOT NULL,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    z INTEGER NOT NULL,
+    source_type TEXT NOT NULL CHECK (source_type IN ('PLAYER', 'GROUP', 'PERMISSION', 'PASSWORD')),
+    source_identifier TEXT NOT NULL,
+    access_level TEXT NOT NULL CHECK (access_level IN ('NORMAL', 'ADMIN')),
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (world, x, y, z, source_type, source_identifier),
+    FOREIGN KEY (world, x, y, z)
+        REFERENCES block_protections(world, x, y, z) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS protection_groups (
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    name TEXT NOT NULL COLLATE NOCASE,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (owner_uuid, name)
+);
+
+CREATE TABLE IF NOT EXISTS protection_group_members (
+    owner_uuid TEXT NOT NULL,
+    group_name TEXT NOT NULL COLLATE NOCASE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (owner_uuid, group_name, player_uuid),
+    FOREIGN KEY (owner_uuid, group_name)
+        REFERENCES protection_groups(owner_uuid, name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS protection_trust (
+    owner_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    source_type TEXT NOT NULL CHECK (source_type IN ('PLAYER', 'GROUP', 'PERMISSION', 'PASSWORD')),
+    source_identifier TEXT NOT NULL,
+    access_level TEXT NOT NULL CHECK (access_level IN ('NORMAL', 'ADMIN')),
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (owner_uuid, source_type, source_identifier)
+);

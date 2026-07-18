@@ -1,0 +1,17 @@
+package dev.opencivitas.protection;
+
+public enum ProtectionResult {
+    SUCCESS,
+    CITIZEN_NOT_FOUND,
+    PROTECTION_NOT_FOUND,
+    ALREADY_PROTECTED,
+    NOT_OWNER,
+    LIMIT_REACHED,
+    SOURCE_EXISTS,
+    SOURCE_NOT_FOUND,
+    GROUP_EXISTS,
+    GROUP_NOT_FOUND,
+    GROUP_NOT_OWNER,
+    MEMBER_EXISTS,
+    MEMBER_NOT_FOUND
+}
