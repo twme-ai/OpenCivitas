@@ -885,3 +885,84 @@ CREATE TABLE IF NOT EXISTS civic_warps (
     updated_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
     updated_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS friend_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    requester_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    target_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED', 'EXPIRED')),
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL CHECK (expires_at > created_at),
+    responded_at INTEGER,
+    CHECK (requester_uuid != target_uuid)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_friend_requests_pending_pair
+    ON friend_requests(requester_uuid, target_uuid)
+    WHERE status = 'PENDING';
+
+CREATE TABLE IF NOT EXISTS friendships (
+    player_a_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    player_b_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (player_a_uuid, player_b_uuid),
+    CHECK (player_a_uuid < player_b_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_friendships_b
+    ON friendships(player_b_uuid, player_a_uuid);
+
+CREATE TABLE IF NOT EXISTS marriage_proposals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    proposer_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    target_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED', 'EXPIRED', 'OFFICIATED')),
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL CHECK (expires_at > created_at),
+    responded_at INTEGER,
+    CHECK (proposer_uuid != target_uuid)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_marriage_proposals_pending_pair
+    ON marriage_proposals(proposer_uuid, target_uuid)
+    WHERE status IN ('PENDING', 'ACCEPTED');
+
+CREATE TABLE IF NOT EXISTS marriages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    spouse_a_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    spouse_b_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    officiant_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    married_at INTEGER NOT NULL,
+    dissolved_at INTEGER,
+    dissolved_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    dissolution_reason TEXT,
+    home_world TEXT,
+    home_x REAL,
+    home_y REAL,
+    home_z REAL,
+    home_yaw REAL,
+    home_pitch REAL,
+    CHECK (spouse_a_uuid < spouse_b_uuid),
+    CHECK ((dissolved_at IS NULL AND dissolved_by IS NULL AND dissolution_reason IS NULL)
+        OR (dissolved_at IS NOT NULL AND dissolution_reason IS NOT NULL)),
+    CHECK ((home_world IS NULL AND home_x IS NULL AND home_y IS NULL AND home_z IS NULL
+            AND home_yaw IS NULL AND home_pitch IS NULL)
+        OR (home_world IS NOT NULL AND home_x IS NOT NULL AND home_y IS NOT NULL AND home_z IS NOT NULL
+            AND home_yaw IS NOT NULL AND home_pitch IS NOT NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_marriages_spouse_a
+    ON marriages(spouse_a_uuid, dissolved_at, married_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_marriages_spouse_b
+    ON marriages(spouse_b_uuid, dissolved_at, married_at DESC);
+
+CREATE TABLE IF NOT EXISTS marriage_preferences (
+    marriage_id INTEGER NOT NULL REFERENCES marriages(id) ON DELETE CASCADE,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    partner_pvp_enabled INTEGER NOT NULL DEFAULT 0 CHECK (partner_pvp_enabled IN (0, 1)),
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (marriage_id, player_uuid)
+);

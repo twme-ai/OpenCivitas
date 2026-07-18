@@ -235,6 +235,27 @@ commands:
     description: Travel to Aventura.
     usage: /spawn-aventura
     aliases: [aventura]
+  friend:
+    description: Send, answer, list, and remove reciprocal friend requests.
+    usage: /friend <add|accept|decline|remove|list> [player]
+    aliases: [friends]
+  marriage:
+    description: Propose, consent to, officiate, and manage a marriage.
+    usage: /marriage <info|propose|accept|decline|officiate|divorce|sethome|home|pvp|chat>
+    aliases: [marry]
+  partnerchat:
+    description: Send a private message to your online spouse.
+    usage: /partnerchat <message>
+    aliases: [pc]
+  partnerhome:
+    description: Travel to your shared partner home.
+    usage: /partnerhome
+  setpartnerhome:
+    description: Set the shared partner home.
+    usage: /setpartnerhome
+  partnerpvp:
+    description: Opt in or out of PvP with your spouse.
+    usage: /partnerpvp <on|off>
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.

@@ -262,6 +262,20 @@ behavioral reference, not a source of copyable implementation or content.
   destination handling, world-border checks, asynchronous chunk loading,
   passable destination validation, and completion-aware teleport feedback.
   OpenCivitas uses original SQLite and Paper API code; no GPL source was copied.
+- A [25 July 2025 archive of DemocracyCraft Families](https://web.archive.org/web/20250725231134/https://wiki.democracycraft.net/Families)
+  establishes that a lawyer officiates marriage after handling its legal
+  requirements, while adoption is processed through the Department of Public
+  Affairs forum rather than a public in-game command. OpenCivitas consequently
+  requires current consent from both prospective spouses plus a configured
+  lawyer job or qualification, records the officiant, and leaves adoption as an
+  external government workflow.
+- [MarriageMaster](https://github.com/GeorgH93/MarriageMaster) and
+  [Marriage](https://github.com/lenis0012/Marriage) are GPL-3.0 relationship
+  references. MarriageMaster's public README, API tree, and feature model were
+  inspected for proposals, marriage/divorce events, partner homes, private
+  partner chat, partner teleport, and configurable partner PvP. OpenCivitas
+  uses an original consent-first SQLite model and immutable in-memory combat
+  snapshot; no GPL source was copied and partner chat content is not stored.
 
 ## Build automation references
 

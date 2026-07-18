@@ -18,6 +18,7 @@ import dev.opencivitas.command.ShopCommand;
 import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.command.ChatCommand;
 import dev.opencivitas.command.NavigationCommand;
+import dev.opencivitas.command.FamilyCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.court.CourtRepository;
 import dev.opencivitas.claim.ClaimListener;
@@ -41,6 +42,11 @@ import dev.opencivitas.chat.ChatRouter;
 import dev.opencivitas.navigation.NavigationPolicy;
 import dev.opencivitas.navigation.NavigationRepository;
 import dev.opencivitas.navigation.NavigationService;
+import dev.opencivitas.navigation.SafeTeleportService;
+import dev.opencivitas.family.FamilyListener;
+import dev.opencivitas.family.FamilyPolicy;
+import dev.opencivitas.family.FamilyRegistry;
+import dev.opencivitas.family.FamilyRepository;
 import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
@@ -449,11 +455,12 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             return;
         }
         NavigationRepository navigationRepository = new NavigationRepository(database);
+        SafeTeleportService safeTeleports = new SafeTeleportService(this);
         NavigationService navigationService = new NavigationService(
                 this, messages, navigationPolicy.gpsUpdateTicks());
         NavigationCommand navigationCommands = new NavigationCommand(
                 this, database, navigationRepository, navigationPolicy,
-                navigationService, propertyRegistry, messages);
+                navigationService, safeTeleports, propertyRegistry, messages);
         for (String name : List.of(
                 "sethome", "home", "homes", "delhome", "civicwarp",
                 "coords", "sendcoords", "map", "gps", "directions",
@@ -465,6 +472,36 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(navigationService, this);
         navigationService.start();
+
+        FamilyPolicy familyPolicy;
+        try {
+            familyPolicy = new FamilyPolicy(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load families.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        FamilyRepository familyRepository = new FamilyRepository(database);
+        FamilyRegistry familyRegistry = new FamilyRegistry();
+        try {
+            familyRegistry.replaceAll(familyRepository.activeMarriages());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore active family relationships", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        FamilyCommand familyCommands = new FamilyCommand(
+                this, database, citizens, familyRepository, familyRegistry,
+                familyPolicy, safeTeleports, messages);
+        for (String name : List.of(
+                "friend", "marriage", "partnerchat", "partnerhome",
+                "setpartnerhome", "partnerpvp")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(familyCommands);
+            command.setTabCompleter(familyCommands);
+        }
+        getServer().getPluginManager().registerEvents(
+                new FamilyListener(familyRegistry, messages), this);
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             long now = System.currentTimeMillis();

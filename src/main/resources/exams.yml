@@ -82,3 +82,39 @@ exams:
             text: {en_US: 'Record nothing', zh_TW: '完全不記錄'}
           C:
             text: {en_US: 'Share one player password', zh_TW: '共用一組玩家密碼'}
+
+  lawyer:
+    qualification: lawyer
+    passing-score: 2
+    randomize-questions: true
+    title:
+      en_US: '<gold>Legal Practice Qualification</gold>'
+      zh_TW: '<gold>法律執業資格考試</gold>'
+    description:
+      en_US: '<gray>This original sample exam covers consent and legal records.</gray>'
+      zh_TW: '<gray>此原創範例考試涵蓋同意與法律紀錄。</gray>'
+    questions:
+      consent:
+        prompt:
+          en_US: 'What must a lawyer verify before officiating a marriage?'
+          zh_TW: '律師主持婚姻前必須確認什麼？'
+        options:
+          A:
+            text: {en_US: 'Both prospective spouses gave current consent', zh_TW: '雙方準配偶均已明確同意'}
+            correct: true
+          B:
+            text: {en_US: 'Only one person requested it', zh_TW: '只有一人提出要求'}
+          C:
+            text: {en_US: 'No record is needed', zh_TW: '不需要任何紀錄'}
+      records:
+        prompt:
+          en_US: 'Why should marriage and divorce actions be auditable?'
+          zh_TW: '婚姻與離婚操作為何應可供稽核？'
+        options:
+          A:
+            text: {en_US: 'To establish status, consent, and responsibility', zh_TW: '為了確認身分、同意與責任'}
+            correct: true
+          B:
+            text: {en_US: 'To publish private partner chat', zh_TW: '為了公開伴侶私人聊天'}
+          C:
+            text: {en_US: 'To bypass both spouses', zh_TW: '為了繞過雙方配偶'}

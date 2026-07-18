@@ -9,6 +9,8 @@ import dev.opencivitas.navigation.NavigationResult;
 import dev.opencivitas.navigation.NavigationRoute;
 import dev.opencivitas.navigation.NavigationService;
 import dev.opencivitas.navigation.SavedLocation;
+import dev.opencivitas.navigation.SafeTeleportService;
+import dev.opencivitas.navigation.TeleportOutcome;
 import dev.opencivitas.property.Property;
 import dev.opencivitas.property.PropertyRegistry;
 import net.kyori.adventure.text.Component;
@@ -16,8 +18,6 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,6 +39,7 @@ public final class NavigationCommand implements CommandExecutor, TabCompleter {
     private final NavigationRepository navigation;
     private final NavigationPolicy policy;
     private final NavigationService gps;
+    private final SafeTeleportService teleports;
     private final PropertyRegistry properties;
     private final MessageService messages;
 
@@ -48,6 +49,7 @@ public final class NavigationCommand implements CommandExecutor, TabCompleter {
             NavigationRepository navigation,
             NavigationPolicy policy,
             NavigationService gps,
+            SafeTeleportService teleports,
             PropertyRegistry properties,
             MessageService messages
     ) {
@@ -56,6 +58,7 @@ public final class NavigationCommand implements CommandExecutor, TabCompleter {
         this.navigation = navigation;
         this.policy = policy;
         this.gps = gps;
+        this.teleports = teleports;
         this.properties = properties;
         this.messages = messages;
     }
@@ -254,34 +257,12 @@ public final class NavigationCommand implements CommandExecutor, TabCompleter {
     }
 
     private void teleport(Player player, SavedLocation saved, String successKey) {
-        World world = Bukkit.getWorld(saved.world());
-        if (world == null) {
-            messages.send(player, "navigation.world-unavailable");
-            return;
-        }
-        Location destination = new Location(world, saved.x(), saved.y(), saved.z(), saved.yaw(), saved.pitch());
-        if (!world.getWorldBorder().isInside(destination)) {
-            messages.send(player, "navigation.unsafe-destination");
-            return;
-        }
-        world.getChunkAtAsync(destination).whenComplete((chunk, error) ->
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (error != null || !safe(destination)) {
-                        messages.send(player, "navigation.unsafe-destination");
-                        return;
-                    }
-                    player.teleportAsync(destination).thenAccept(teleported ->
-                            Bukkit.getScheduler().runTask(plugin, () -> messages.send(player,
-                                    teleported ? successKey : "navigation.teleport-failed",
-                                    Placeholder.unparsed("destination", saved.id()))));
-                }));
-    }
-
-    private static boolean safe(Location location) {
-        Block feet = location.getBlock();
-        Block head = feet.getRelative(0, 1, 0);
-        Block floor = feet.getRelative(0, -1, 0);
-        return feet.isPassable() && head.isPassable() && floor.getType().isSolid();
+        teleports.teleport(player, saved, outcome -> messages.send(player, switch (outcome) {
+            case SUCCESS -> successKey;
+            case WORLD_UNAVAILABLE -> "navigation.world-unavailable";
+            case UNSAFE_DESTINATION -> "navigation.unsafe-destination";
+            case FAILED -> "navigation.teleport-failed";
+        }, Placeholder.unparsed("destination", saved.id())));
     }
 
     private void sendLocation(CommandSender recipient, String key, Location location,

@@ -17,6 +17,7 @@ jobs:
 
   armourer: {category: PROFESSION, qualification: armourer, self-join: true}
   jeweller: {category: PROFESSION, qualification: jeweller, self-join: true}
+  lawyer: {category: PROFESSION, qualification: lawyer, self-join: true}
   mason: {category: PROFESSION, qualification: mason, self-join: true}
   mechanic: {category: PROFESSION, qualification: mechanic, self-join: true}
   realtor: {category: PROFESSION, qualification: realtor, self-join: true}

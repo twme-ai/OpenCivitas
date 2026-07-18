@@ -53,6 +53,8 @@ The first playable foundation includes:
   and replies, offline mail, help questions, and qualification-gated advertising
 - persistent named homes and civic warps, async safe teleport, coordinate sharing,
   configurable web-map link, and compass/action-bar GPS for registered plots
+- reciprocal friend consent, lawyer-officiated marriage, audited divorce, shared
+  partner home, unlogged partner chat, and two-sided partner PvP consent
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

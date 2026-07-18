@@ -1,0 +1,5 @@
+friend-request-expiry-hours: 72
+marriage-proposal-expiry-hours: 168
+partner-pvp-enabled-by-default: false
+lawyer-jobs: [lawyer]
+lawyer-qualifications: [lawyer]
