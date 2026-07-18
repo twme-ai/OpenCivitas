@@ -117,7 +117,8 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         JobCommand jobCommands = new JobCommand(
                 this, database, citizens, new JobRepository(database), jobRegistry, messages);
         for (String name : List.of(
-                "jobs", "job", "qualifications", "qualification", "quitjob", "quitprofession")) {
+                "jobs", "job", "qualifications", "qualification", "licenses", "license",
+                "setprefix", "quitjob", "quitprofession")) {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(jobCommands);
             command.setTabCompleter(jobCommands);

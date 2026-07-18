@@ -4,6 +4,7 @@ import dev.opencivitas.citizen.CitizenProfile;
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.job.CitizenJob;
+import dev.opencivitas.job.CitizenLicense;
 import dev.opencivitas.job.JobCategory;
 import dev.opencivitas.job.JobDefinition;
 import dev.opencivitas.job.JobJoinResult;
@@ -21,6 +22,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -70,6 +72,9 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
             case "job" -> job(sender, args);
             case "qualifications" -> viewQualifications(sender, args);
             case "qualification" -> qualification(sender, args);
+            case "licenses" -> viewLicenses(sender, args);
+            case "license" -> license(sender, args);
+            case "setprefix" -> setPrefix(sender, args);
             case "quitjob" -> quitJob(sender, args);
             case "quitprofession" -> quitProfession(sender, args);
             default -> false;
@@ -82,7 +87,10 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
         }
         complete(sender, database.submit(() -> {
             Optional<CitizenProfile> profile = profile(sender, args);
-            return new JobsView(profile, profile.isEmpty() ? List.of() : jobs.jobs(profile.get().uuid()));
+            return new JobsView(
+                    profile,
+                    profile.isEmpty() ? List.of() : jobs.jobs(profile.get().uuid()),
+                    profile.isEmpty() ? Optional.empty() : jobs.prefix(profile.get().uuid()));
         }), view -> {
             if (view.profile().isEmpty()) {
                 notFound(sender, args);
@@ -90,6 +98,8 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
             }
             messages.send(sender, "jobs.header",
                     Placeholder.unparsed("player", view.profile().get().lastName()));
+            view.prefix().ifPresent(prefix -> messages.send(sender, "jobs.prefix-current",
+                    Placeholder.unparsed("job", displayName(prefix))));
             if (view.jobs().isEmpty()) {
                 messages.send(sender, "jobs.empty");
                 return;
@@ -127,6 +137,111 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
             for (String qualification : view.qualifications()) {
                 messages.send(sender, "qualifications.entry",
                         Placeholder.unparsed("qualification", displayName(qualification)));
+            }
+        });
+        return true;
+    }
+
+    private boolean viewLicenses(CommandSender sender, String[] args) {
+        if (!validateProfileLookup(sender, args, "/licenses [player]")) return true;
+        complete(sender, database.submit(() -> {
+            Optional<CitizenProfile> profile = profile(sender, args);
+            return new LicensesView(profile, profile.isEmpty()
+                    ? List.of() : jobs.licenses(profile.get().uuid(), System.currentTimeMillis()));
+        }), view -> {
+            if (view.profile().isEmpty()) {
+                notFound(sender, args);
+                return;
+            }
+            messages.send(sender, "licenses.header",
+                    Placeholder.unparsed("player", view.profile().get().lastName()));
+            if (view.licenses().isEmpty()) messages.send(sender, "licenses.empty");
+            for (CitizenLicense license : view.licenses()) {
+                messages.send(sender, license.expiresAt() == null
+                                ? "licenses.entry-permanent" : "licenses.entry-expiring",
+                        Placeholder.unparsed("license", displayName(license.id())),
+                        Placeholder.unparsed("expires", license.expiresAt() == null ? "" : license.expiresAt().toString()));
+            }
+        });
+        return true;
+    }
+
+    private boolean license(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("opencivitas.licenses.manage")) {
+            messages.send(sender, "error.no-permission");
+            return true;
+        }
+        if (args.length < 3 || args.length > 4
+                || (!args[0].equalsIgnoreCase("grant") && !args[0].equalsIgnoreCase("revoke"))) {
+            usage(sender, "/license <grant|revoke> <player> <license> [days|permanent]");
+            return true;
+        }
+        String license = args[2].toLowerCase(Locale.ROOT);
+        if (!QUALIFICATION_ID.matcher(license).matches()) {
+            messages.send(sender, "licenses.invalid");
+            return true;
+        }
+        boolean grant = args[0].equalsIgnoreCase("grant");
+        if (!grant && args.length != 3) {
+            usage(sender, "/license revoke <player> <license>");
+            return true;
+        }
+        long now = System.currentTimeMillis();
+        Long expires = null;
+        if (grant && args.length == 4 && !args[3].equalsIgnoreCase("permanent")) {
+            try {
+                int days = Integer.parseInt(args[3]);
+                if (days < 1 || days > 3650) throw new NumberFormatException("Days outside range");
+                expires = Math.addExact(now, Duration.ofDays(days).toMillis());
+            } catch (NumberFormatException | ArithmeticException exception) {
+                messages.send(sender, "licenses.invalid-days");
+                return true;
+            }
+        }
+        UUID actor = sender instanceof Player player ? player.getUniqueId() : null;
+        Long selectedExpiry = expires;
+        complete(sender, database.submit(() -> {
+            Optional<CitizenProfile> target = citizens.findByName(args[1]);
+            boolean changed = target.isPresent() && (grant
+                    ? jobs.grantLicense(target.get().uuid(), license, actor, selectedExpiry, now)
+                    : jobs.revokeLicense(target.get().uuid(), license));
+            return new LicenseChange(target, changed);
+        }), outcome -> {
+            if (outcome.profile().isEmpty()) {
+                notFound(sender, new String[]{args[1]});
+                return;
+            }
+            messages.send(sender, outcome.changed()
+                            ? grant ? "licenses.granted" : "licenses.revoked"
+                            : "licenses.not-held",
+                    Placeholder.unparsed("player", outcome.profile().get().lastName()),
+                    Placeholder.unparsed("license", displayName(license)));
+        });
+        return true;
+    }
+
+    private boolean setPrefix(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.player-only");
+            return true;
+        }
+        if (args.length != 1) {
+            usage(sender, "/setprefix <job|clear>");
+            return true;
+        }
+        String selected = args[0].equalsIgnoreCase("clear") ? null : args[0].toLowerCase(Locale.ROOT);
+        if (selected != null && registry.find(selected).isEmpty()) {
+            unknownJob(sender, selected);
+            return true;
+        }
+        complete(sender, database.submit(() -> jobs.setPrefix(
+                player.getUniqueId(), selected, System.currentTimeMillis())), changed -> {
+            if (!changed) {
+                messages.send(sender, "jobs.not-held", Placeholder.unparsed("job", displayName(selected)));
+            } else if (selected == null) {
+                messages.send(sender, "jobs.prefix-cleared");
+            } else {
+                messages.send(sender, "jobs.prefix-set", Placeholder.unparsed("job", displayName(selected)));
             }
         });
         return true;
@@ -416,7 +531,7 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
     ) {
         String name = command.getName().toLowerCase(Locale.ROOT);
         List<String> jobIds = registry.all().stream().map(JobDefinition::id).toList();
-        if ((name.equals("jobs") || name.equals("qualifications")) && args.length == 1) {
+        if ((name.equals("jobs") || name.equals("qualifications") || name.equals("licenses")) && args.length == 1) {
             return filter(args[0], onlineNames());
         }
         if (name.equals("quitjob") && args.length == 1) {
@@ -449,6 +564,15 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
             if (args.length == 3) {
                 return filter(args[2], registry.all().stream().map(JobDefinition::qualification).distinct().toList());
             }
+        }
+        if (name.equals("license")) {
+            if (args.length == 1) return filter(args[0], List.of("grant", "revoke"));
+            if (args.length == 2) return filter(args[1], onlineNames());
+        }
+        if (name.equals("setprefix") && args.length == 1) {
+            List<String> values = new ArrayList<>(jobIds);
+            values.add("clear");
+            return filter(args[0], values);
         }
         return List.of();
     }
@@ -486,10 +610,17 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
         return tail;
     }
 
-    private record JobsView(Optional<CitizenProfile> profile, List<CitizenJob> jobs) {
+    private record JobsView(
+            Optional<CitizenProfile> profile,
+            List<CitizenJob> jobs,
+            Optional<String> prefix
+    ) {
     }
 
     private record QualificationsView(Optional<CitizenProfile> profile, List<String> qualifications) {
+    }
+
+    private record LicensesView(Optional<CitizenProfile> profile, List<CitizenLicense> licenses) {
     }
 
     private record EmploymentResult(Optional<CitizenProfile> profile, JobJoinResult result) {
@@ -499,5 +630,8 @@ public final class JobCommand implements CommandExecutor, TabCompleter {
     }
 
     private record QualificationChange(Optional<CitizenProfile> profile, boolean changed) {
+    }
+
+    private record LicenseChange(Optional<CitizenProfile> profile, boolean changed) {
     }
 }

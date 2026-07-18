@@ -15,6 +15,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JobRepositoryTest {
@@ -106,6 +107,32 @@ class JobRepositoryTest {
         assertTrue(jobs.revokeQualification(PLAYER, "miner"));
         assertFalse(jobs.revokeQualification(PLAYER, "miner"));
         assertTrue(jobs.qualifications(PLAYER).isEmpty());
+    }
+
+    @Test
+    void licensesSupportPermanentExpiryRenewalAndRevocation() throws Exception {
+        assertTrue(jobs.grantLicense(PLAYER, "drivers", ADMIN, null, 1_000));
+        assertEquals("drivers", jobs.licenses(PLAYER, 2_000).getFirst().id());
+        assertNull(jobs.licenses(PLAYER, 2_000).getFirst().expiresAt());
+
+        assertTrue(jobs.grantLicense(PLAYER, "drivers", ADMIN, 5_000L, 2_000));
+        assertEquals(1, jobs.licenses(PLAYER, 4_999).size());
+        assertTrue(jobs.licenses(PLAYER, 5_000).isEmpty());
+        assertTrue(jobs.revokeLicense(PLAYER, "drivers"));
+        assertFalse(jobs.revokeLicense(PLAYER, "drivers"));
+    }
+
+    @Test
+    void prefixMustBeAJobCurrentlyHeldByPlayer() throws Exception {
+        assertFalse(jobs.setPrefix(PLAYER, "miner", 1_000));
+        qualify(MINER);
+        jobs.join(PLAYER, MINER, 2);
+        assertTrue(jobs.setPrefix(PLAYER, "miner", 2_000));
+        assertEquals("miner", jobs.prefix(PLAYER).orElseThrow());
+
+        jobs.leave(PLAYER, "miner");
+        assertTrue(jobs.prefix(PLAYER).isEmpty());
+        assertTrue(jobs.setPrefix(PLAYER, null, 3_000));
     }
 
     private void qualify(JobDefinition... definitions) throws Exception {

@@ -36,6 +36,10 @@ behavioral reference, not a source of copyable implementation or content.
   slot limits, and join/leave lifecycle patterns (Apache-2.0). The public
   `commands/list/join.java` and `container/JobsPlayer.java` implementations were
   inspected before the OpenCivitas enrollment transaction was designed.
+- The current DemocracyCraft command reference documents `/licenses [player]`
+  and `/setprefix <job>`. OpenCivitas stores license expiry separately from
+  job qualifications and only resolves a displayed prefix while that job is
+  still held, preventing a stale selection from implying a current role.
 - [VaultAPI](https://github.com/MilkBowl/VaultAPI): common economy service
   contract and compatibility expectations (LGPL-3.0).
 - [QuickShop-Hikari](https://github.com/QuickShop-Community/QuickShop-Hikari):

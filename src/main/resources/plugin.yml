@@ -39,6 +39,15 @@ commands:
   qualification:
     description: Manage citizen qualifications.
     usage: /qualification <grant|revoke> <player> <qualification>
+  licenses:
+    description: View a citizen's active licenses.
+    usage: /licenses [player]
+  license:
+    description: Grant or revoke citizen licenses.
+    usage: /license <grant|revoke> <player> <license> [days|permanent]
+  setprefix:
+    description: Select one of your jobs as your displayed prefix.
+    usage: /setprefix <job|clear>
   quitjob:
     description: Leave a trade job.
     usage: /quitjob <job>
@@ -100,6 +109,9 @@ permissions:
     default: op
   opencivitas.qualifications.manage:
     description: Grant and revoke citizen qualifications.
+    default: op
+  opencivitas.licenses.manage:
+    description: Grant and revoke citizen licenses.
     default: op
   opencivitas.university.setwarp:
     description: Set the university warp.

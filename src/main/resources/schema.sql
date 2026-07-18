@@ -47,6 +47,24 @@ CREATE TABLE IF NOT EXISTS citizen_jobs (
 CREATE INDEX IF NOT EXISTS idx_citizen_jobs_player_category
     ON citizen_jobs(player_uuid, category);
 
+CREATE TABLE IF NOT EXISTS licenses (
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    license_id TEXT NOT NULL,
+    granted_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    granted_at INTEGER NOT NULL,
+    expires_at INTEGER,
+    PRIMARY KEY (player_uuid, license_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_licenses_player_expires
+    ON licenses(player_uuid, expires_at, license_id);
+
+CREATE TABLE IF NOT EXISTS player_prefixes (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    job_id TEXT NOT NULL,
+    selected_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS exam_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,

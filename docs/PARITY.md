@@ -10,7 +10,7 @@ legally or meaningfully copied from another server.
 | Messages | MiniMessage and player-selectable locales | implemented |
 | Identity | persistent profiles, last known name, join timestamps | implemented |
 | Economy | `$1,200` start, balances, payments, transaction history | implemented |
-| Jobs | two trades, one profession, unlimited government jobs | in progress: persistent membership, qualification gates, limits, appointments |
+| Jobs | two trades, one profession, unlimited government jobs | in progress: persistent membership, qualification gates, limits, appointments, licenses, verified prefix selection; action earnings remain |
 | University | exams and qualifications for jobs/licenses | in progress: localized exam engine, attempt ledger, qualification awards, warp |
 | Shops | chest buy/sell, stack modifiers, item search, sales history | in progress: persistent personal/firm shops, sign creation, click/shift-click settlement, search, history, stock and capacity checks |
 | Businesses | licensed firms, staff, accounts, deposits, withdrawals, sales | in progress: accounts, offers, five ranks, wages/payroll, ownership, ledgers, firm shops and sales history; custom roles remain |

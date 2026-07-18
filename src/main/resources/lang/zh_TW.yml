@@ -73,6 +73,9 @@ jobs:
   fired: '<green>已移除 <player> 的 <job> 工作。</green>'
   profession-left: '<green>你已離開目前的專業工作。</green>'
   no-profession: '<red>你目前沒有專業工作。</red>'
+  prefix-set: '<green>目前顯示的職業已設為 <job>。</green>'
+  prefix-cleared: '<green>已清除顯示的職業前綴。</green>'
+  prefix-current: '<gray>目前顯示的職業：</gray> <white><job></white>'
   category:
     trade: '一般職業'
     profession: '專業職業'
@@ -86,6 +89,16 @@ qualifications:
   already-held: '<yellow><player> 已擁有 <qualification> 資格。</yellow>'
   not-held: '<yellow><player> 沒有 <qualification> 資格。</yellow>'
   invalid: '<red>資格 ID 僅能使用小寫英文字母、數字與連字號。</red>'
+licenses:
+  header: '<gold><player> 持有的有效執照：</gold>'
+  empty: '<gray>沒有有效執照。</gray>'
+  entry-permanent: '<dark_gray>-</dark_gray> <white><license></white> <gray>（永久）</gray>'
+  entry-expiring: '<dark_gray>-</dark_gray> <white><license></white> <gray>（到期：<expires>）</gray>'
+  granted: '<green>已授予 <player> <license> 執照。</green>'
+  revoked: '<green>已撤銷 <player> 的 <license> 執照。</green>'
+  not-held: '<yellow><player> 沒有 <license> 執照。</yellow>'
+  invalid: '<red>執照 ID 僅能使用小寫英文字母、數字與連字號。</red>'
+  invalid-days: '<red>執照效期必須介於 1 至 3650 天，或設為 permanent。</red>'
 exams:
   list-header: '<gold>大學考試：</gold>'
   list-entry: '<dark_gray>-</dark_gray> <white><exam></white> <gray>授予 <qualification></gray>'

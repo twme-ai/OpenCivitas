@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class JobRepository {
@@ -55,6 +56,105 @@ public final class JobRepository {
                     qualifications.add(results.getString(1));
                 }
                 return List.copyOf(qualifications);
+            }
+        }
+    }
+
+    public List<CitizenLicense> licenses(UUID playerId, long now) throws SQLException {
+        String sql = """
+                SELECT license_id, granted_at, expires_at FROM licenses
+                WHERE player_uuid = ? AND (expires_at IS NULL OR expires_at > ?)
+                ORDER BY license_id
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, playerId.toString());
+            statement.setLong(2, now);
+            try (ResultSet results = statement.executeQuery()) {
+                List<CitizenLicense> licenses = new ArrayList<>();
+                while (results.next()) {
+                    long expires = results.getLong("expires_at");
+                    boolean permanent = results.wasNull();
+                    licenses.add(new CitizenLicense(
+                            results.getString("license_id"),
+                            Instant.ofEpochMilli(results.getLong("granted_at")),
+                            permanent ? null : Instant.ofEpochMilli(expires)));
+                }
+                return List.copyOf(licenses);
+            }
+        }
+    }
+
+    public boolean grantLicense(
+            UUID playerId, String license, UUID grantedBy, Long expiresAt, long now) throws SQLException {
+        String sql = """
+                INSERT INTO licenses(player_uuid, license_id, granted_by, granted_at, expires_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(player_uuid, license_id) DO UPDATE SET
+                    granted_by = excluded.granted_by,
+                    granted_at = excluded.granted_at,
+                    expires_at = excluded.expires_at
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, playerId.toString());
+            if (grantedBy == null) statement.setNull(3, java.sql.Types.VARCHAR);
+            else statement.setString(3, grantedBy.toString());
+            statement.setString(2, license);
+            statement.setLong(4, now);
+            if (expiresAt == null) statement.setNull(5, java.sql.Types.BIGINT);
+            else statement.setLong(5, expiresAt);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    public boolean revokeLicense(UUID playerId, String license) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "DELETE FROM licenses WHERE player_uuid = ? AND license_id = ?")) {
+            statement.setString(1, playerId.toString());
+            statement.setString(2, license);
+            return statement.executeUpdate() == 1;
+        }
+    }
+
+    public boolean setPrefix(UUID playerId, String jobId, long now) throws SQLException {
+        try (Connection connection = database.openConnection()) {
+            if (jobId == null) {
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM player_prefixes WHERE player_uuid = ?")) {
+                    statement.setString(1, playerId.toString());
+                    statement.executeUpdate();
+                    return true;
+                }
+            }
+            if (!hasJob(connection, playerId, jobId)) {
+                return false;
+            }
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    INSERT INTO player_prefixes(player_uuid, job_id, selected_at) VALUES (?, ?, ?)
+                    ON CONFLICT(player_uuid) DO UPDATE SET job_id = excluded.job_id, selected_at = excluded.selected_at
+                    """)) {
+                statement.setString(1, playerId.toString());
+                statement.setString(2, jobId);
+                statement.setLong(3, now);
+                statement.executeUpdate();
+                return true;
+            }
+        }
+    }
+
+    public Optional<String> prefix(UUID playerId) throws SQLException {
+        String sql = """
+                SELECT prefix.job_id FROM player_prefixes prefix
+                JOIN citizen_jobs job ON job.player_uuid = prefix.player_uuid AND job.job_id = prefix.job_id
+                WHERE prefix.player_uuid = ?
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, playerId.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(results.getString(1)) : Optional.empty();
             }
         }
     }

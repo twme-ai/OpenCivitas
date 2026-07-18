@@ -73,6 +73,9 @@ jobs:
   fired: '<green>Removed <player> from <job>.</green>'
   profession-left: '<green>You left your profession.</green>'
   no-profession: '<red>You do not currently hold a profession.</red>'
+  prefix-set: '<green>Your displayed job is now <job>.</green>'
+  prefix-cleared: '<green>Your displayed job prefix was cleared.</green>'
+  prefix-current: '<gray>Displayed job:</gray> <white><job></white>'
   category:
     trade: 'trade'
     profession: 'profession'
@@ -86,6 +89,16 @@ qualifications:
   already-held: '<yellow><player> already has <qualification>.</yellow>'
   not-held: '<yellow><player> does not have <qualification>.</yellow>'
   invalid: '<red>Qualification IDs use lowercase letters, numbers, and hyphens.</red>'
+licenses:
+  header: '<gold>Active licenses held by <player>:</gold>'
+  empty: '<gray>No active licenses.</gray>'
+  entry-permanent: '<dark_gray>-</dark_gray> <white><license></white> <gray>(permanent)</gray>'
+  entry-expiring: '<dark_gray>-</dark_gray> <white><license></white> <gray>(expires <expires>)</gray>'
+  granted: '<green>Granted <license> to <player>.</green>'
+  revoked: '<green>Revoked <license> from <player>.</green>'
+  not-held: '<yellow><player> does not hold <license>.</yellow>'
+  invalid: '<red>License IDs use lowercase letters, numbers, and hyphens.</red>'
+  invalid-days: '<red>License duration must be from 1 to 3650 days, or permanent.</red>'
 exams:
   list-header: '<gold>University exams:</gold>'
   list-entry: '<dark_gray>-</dark_gray> <white><exam></white> <gray>awards <qualification></gray>'

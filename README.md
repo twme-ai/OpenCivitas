@@ -21,6 +21,7 @@ The first playable foundation includes:
 - Configurable starting balance (default `$1,200`)
 - `/balance`, `/baltop`, `/pay`, `/transactions`, `/about`, and `/locale`
 - persistent qualifications and job membership
+- permanent/expiring licenses and verified displayed-job prefix selection
 - two-trade, one-profession, and unlimited government-role limits
 - self-service career enrollment plus administrative appointments
 - localized, configurable university exams with auditable attempts
