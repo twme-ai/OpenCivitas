@@ -1,0 +1,43 @@
+limits:
+  trade: 2
+  profession: 1
+
+jobs:
+  brewer: {category: TRADE, qualification: brewer, self-join: true}
+  carpenter: {category: TRADE, qualification: carpenter, self-join: true}
+  chef: {category: TRADE, qualification: chef, self-join: true}
+  contractor: {category: TRADE, qualification: contractor, self-join: true}
+  designer: {category: TRADE, qualification: designer, self-join: true}
+  farmer: {category: TRADE, qualification: farmer, self-join: true}
+  fisher: {category: TRADE, qualification: fisher, self-join: true}
+  journalist: {category: TRADE, qualification: journalist, self-join: true}
+  lumberjack: {category: TRADE, qualification: lumberjack, self-join: true}
+  miner: {category: TRADE, qualification: miner, self-join: true}
+  hunter: {category: TRADE, qualification: hunter, self-join: true}
+
+  armourer: {category: PROFESSION, qualification: armourer, self-join: true}
+  jeweller: {category: PROFESSION, qualification: jeweller, self-join: true}
+  mason: {category: PROFESSION, qualification: mason, self-join: true}
+  mechanic: {category: PROFESSION, qualification: mechanic, self-join: true}
+  realtor: {category: PROFESSION, qualification: realtor, self-join: true}
+
+  archivist: {category: GOVERNMENT, qualification: archivist, self-join: false}
+  auditor: {category: GOVERNMENT, qualification: auditor, self-join: false}
+  building-inspector: {category: GOVERNMENT, qualification: building-inspector, self-join: false}
+  constructor: {category: GOVERNMENT, qualification: constructor, self-join: false}
+  detective: {category: GOVERNMENT, qualification: detective, self-join: false}
+  doctor: {category: GOVERNMENT, qualification: doctor, self-join: false}
+  economist: {category: GOVERNMENT, qualification: economist, self-join: false}
+  electoral-officer: {category: GOVERNMENT, qualification: electoral-officer, self-join: false}
+  epidemiologist: {category: GOVERNMENT, qualification: epidemiologist, self-join: false}
+  event-coordinator: {category: GOVERNMENT, qualification: event-coordinator, self-join: false}
+  guide: {category: GOVERNMENT, qualification: guide, self-join: false}
+  investigator: {category: GOVERNMENT, qualification: investigator, self-join: false}
+  media-advisor: {category: GOVERNMENT, qualification: media-advisor, self-join: false}
+  medical-specialist: {category: GOVERNMENT, qualification: medical-specialist, self-join: false}
+  paramedic: {category: GOVERNMENT, qualification: paramedic, self-join: false}
+  police-officer: {category: GOVERNMENT, qualification: police-officer, self-join: false}
+  professor: {category: GOVERNMENT, qualification: professor, self-join: false}
+  prosecutor: {category: GOVERNMENT, qualification: prosecutor, self-join: false}
+  ranger: {category: GOVERNMENT, qualification: ranger, self-join: false}
+  supply-officer: {category: GOVERNMENT, qualification: supply-officer, self-join: false}

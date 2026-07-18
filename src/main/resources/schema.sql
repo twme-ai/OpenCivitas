@@ -26,3 +26,23 @@ CREATE TABLE IF NOT EXISTS ledger_entries (
 
 CREATE INDEX IF NOT EXISTS idx_ledger_player_created
     ON ledger_entries(player_uuid, created_at DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS qualifications (
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    qualification_id TEXT NOT NULL,
+    granted_by TEXT,
+    granted_at INTEGER NOT NULL,
+    PRIMARY KEY (player_uuid, qualification_id)
+);
+
+CREATE TABLE IF NOT EXISTS citizen_jobs (
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    job_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    joined_at INTEGER NOT NULL,
+    appointed_by TEXT,
+    PRIMARY KEY (player_uuid, job_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_citizen_jobs_player_category
+    ON citizen_jobs(player_uuid, category);

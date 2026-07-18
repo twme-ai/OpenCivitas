@@ -2,8 +2,11 @@ package dev.opencivitas;
 
 import dev.opencivitas.citizen.CitizenRepository;
 import dev.opencivitas.command.CivitasCommand;
+import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.Money;
+import dev.opencivitas.job.JobRegistry;
+import dev.opencivitas.job.JobRepository;
 import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
 import org.bukkit.command.PluginCommand;
@@ -60,6 +63,23 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(commands);
             command.setTabCompleter(commands);
+        }
+
+        JobRegistry jobRegistry;
+        try {
+            jobRegistry = new JobRegistry(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load jobs.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        JobCommand jobCommands = new JobCommand(
+                this, database, citizens, new JobRepository(database), jobRegistry, messages);
+        for (String name : List.of(
+                "jobs", "job", "qualifications", "qualification", "quitjob", "quitprofession")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(jobCommands);
+            command.setTabCompleter(jobCommands);
         }
 
         getServer().getPluginManager().registerEvents(

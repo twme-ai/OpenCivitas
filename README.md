@@ -20,6 +20,9 @@ The first playable foundation includes:
 - SQLite persistence with an auditable per-account ledger
 - Configurable starting balance (default `$1,200`)
 - `/balance`, `/pay`, `/transactions`, `/about`, and `/locale`
+- persistent qualifications and job membership
+- two-trade, one-profession, and unlimited government-role limits
+- self-service career enrollment plus administrative appointments
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).

@@ -32,7 +32,10 @@ behavioral reference, not a source of copyable implementation or content.
 - [Adventure](https://github.com/PaperMC/adventure): components, MiniMessage,
   audiences, and localization building blocks.
 - [Jobs Reborn](https://github.com/Zrips/Jobs): configurable job actions,
-  progression, and economy integration patterns (Apache-2.0).
+  progression, qualification/permission checks, duplicate membership checks,
+  slot limits, and join/leave lifecycle patterns (Apache-2.0). The public
+  `commands/list/join.java` and `container/JobsPlayer.java` implementations were
+  inspected before the OpenCivitas enrollment transaction was designed.
 - [VaultAPI](https://github.com/MilkBowl/VaultAPI): common economy service
   contract and compatibility expectations (LGPL-3.0).
 - [QuickShop-Hikari](https://github.com/QuickShop-Community/QuickShop-Hikari):

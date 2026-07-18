@@ -24,6 +24,24 @@ commands:
   locale:
     description: Select a message language.
     usage: /locale [list|set <locale>|reset]
+  jobs:
+    description: View a citizen's active jobs.
+    usage: /jobs [player]
+  job:
+    description: Browse, join, leave, or manage jobs.
+    usage: /job <list|join|quit|employ|fire>
+  qualifications:
+    description: View a citizen's qualifications.
+    usage: /qualifications [player]
+  qualification:
+    description: Manage citizen qualifications.
+    usage: /qualification <grant|revoke> <player> <qualification>
+  quitjob:
+    description: Leave a trade job.
+    usage: /quitjob <job>
+  quitprofession:
+    description: Leave your current profession.
+    usage: /quitprofession
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -31,3 +49,12 @@ permissions:
   opencivitas.about.others:
     description: View another player's public profile.
     default: true
+  opencivitas.jobs.others:
+    description: View another player's jobs and qualifications.
+    default: true
+  opencivitas.jobs.manage:
+    description: Appoint and dismiss citizens from jobs.
+    default: op
+  opencivitas.qualifications.manage:
+    description: Grant and revoke citizen qualifications.
+    default: op
