@@ -46,7 +46,12 @@ public final class CitizenListener implements Listener {
         UUID playerId = player.getUniqueId();
         String playerName = player.getName();
         String clientLocale = player.locale().toString();
-        database.submit(() -> citizens.register(playerId, playerName, clientLocale, startingBalanceCents))
+        long joinedAt = System.currentTimeMillis();
+        database.submit(() -> {
+            var registration = citizens.register(playerId, playerName, clientLocale, startingBalanceCents);
+            citizens.startActivitySession(playerId, joinedAt);
+            return registration;
+        })
                 .whenComplete((registration, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
                     if (error != null) {
                         plugin.getLogger().log(Level.SEVERE, "Could not register citizen " + playerName, error);
@@ -68,8 +73,10 @@ public final class CitizenListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
+        long quitAt = System.currentTimeMillis();
         messages.clear(playerId);
         database.submit(() -> {
+            citizens.endActivitySession(playerId, quitAt);
             citizens.updateLastSeen(playerId);
             return null;
         }).exceptionally(error -> {

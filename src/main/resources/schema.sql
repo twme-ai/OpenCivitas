@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS players (
 CREATE INDEX IF NOT EXISTS idx_players_last_name
     ON players(last_name COLLATE NOCASE);
 
+CREATE TABLE IF NOT EXISTS player_activity_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    started_at INTEGER NOT NULL,
+    last_activity_at INTEGER NOT NULL CHECK (last_activity_at >= started_at),
+    ended_at INTEGER CHECK (ended_at IS NULL OR ended_at >= started_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_activity_player_started
+    ON player_activity_sessions(player_uuid, started_at, last_activity_at);
+
 CREATE TABLE IF NOT EXISTS accounts (
     player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
     balance_cents INTEGER NOT NULL CHECK (balance_cents >= 0)
@@ -64,6 +75,94 @@ CREATE TABLE IF NOT EXISTS player_prefixes (
     job_id TEXT NOT NULL,
     selected_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS elections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    title TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('OFFICE', 'REFERENDUM')),
+    office_id TEXT,
+    method TEXT NOT NULL CHECK (method IN ('IRV', 'STV', 'REFERENDUM')),
+    seats INTEGER NOT NULL CHECK (seats > 0),
+    term_days INTEGER NOT NULL CHECK (term_days >= 0),
+    running_mate_required INTEGER NOT NULL DEFAULT 0 CHECK (running_mate_required IN (0, 1)),
+    running_mate_office TEXT,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED', 'CANCELLED')),
+    created_by TEXT REFERENCES players(uuid) ON DELETE SET NULL,
+    created_at INTEGER NOT NULL,
+    nominations_close_at INTEGER NOT NULL,
+    voting_opens_at INTEGER NOT NULL,
+    voting_closes_at INTEGER NOT NULL,
+    closed_at INTEGER,
+    CHECK (nominations_close_at <= voting_opens_at),
+    CHECK (voting_opens_at < voting_closes_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_elections_status_close
+    ON elections(status, voting_closes_at, id);
+
+CREATE TABLE IF NOT EXISTS election_choices (
+    election_id INTEGER NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
+    choice_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    candidate_uuid TEXT REFERENCES players(uuid) ON DELETE RESTRICT,
+    running_mate_uuid TEXT REFERENCES players(uuid) ON DELETE RESTRICT,
+    running_mate_name TEXT,
+    nominated_at INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'WITHDRAWN')),
+    PRIMARY KEY (election_id, choice_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_election_candidate_once
+    ON election_choices(election_id, candidate_uuid) WHERE candidate_uuid IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS election_voters (
+    election_id INTEGER NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
+    voter_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    ballot_id TEXT NOT NULL UNIQUE,
+    cast_at INTEGER NOT NULL,
+    PRIMARY KEY (election_id, voter_uuid)
+);
+
+CREATE TABLE IF NOT EXISTS election_ballot_preferences (
+    ballot_id TEXT NOT NULL REFERENCES election_voters(ballot_id) ON DELETE CASCADE,
+    rank INTEGER NOT NULL CHECK (rank > 0),
+    choice_id TEXT NOT NULL,
+    PRIMARY KEY (ballot_id, rank),
+    UNIQUE (ballot_id, choice_id)
+);
+
+CREATE TABLE IF NOT EXISTS election_round_results (
+    election_id INTEGER NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
+    round_number INTEGER NOT NULL CHECK (round_number > 0),
+    choice_id TEXT NOT NULL,
+    tally_micros INTEGER NOT NULL CHECK (tally_micros >= 0),
+    disposition TEXT,
+    PRIMARY KEY (election_id, round_number, choice_id)
+);
+
+CREATE TABLE IF NOT EXISTS election_results (
+    election_id INTEGER NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
+    choice_id TEXT NOT NULL,
+    placement INTEGER NOT NULL CHECK (placement > 0),
+    elected INTEGER NOT NULL CHECK (elected IN (0, 1)),
+    final_tally_micros INTEGER NOT NULL CHECK (final_tally_micros >= 0),
+    PRIMARY KEY (election_id, choice_id)
+);
+
+CREATE TABLE IF NOT EXISTS office_terms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    office_id TEXT NOT NULL,
+    seat_number INTEGER NOT NULL CHECK (seat_number > 0),
+    holder_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,
+    election_id INTEGER REFERENCES elections(id) ON DELETE SET NULL,
+    started_at INTEGER NOT NULL,
+    ends_at INTEGER NOT NULL CHECK (ends_at > started_at),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'EXPIRED', 'SUPERSEDED', 'VACATED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_office_terms_active
+    ON office_terms(office_id, status, ends_at, seat_number);
 
 CREATE TABLE IF NOT EXISTS exam_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

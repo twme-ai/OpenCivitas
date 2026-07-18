@@ -52,6 +52,24 @@ behavioral reference, not a source of copyable implementation or content.
   spatial authorization.
 - [ElectionPlugin](https://github.com/lucasperecin/ElectionPlugin): modern Paper
   election command and persistence reference.
+- A [10 June 2026 archive of DemocracyCraft Government revision 9394](https://web.archive.org/web/20260610182933/https://wiki.democracycraft.net/Government)
+  was inspected while the live wiki returned HTTP 500. It documents 11 House seats
+  elected by STV for two months, two staggered three-seat Senate classes serving
+  four months, four-month presidential IRV, and the 24/72/300-hour candidate
+  thresholds with 12 recent hours. The
+  [archived Vice President revision 9309](https://web.archive.org/web/20260610182952/https://wiki.democracycraft.net/Vice_president)
+  establishes four months of citizenship, 150 total hours, 12 recent hours,
+  and exclusion of the most recently elected president for running mates.
+- [single-transferable-vote](https://github.com/buzzlawless/single-transferable-vote):
+  MIT-licensed Droop quota, candidate elimination, surplus transfer, and result
+  test reference. OpenCivitas implements its own immutable ballots and
+  fractional transfer counter, with every round persisted for deterministic
+  recount and audit.
+- ElectionPlugin's current `ElectionManager` and command implementations were
+  inspected for candidate lifecycle, one-vote enforcement, result publication,
+  persistence, and multilingual command expectations. OpenCivitas replaces its
+  name-keyed flat-file ballots with transactional UUID identities, replaceable
+  ranked ballots, scheduled phases, and SQLite result history.
 - [QuizMaster](https://github.com/Ansandr/QuizMaster): MIT-licensed question,
   option, active-session, pass-score, and configuration model. Its public
   `QuizManager`, `QuizHandler`, and `QuizConfiguration` were inspected before

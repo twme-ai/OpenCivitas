@@ -124,6 +124,20 @@ class CitizenRepositoryTest {
         assertTrue(repository.balanceTop(10, 2).isEmpty());
     }
 
+    @Test
+    void activitySessionsUseHeartbeatsToAvoidCountingOfflineCrashTime() throws Exception {
+        repository.register(ALICE, "Alice", "en_US", 0);
+        repository.startActivitySession(ALICE, 1_000);
+        repository.heartbeatActivity(ALICE, 2_000);
+        repository.startActivitySession(ALICE, 10_000);
+        repository.endActivitySession(ALICE, 12_000);
+
+        CitizenActivity activity = repository.activity(ALICE, 1_500);
+
+        assertEquals(3_000, activity.total().toMillis());
+        assertEquals(2_500, activity.recent().toMillis());
+    }
+
     private void registerBoth() throws Exception {
         repository.register(ALICE, "Alice", "en_US", 120_000);
         repository.register(BOB, "Bob", "en_US", 120_000);

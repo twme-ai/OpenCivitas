@@ -1,0 +1,46 @@
+offices:
+  house:
+    method: STV
+    seats: 11
+    term-days: 61
+    eligibility:
+      citizenship-days: 0
+      total-hours: 24
+      recent-hours: 12
+      recent-window-days: 30
+  senate-a:
+    method: STV
+    seats: 3
+    term-days: 122
+    eligibility:
+      citizenship-days: 0
+      total-hours: 72
+      recent-hours: 12
+      recent-window-days: 30
+  senate-b:
+    method: STV
+    seats: 3
+    term-days: 122
+    eligibility:
+      citizenship-days: 0
+      total-hours: 72
+      recent-hours: 12
+      recent-window-days: 30
+  president:
+    method: IRV
+    seats: 1
+    term-days: 122
+    running-mate:
+      required: true
+      office: vice-president
+      eligibility:
+        citizenship-days: 120
+        total-hours: 150
+        recent-hours: 12
+        disallow-most-recent-president: true
+    eligibility:
+      citizenship-days: 120
+      total-hours: 300
+      recent-hours: 12
+      recent-window-days: 30
+      disallow-immediate-reelection: true

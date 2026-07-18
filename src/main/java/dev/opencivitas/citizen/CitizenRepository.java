@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +84,93 @@ public final class CitizenRepository {
             statement.setLong(1, Instant.now().toEpochMilli());
             statement.setString(2, uuid.toString());
             statement.executeUpdate();
+        }
+    }
+
+    public void startActivitySession(UUID uuid, long now) throws SQLException {
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement close = connection.prepareStatement("""
+                        UPDATE player_activity_sessions SET ended_at = last_activity_at
+                        WHERE player_uuid = ? AND ended_at IS NULL
+                        """)) {
+                    close.setString(1, uuid.toString());
+                    close.executeUpdate();
+                }
+                try (PreparedStatement insert = connection.prepareStatement("""
+                        INSERT INTO player_activity_sessions(player_uuid, started_at, last_activity_at)
+                        VALUES (?, ?, ?)
+                        """)) {
+                    insert.setString(1, uuid.toString());
+                    insert.setLong(2, now);
+                    insert.setLong(3, now);
+                    insert.executeUpdate();
+                }
+                connection.commit();
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        }
+    }
+
+    public void heartbeatActivity(UUID uuid, long now) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement("""
+                     UPDATE player_activity_sessions SET last_activity_at = ?
+                     WHERE id = (
+                         SELECT id FROM player_activity_sessions
+                         WHERE player_uuid = ? AND ended_at IS NULL
+                         ORDER BY id DESC LIMIT 1
+                     )
+                     """)) {
+            statement.setLong(1, now);
+            statement.setString(2, uuid.toString());
+            statement.executeUpdate();
+        }
+    }
+
+    public void endActivitySession(UUID uuid, long now) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement("""
+                     UPDATE player_activity_sessions SET last_activity_at = ?, ended_at = ?
+                     WHERE id = (
+                         SELECT id FROM player_activity_sessions
+                         WHERE player_uuid = ? AND ended_at IS NULL
+                         ORDER BY id DESC LIMIT 1
+                     )
+                     """)) {
+            statement.setLong(1, now);
+            statement.setLong(2, now);
+            statement.setString(3, uuid.toString());
+            statement.executeUpdate();
+        }
+    }
+
+    public CitizenActivity activity(UUID uuid, long recentSince) throws SQLException {
+        String sql = """
+                SELECT
+                    COALESCE(SUM(last_activity_at - started_at), 0) AS total_millis,
+                    COALESCE(SUM(CASE
+                        WHEN last_activity_at <= ? THEN 0
+                        WHEN started_at < ? THEN last_activity_at - ?
+                        ELSE last_activity_at - started_at
+                    END), 0) AS recent_millis
+                FROM player_activity_sessions WHERE player_uuid = ?
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, recentSince);
+            statement.setLong(2, recentSince);
+            statement.setLong(3, recentSince);
+            statement.setString(4, uuid.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                results.next();
+                return new CitizenActivity(
+                        Duration.ofMillis(results.getLong("total_millis")),
+                        Duration.ofMillis(results.getLong("recent_millis")));
+            }
         }
     }
 

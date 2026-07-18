@@ -17,8 +17,8 @@ legally or meaningfully copied from another server.
 | Auctions | item listings, bids, settlement | implemented: metadata-safe listings, browse/search, escrow bids, buyouts, refunds, cancellation rules, expiry settlement, persistent claims |
 | Property | buy, rent, refund, titleholder, tenant, trusted builders, search | in progress: registered 3D plots, purchase, fixed-term escrow/rent expiry, proportional refund, titleholder/tenant/trust, price search, protection |
 | Claims | wilderness claims, transfer, explosion policy, kick-out | in progress: 4,096-block allowance, paid expansion, menu/wand create and resize, trust, transfer, protection, explosion toggle, kick-out |
-| Government | executive, bicameral legislature, judiciary | planned |
-| Elections | STV, instant runoff, terms, eligibility, referendums | planned |
+| Government | executive, bicameral legislature, judiciary | in progress: configurable elected offices and persistent office terms; executive appointments and judiciary remain |
+| Elections | STV, instant runoff, terms, eligibility, referendums | implemented: playtime/citizenship eligibility, nominations, running mates, ranked ballot replacement, IRV, Droop-quota STV, strict-majority referendums, auditable rounds/results, automatic terms |
 | Legislature | bills, amendments, chamber votes, veto and override | planned |
 | Courts | three levels, cases, filings, orders, appeals | planned |
 | Law enforcement | reports, consent, wanted status, evidence, arrest | planned |

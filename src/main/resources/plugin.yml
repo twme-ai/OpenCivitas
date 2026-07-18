@@ -94,6 +94,10 @@ commands:
     description: Browse, list, bid on, buy, and claim auction items.
     usage: /auction <open|sell|bid|buy|cancel|claims|claim|mine|search>
     aliases: [ah, auctions]
+  election:
+    description: View elections, nominate candidates, and cast ranked ballots.
+    usage: /election <list|offices|info|nominate|withdraw|ballot|results|terms>
+    aliases: [elections]
 permissions:
   opencivitas.balance.others:
     description: View another player's balance.
@@ -130,4 +134,7 @@ permissions:
     default: op
   opencivitas.property.bypass:
     description: Build and interact in any registered property.
+    default: op
+  opencivitas.elections.manage:
+    description: Create, close, and cancel elections and referendums.
     default: op

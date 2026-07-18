@@ -8,6 +8,7 @@ import dev.opencivitas.command.BusinessCommand;
 import dev.opencivitas.command.ClaimCommand;
 import dev.opencivitas.command.CivitasCommand;
 import dev.opencivitas.command.ExamCommand;
+import dev.opencivitas.command.ElectionCommand;
 import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.ShopCommand;
@@ -16,6 +17,8 @@ import dev.opencivitas.claim.ClaimListener;
 import dev.opencivitas.claim.ClaimRegistry;
 import dev.opencivitas.claim.ClaimRepository;
 import dev.opencivitas.economy.Money;
+import dev.opencivitas.election.ElectionRegistry;
+import dev.opencivitas.election.ElectionRepository;
 import dev.opencivitas.exam.ExamRegistry;
 import dev.opencivitas.exam.ExamRepository;
 import dev.opencivitas.exam.UniversityService;
@@ -252,6 +255,48 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                         getLogger().log(Level.SEVERE, "Could not settle expired auctions", error);
                     }
                 }), 1_200L, 1_200L);
+
+        ElectionRegistry electionRegistry;
+        try {
+            electionRegistry = new ElectionRegistry(this);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load elections.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ElectionRepository electionRepository = new ElectionRepository(database);
+        try {
+            electionRepository.closeDue(System.currentTimeMillis());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not settle due elections", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        ElectionCommand electionCommands = new ElectionCommand(
+                this, database, citizens, electionRepository, electionRegistry, messages);
+        PluginCommand electionCommand = Objects.requireNonNull(getCommand("election"), "Missing command election");
+        electionCommand.setExecutor(electionCommands);
+        electionCommand.setTabCompleter(electionCommands);
+        getServer().getScheduler().runTaskTimer(this, () -> database.submit(
+                () -> electionRepository.closeDue(System.currentTimeMillis()))
+                .whenComplete((ignored, error) -> {
+                    if (error != null && isEnabled()) {
+                        getLogger().log(Level.SEVERE, "Could not settle due elections", error);
+                    }
+                }), 1_200L, 1_200L);
+
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            long now = System.currentTimeMillis();
+            List<java.util.UUID> online = getServer().getOnlinePlayers().stream()
+                    .map(org.bukkit.entity.Player::getUniqueId).toList();
+            database.submit(() -> {
+                for (java.util.UUID playerId : online) citizens.heartbeatActivity(playerId, now);
+                return null;
+            }).exceptionally(error -> {
+                if (isEnabled()) getLogger().log(Level.WARNING, "Could not record player activity", error);
+                return null;
+            });
+        }, 1_200L, 1_200L);
 
         getServer().getPluginManager().registerEvents(
                 new CitizenListener(this, database, citizens, messages, startingBalance, currencySymbol), this);
