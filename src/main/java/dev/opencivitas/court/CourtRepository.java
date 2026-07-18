@@ -469,16 +469,12 @@ public final class CourtRepository {
                 if (source.status() != CourtCaseStatus.DECIDED) {
                     return rollback(connection, CourtActionResult.NO_APPEAL);
                 }
-                if (source.level() == CourtLevel.SUPREME) {
-                    return rollback(connection, CourtActionResult.NO_APPEAL);
-                }
                 if (!source.plaintiffId().equals(appellant) && !source.defendantId().equals(appellant)) {
                     return rollback(connection, CourtActionResult.NOT_PARTY);
                 }
                 CourtLevel target = switch (source.level()) {
                     case DISTRICT -> CourtLevel.FEDERAL;
-                    case FEDERAL -> CourtLevel.SUPREME;
-                    case SUPREME -> throw new IllegalStateException("Supreme Court decisions are final");
+                    case FEDERAL, SUPREME -> CourtLevel.SUPREME;
                 };
                 String argumentText = ground.name() + ": " + argument;
                 CourtOperation created = insertCase(

@@ -186,9 +186,12 @@ class CourtRepositoryTest {
                 appeal.id(), JUSTICE_TWO, CourtOutcome.REVERSED,
                 0, 0, 0, "Separate opinion", NOW + 9);
         assertEquals(CourtCaseStatus.DECIDED, second.courtCase().orElseThrow().status());
-        assertEquals(CourtActionResult.NO_APPEAL,
-                courts.appeal(appeal.id(), PLAINTIFF, AppealGround.LAW_ERROR,
-                        "Supreme decisions are final", NOW + 10).result());
+        CourtCase rehearing = courts.appeal(
+                appeal.id(), PLAINTIFF, AppealGround.LAW_ERROR,
+                "The Supreme Court applied the wrong legal principle", NOW + 10)
+                .courtCase().orElseThrow();
+        assertEquals(CourtLevel.SUPREME, rehearing.level());
+        assertEquals(appeal.id(), rehearing.parentCaseId());
     }
 
     private void job(UUID player, String job) throws Exception {
