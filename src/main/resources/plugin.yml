@@ -50,7 +50,7 @@ commands:
     usage: /university [setwarp]
   business:
     description: Create and manage player businesses.
-    usage: /business <create|info|list|deposit|withdraw|pay|transactions|disband>
+    usage: /business <create|info|list|deposit|withdraw|pay|offer|accept|deny|offers|staff|fire|resign|role|wage|payroll|transferproprietorship|transactions|disband>
     aliases: [democracybusiness, db, firm, company]
 permissions:
   opencivitas.balance.others:

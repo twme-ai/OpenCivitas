@@ -62,6 +62,15 @@ behavioral reference, not a source of copyable implementation or content.
   preflight balance checks, commit/rollback, callbacks, and transaction events.
   OpenCivitas uses a single SQLite transaction for the current internal account
   transfers and keeps the same all-or-nothing invariant.
+- [MyCompany](https://github.com/Ez4p1xEL/MyCompany): MIT-licensed company,
+  persisted employee, hire request, position, salary, and ownership reference.
+  Its current `HireRequestManager`, `CompanyManager`, configuration, and salary
+  event were inspected before implementing restart-safe offers and payroll.
+- [Towny invitations](https://github.com/TownyAdvanced/Towny/tree/master/Towny/src/main/java/com/palmergames/bukkit/towny/invites):
+  explicit sender/receiver ownership and accept/decline lifecycle reference.
+- [QuickShop permission groups](https://github.com/QuickShop-Community/QuickShop-Hikari/blob/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/shop/SimpleShopPermissionManager.java):
+  named permission group and least-privilege shop access reference for the firm
+  hierarchy and the upcoming custom-role/shop integration.
 
 ## Build automation references
 

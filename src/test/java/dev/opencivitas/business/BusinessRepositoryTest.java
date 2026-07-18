@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BusinessRepositoryTest {
     private static final UUID OWNER = UUID.fromString("00000000-0000-0000-0000-000000000030");
     private static final UUID CUSTOMER = UUID.fromString("00000000-0000-0000-0000-000000000031");
+    private static final UUID WORKER = UUID.fromString("00000000-0000-0000-0000-000000000032");
+    private static final long NOW = 1_000_000L;
 
     @TempDir
     Path temporaryDirectory;
@@ -38,6 +40,7 @@ class BusinessRepositoryTest {
         citizens = new CitizenRepository(database);
         citizens.register(OWNER, "Owner", "en_US", 120_000);
         citizens.register(CUSTOMER, "Customer", "en_US", 120_000);
+        citizens.register(WORKER, "Worker", "en_US", 120_000);
         businesses = new BusinessRepository(database);
     }
 
@@ -133,6 +136,128 @@ class BusinessRepositoryTest {
         assertEquals(BusinessStatus.ACTIVE, businesses.find("acme").orElseThrow().status());
     }
 
+    @Test
+    void offerLifecycleIsPersistentAndAwardsConfiguredRoleAndWage() throws Exception {
+        createBusiness();
+
+        assertEquals(BusinessResult.SUCCESS, businesses.offer(
+                OWNER, "acme", CUSTOMER, BusinessRole.MANAGER, 5_000, NOW, NOW + 10_000));
+        assertEquals(BusinessResult.OFFER_EXISTS, businesses.offer(
+                OWNER, "acme", CUSTOMER, BusinessRole.EMPLOYEE, 0, NOW, NOW + 10_000));
+
+        BusinessOffer offer = businesses.offers(CUSTOMER, NOW).getFirst();
+        assertEquals("acme", offer.businessSlug());
+        assertEquals(BusinessRole.MANAGER, offer.role());
+        assertEquals(5_000, offer.wageCents());
+
+        assertEquals(BusinessResult.SUCCESS, businesses.acceptOffer(CUSTOMER, "acme", NOW + 1));
+        assertTrue(businesses.offers(CUSTOMER, NOW + 1).isEmpty());
+        BusinessMember member = businesses.members("acme").stream()
+                .filter(candidate -> candidate.playerId().equals(CUSTOMER))
+                .findFirst().orElseThrow();
+        assertEquals(BusinessRole.MANAGER, member.role());
+        assertEquals(5_000, member.wageCents());
+        assertEquals(BusinessResult.ALREADY_MEMBER, businesses.offer(
+                OWNER, "acme", CUSTOMER, BusinessRole.EMPLOYEE, 0, NOW, NOW + 10_000));
+    }
+
+    @Test
+    void expiredAndDeniedOffersCannotBeAccepted() throws Exception {
+        createBusiness();
+        businesses.offer(OWNER, "acme", CUSTOMER, BusinessRole.EMPLOYEE, 0, NOW, NOW + 10);
+        assertEquals(BusinessResult.OFFER_NOT_FOUND,
+                businesses.acceptOffer(CUSTOMER, "acme", NOW + 10));
+
+        businesses.offer(OWNER, "acme", CUSTOMER, BusinessRole.EMPLOYEE, 0, NOW, NOW + 10);
+        assertEquals(BusinessResult.OFFER_NOT_FOUND,
+                businesses.denyOffer(CUSTOMER, "acme", NOW + 10));
+
+        businesses.offer(OWNER, "acme", WORKER, BusinessRole.EMPLOYEE, 0, NOW, NOW + 10_000);
+        assertEquals(BusinessResult.SUCCESS, businesses.denyOffer(WORKER, "acme", NOW + 1));
+        assertEquals(BusinessResult.OFFER_NOT_FOUND, businesses.denyOffer(WORKER, "acme", NOW + 1));
+    }
+
+    @Test
+    void hierarchyRestrictsPromotionAndDismissal() throws Exception {
+        createBusiness();
+        employ(CUSTOMER, BusinessRole.CO_PROPRIETOR, 0);
+        employ(WORKER, BusinessRole.MANAGER, 0);
+
+        assertEquals(BusinessResult.NO_PERMISSION,
+                businesses.setRole(CUSTOMER, "acme", CUSTOMER, BusinessRole.MANAGER));
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.setRole(CUSTOMER, "acme", WORKER, BusinessRole.SUPERVISOR));
+        assertEquals(BusinessRole.SUPERVISOR, businesses.role("acme", WORKER).orElseThrow());
+        assertEquals(BusinessResult.CANNOT_REMOVE_PROPRIETOR,
+                businesses.fire(CUSTOMER, "acme", OWNER));
+        assertEquals(BusinessResult.SUCCESS, businesses.fire(CUSTOMER, "acme", WORKER));
+        assertEquals(BusinessResult.NOT_MEMBER, businesses.fire(CUSTOMER, "acme", WORKER));
+    }
+
+    @Test
+    void employeesMayResignButProprietorMustTransferOrDisband() throws Exception {
+        createBusiness();
+        employ(CUSTOMER, BusinessRole.EMPLOYEE, 0);
+
+        assertEquals(BusinessResult.CANNOT_REMOVE_PROPRIETOR, businesses.resign(OWNER, "acme"));
+        assertEquals(BusinessResult.SUCCESS, businesses.resign(CUSTOMER, "acme"));
+        assertEquals(BusinessResult.NOT_MEMBER, businesses.resign(CUSTOMER, "acme"));
+    }
+
+    @Test
+    void proprietorshipTransferUpdatesCanonicalOwnerAndRoles() throws Exception {
+        createBusiness();
+        employ(CUSTOMER, BusinessRole.EMPLOYEE, 0);
+
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.transferProprietorship(OWNER, "acme", CUSTOMER));
+
+        Business business = businesses.find("acme").orElseThrow();
+        assertEquals(CUSTOMER, business.proprietorId());
+        assertEquals(BusinessRole.PROPRIETOR, businesses.role("acme", CUSTOMER).orElseThrow());
+        assertEquals(BusinessRole.CO_PROPRIETOR, businesses.role("acme", OWNER).orElseThrow());
+        assertEquals(BusinessResult.NO_PERMISSION,
+                businesses.transferProprietorship(OWNER, "acme", WORKER));
+    }
+
+    @Test
+    void payrollPaysAllConfiguredWagesAtomically() throws Exception {
+        createBusiness();
+        employ(CUSTOMER, BusinessRole.EMPLOYEE, 10_000);
+        employ(WORKER, BusinessRole.MANAGER, 20_000);
+        businesses.deposit(OWNER, "acme", 40_000);
+
+        PayrollOperation payroll = businesses.runPayroll(OWNER, "acme");
+
+        assertEquals(BusinessResult.SUCCESS, payroll.result());
+        assertEquals(2, payroll.recipients());
+        assertEquals(30_000, payroll.totalPaidCents());
+        assertEquals(10_000, payroll.businessBalanceCents());
+        assertEquals(130_000, citizens.find(CUSTOMER).orElseThrow().balanceCents());
+        assertEquals(140_000, citizens.find(WORKER).orElseThrow().balanceCents());
+        assertEquals(3, businesses.ledger("acme", 10, 0).size());
+
+        PayrollOperation rejected = businesses.runPayroll(OWNER, "acme");
+        assertEquals(BusinessResult.INSUFFICIENT_BUSINESS_FUNDS, rejected.result());
+        assertEquals(130_000, citizens.find(CUSTOMER).orElseThrow().balanceCents());
+        assertEquals(140_000, citizens.find(WORKER).orElseThrow().balanceCents());
+        assertEquals(3, businesses.ledger("acme", 10, 0).size());
+    }
+
+    @Test
+    void staffManagerCanSetWageOnlyBelowOwnAuthority() throws Exception {
+        createBusiness();
+        employ(CUSTOMER, BusinessRole.CO_PROPRIETOR, 0);
+        employ(WORKER, BusinessRole.EMPLOYEE, 0);
+
+        assertEquals(BusinessResult.SUCCESS, businesses.setWage(CUSTOMER, "acme", WORKER, 7_500));
+        assertEquals(7_500, businesses.members("acme").stream()
+                .filter(member -> member.playerId().equals(WORKER))
+                .findFirst().orElseThrow().wageCents());
+        assertEquals(BusinessResult.CANNOT_REMOVE_PROPRIETOR,
+                businesses.setWage(CUSTOMER, "acme", OWNER, 1));
+    }
+
     private void createBusiness() throws Exception {
         qualifyOwner();
         assertEquals(BusinessResult.SUCCESS, businesses.create(OWNER, "acme", "Acme"));
@@ -140,5 +265,11 @@ class BusinessRepositoryTest {
 
     private void qualifyOwner() throws Exception {
         new JobRepository(database).grantQualification(OWNER, "entrepreneur", null);
+    }
+
+    private void employ(UUID player, BusinessRole role, long wage) throws Exception {
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.offer(OWNER, "acme", player, role, wage, NOW, NOW + 10_000));
+        assertEquals(BusinessResult.SUCCESS, businesses.acceptOffer(player, "acme", NOW + 1));
     }
 }

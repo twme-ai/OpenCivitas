@@ -84,6 +84,20 @@ CREATE TABLE IF NOT EXISTS business_members (
 CREATE INDEX IF NOT EXISTS idx_business_members_player
     ON business_members(player_uuid, business_id);
 
+CREATE TABLE IF NOT EXISTS business_offers (
+    business_id INTEGER NOT NULL REFERENCES businesses(id),
+    player_uuid TEXT NOT NULL REFERENCES players(uuid),
+    offered_by TEXT NOT NULL REFERENCES players(uuid),
+    offered_role TEXT NOT NULL,
+    offered_wage_cents INTEGER NOT NULL DEFAULT 0 CHECK (offered_wage_cents >= 0),
+    offered_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    PRIMARY KEY (business_id, player_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_business_offers_player_expires
+    ON business_offers(player_uuid, expires_at);
+
 CREATE TABLE IF NOT EXISTS business_ledger_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     business_id INTEGER NOT NULL REFERENCES businesses(id),

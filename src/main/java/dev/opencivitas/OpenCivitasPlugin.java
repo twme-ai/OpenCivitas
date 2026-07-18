@@ -21,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -43,6 +44,9 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
         String currencySymbol = getConfig().getString("economy.currency-symbol", "$");
         int pageSize = Math.max(1, Math.min(50, getConfig().getInt("economy.transaction-page-size", 10)));
+        long offerExpiryMinutes = Math.max(
+                1, Math.min(525_600, getConfig().getLong("business.offer-expiry-minutes", 1_440)));
+        long offerExpiryMillis = Duration.ofMinutes(offerExpiryMinutes).toMillis();
         Path dataDirectory = getDataFolder().toPath().toAbsolutePath().normalize();
         Path databaseFile = dataDirectory
                 .resolve(getConfig().getString("database.file", "opencivitas.db"))
@@ -119,7 +123,8 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                 new BusinessRepository(database),
                 messages,
                 currencySymbol,
-                pageSize
+                pageSize,
+                offerExpiryMillis
         );
         businessCommand.setExecutor(businessCommands);
         businessCommand.setTabCompleter(businessCommands);

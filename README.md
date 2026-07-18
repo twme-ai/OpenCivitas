@@ -27,6 +27,7 @@ The first playable foundation includes:
 - qualification awards and an asynchronous `/university` warp
 - entrepreneur-gated firms with separate accounts and transaction ledgers
 - atomic business deposits, withdrawals, payments, and disband refunds
+- persistent hiring offers, ranked staff, wages, payroll, and ownership transfer
 - asynchronous database access and atomic transfers
 
 The authoritative implementation status is in [docs/PARITY.md](docs/PARITY.md).
