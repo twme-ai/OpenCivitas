@@ -238,6 +238,13 @@ behavioral reference, not a source of copyable implementation or content.
   `HumanEntity.openSign(Sign, Side)` provides the documented sign UI; edit
   sessions are bounded, shop-locked, and restored from SQLite after invalid
   input, disconnect, or timeout. Packet interception is not justified.
+- [FancyHolograms](https://github.com/FancyMcPlugins/FancyHolograms), MIT commit
+  `4c701a3a6f3323a153ed4430def3eb3ec7d00737`, was inspected for display-entity
+  lifecycle, view distance, and recipient visibility behavior. OpenCivitas uses
+  original non-persistent TextDisplay entities only for loaded shop chunks,
+  removes them on unload/disable, and applies persisted per-player visibility
+  with Paper's `showEntity`/`hideEntity`; no source, configuration, or messages
+  were copied and packet interception is not justified.
 - [DemocracyCraft Wilderness Claiming](https://wiki.democracycraft.net/Wilderness_Claiming):
   current revision 9515 documents wilderness-only self-service claims, a
   4,096-block limit, 10 free blocks, `$20` additional blocks, golden-shovel

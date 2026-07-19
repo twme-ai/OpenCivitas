@@ -47,6 +47,7 @@ public final class ShopListener implements Listener {
     private final JavaPlugin plugin;
     private final Database database;
     private final ShopRepository shops;
+    private final ShopHologramService holograms;
     private final MessageService messages;
     private final String currencySymbol;
     private final ShopSignParser parser = new ShopSignParser();
@@ -60,12 +61,14 @@ public final class ShopListener implements Listener {
             JavaPlugin plugin,
             Database database,
             ShopRepository shops,
+            ShopHologramService holograms,
             MessageService messages,
             String currencySymbol
     ) {
         this.plugin = plugin;
         this.database = database;
         this.shops = shops;
+        this.holograms = holograms;
         this.messages = messages;
         this.currencySymbol = currencySymbol;
         shopIdKey = new NamespacedKey(plugin, "shop-id");
@@ -248,6 +251,7 @@ public final class ShopListener implements Listener {
         if (block.getState() instanceof Sign sign) {
             Long shopId = sign.getPersistentDataContainer().get(shopIdKey, PersistentDataType.LONG);
             if (shopId != null) {
+                holograms.remove(shopId);
                 database.submit(() -> {
                     shops.deactivate(shopId, Instant.now().toEpochMilli());
                     return null;
@@ -256,6 +260,12 @@ public final class ShopListener implements Listener {
             return;
         }
         if (block.getState() instanceof Container) {
+            for (BlockFace face : ADJACENT) {
+                if (block.getRelative(face).getState() instanceof Sign sign) {
+                    Long shopId = sign.getPersistentDataContainer().get(shopIdKey, PersistentDataType.LONG);
+                    if (shopId != null) holograms.remove(shopId);
+                }
+            }
             database.submit(() -> {
                 shops.deactivateContainer(
                         block.getWorld().getName(), block.getX(), block.getY(), block.getZ(),
@@ -282,6 +292,7 @@ public final class ShopListener implements Listener {
         if (block == null || !(block.getState() instanceof Sign sign)
                 || !(block.getWorld().getBlockAt(
                         shop.containerX(), shop.containerY(), shop.containerZ()).getState() instanceof Container)) {
+            holograms.remove(shop.id());
             database.submit(() -> {
                 shops.deactivate(shop.id(), Instant.now().toEpochMilli());
                 return null;
@@ -290,6 +301,7 @@ public final class ShopListener implements Listener {
             return;
         }
         writeSign((Sign) block.getState(), shop);
+        holograms.upsert(shop);
         messages.send(actor, updated ? "shops.creation.updated" : "shops.creation.created",
                 Placeholder.unparsed("item", displayItem(shop.itemKey())));
     }

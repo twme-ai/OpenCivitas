@@ -417,6 +417,8 @@ shops:
     header: '<gold>販售或收購 <item> 的商店：</gold>'
     empty: '<gray>找不到營運中的商店。</gray>'
     entry: '<dark_gray>-</dark_gray> <white><account></white> <gray>位於 <world> <x>, <y>, <z></gray> <white><prices></white>'
+    holograms-enabled: '<green>現在會顯示箱子商店浮空文字。</green>'
+    holograms-disabled: '<gray>現在已隱藏箱子商店浮空文字。</gray>'
   history:
     header: '<gold>箱子商店交易紀錄</gold> <gray>（第 <page> 頁）</gray>'
     empty: '<gray>此頁沒有箱子商店交易紀錄。</gray>'

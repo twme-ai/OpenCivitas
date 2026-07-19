@@ -87,6 +87,7 @@ import dev.opencivitas.police.PoliceListener;
 import dev.opencivitas.police.PolicePolicy;
 import dev.opencivitas.police.PoliceRepository;
 import dev.opencivitas.shop.ShopListener;
+import dev.opencivitas.shop.ShopHologramService;
 import dev.opencivitas.shop.ShopRepository;
 import dev.opencivitas.property.PropertyListener;
 import dev.opencivitas.property.PropertyRegistry;
@@ -115,6 +116,7 @@ public final class OpenCivitasPlugin extends JavaPlugin {
     private NetworkService networkService;
     private CameraViewService cameraViews;
     private CameraManager cameraManager;
+    private ShopHologramService shopHolograms;
 
     @Override
     public void onEnable() {
@@ -264,14 +266,24 @@ public final class OpenCivitasPlugin extends JavaPlugin {
         businessCommand.setExecutor(businessCommands);
         businessCommand.setTabCompleter(businessCommands);
 
+        shopHolograms = new ShopHologramService(this, database, shops, currencySymbol);
+        try {
+            shopHolograms.start(shops.active());
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not load chest shop holograms", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        getServer().getPluginManager().registerEvents(shopHolograms, this);
         ShopCommand shopCommands = new ShopCommand(
-                this, database, shops, messages, currencySymbol, pageSize);
+                this, database, shops, shopHolograms, messages, currencySymbol, pageSize);
         for (String name : List.of("find", "chestshop")) {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(shopCommands);
             command.setTabCompleter(shopCommands);
         }
-        ShopListener shopListener = new ShopListener(this, database, shops, messages, currencySymbol);
+        ShopListener shopListener = new ShopListener(
+                this, database, shops, shopHolograms, messages, currencySymbol);
         getServer().getPluginManager().registerEvents(shopListener, this);
         ShopSignCommand shopSignCommand = new ShopSignCommand(
                 this, database, shops, shopListener, messages);
@@ -754,6 +766,9 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (shopHolograms != null) {
+            shopHolograms.stop();
+        }
         if (cameraViews != null) {
             cameraViews.stop();
         }

@@ -4,7 +4,9 @@ import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.Money;
 import dev.opencivitas.message.MessageService;
 import dev.opencivitas.shop.ChestShop;
+import dev.opencivitas.shop.ShopHologramService;
 import dev.opencivitas.shop.ShopRepository;
+import dev.opencivitas.shop.ShopResult;
 import dev.opencivitas.shop.ShopSale;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
@@ -17,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -34,6 +37,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
     private final JavaPlugin plugin;
     private final Database database;
     private final ShopRepository shops;
+    private final ShopHologramService holograms;
     private final MessageService messages;
     private final String currencySymbol;
     private final int pageSize;
@@ -42,6 +46,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
             JavaPlugin plugin,
             Database database,
             ShopRepository shops,
+            ShopHologramService holograms,
             MessageService messages,
             String currencySymbol,
             int pageSize
@@ -49,6 +54,7 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
         this.plugin = plugin;
         this.database = database;
         this.shops = shops;
+        this.holograms = holograms;
         this.messages = messages;
         this.currencySymbol = currencySymbol;
         this.pageSize = pageSize;
@@ -73,7 +79,24 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
 
     private boolean find(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            usage(sender, "/find <item>");
+            usage(sender, "/find <item|toggle>");
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("toggle")) {
+            if (!(sender instanceof Player player)) {
+                messages.send(sender, "error.player-only");
+                return true;
+            }
+            complete(sender, database.submit(() -> shops.toggleHolograms(
+                    player.getUniqueId(), Instant.now().toEpochMilli())), setting -> {
+                if (setting.result() != ShopResult.SUCCESS) {
+                    messages.send(sender, "error.database");
+                    return;
+                }
+                holograms.setVisible(player, setting.visible());
+                messages.send(player, setting.visible()
+                        ? "shops.find.holograms-enabled" : "shops.find.holograms-disabled");
+            });
             return true;
         }
         Material material = Material.matchMaterial(args[0].replace(' ', '_'));
@@ -196,6 +219,10 @@ public final class ShopCommand implements CommandExecutor, TabCompleter {
         if (command.getName().equalsIgnoreCase("chestshop") && args.length == 1
                 && "history".startsWith(args[0].toLowerCase(Locale.ROOT))) {
             return List.of("history");
+        }
+        if (command.getName().equalsIgnoreCase("find") && args.length == 1
+                && "toggle".startsWith(args[0].toLowerCase(Locale.ROOT))) {
+            return List.of("toggle");
         }
         return List.of();
     }

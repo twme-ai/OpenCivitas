@@ -612,6 +612,12 @@ CREATE INDEX IF NOT EXISTS idx_shop_sales_shop_created
 CREATE INDEX IF NOT EXISTS idx_shop_sales_customer_created
     ON shop_sales(customer_uuid, created_at DESC, id DESC);
 
+CREATE TABLE IF NOT EXISTS shop_hologram_preferences (
+    player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
+    visible INTEGER NOT NULL CHECK (visible IN (0, 1)),
+    updated_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS claim_accounts (
     player_uuid TEXT PRIMARY KEY REFERENCES players(uuid) ON DELETE CASCADE,
     purchased_blocks INTEGER NOT NULL DEFAULT 0 CHECK (purchased_blocks >= 0),

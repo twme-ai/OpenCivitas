@@ -67,7 +67,7 @@ commands:
     aliases: [democracybusiness, db, firm, company]
   find:
     description: Find active chest shops selling or buying an item.
-    usage: /find <item>
+    usage: /find <item|toggle>
   chestshop:
     description: View chest shop transaction history.
     usage: /chestshop history [page]

@@ -417,6 +417,8 @@ shops:
     header: '<gold>Active shops for <item>:</gold>'
     empty: '<gray>No active shops were found.</gray>'
     entry: '<dark_gray>-</dark_gray> <white><account></white> <gray>at <world> <x>, <y>, <z></gray> <white><prices></white>'
+    holograms-enabled: '<green>Chest shop holograms are now visible.</green>'
+    holograms-disabled: '<gray>Chest shop holograms are now hidden.</gray>'
   history:
     header: '<gold>Chest shop history</gold> <gray>(page <page>)</gray>'
     empty: '<gray>No chest shop transactions were found on this page.</gray>'

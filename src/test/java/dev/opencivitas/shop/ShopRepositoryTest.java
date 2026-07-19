@@ -15,10 +15,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -72,6 +74,25 @@ class ShopRepositoryTest {
         shops.deactivate(shop.id(), NOW + 2);
         assertEquals(ShopResult.SUCCESS,
                 shops.create(OWNER, playerDraft(10, 20, 30, 3_000L, null), NOW + 3).result());
+    }
+
+    @Test
+    void hologramPreferencePersistsAndActiveSnapshotExcludesDeactivatedShops() throws Exception {
+        ChestShop shop = shops.create(
+                OWNER, playerDraft(10, 20, 30, 2_500L, 1_000L), NOW).shop().orElseThrow();
+        assertEquals(List.of(shop), shops.active());
+        assertTrue(shops.hologramsVisible(OWNER));
+
+        ShopHologramSetting hidden = shops.toggleHolograms(OWNER, NOW + 1);
+        assertEquals(ShopResult.SUCCESS, hidden.result());
+        assertFalse(hidden.visible());
+        assertFalse(new ShopRepository(database).hologramsVisible(OWNER));
+        assertTrue(shops.toggleHolograms(OWNER, NOW + 2).visible());
+        assertEquals(ShopResult.CITIZEN_NOT_FOUND, shops.toggleHolograms(
+                UUID.fromString("00000000-0000-0000-0000-000000000099"), NOW + 3).result());
+
+        shops.deactivate(shop.id(), NOW + 4);
+        assertTrue(shops.active().isEmpty());
     }
 
     @Test

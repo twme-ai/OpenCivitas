@@ -178,6 +178,64 @@ public final class ShopRepository {
         }
     }
 
+    public List<ChestShop> active() throws SQLException {
+        String sql = SHOP_SELECT + """
+                WHERE s.active = 1
+                ORDER BY s.world_name, s.sign_x, s.sign_z, s.sign_y, s.id
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            return readShops(statement);
+        }
+    }
+
+    public boolean hologramsVisible(UUID player) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT visible FROM shop_hologram_preferences WHERE player_uuid = ?")) {
+            statement.setString(1, player.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                return !results.next() || results.getBoolean(1);
+            }
+        }
+    }
+
+    public ShopHologramSetting toggleHolograms(UUID player, long now) throws SQLException {
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                if (!accountExists(connection, player)) {
+                    connection.rollback();
+                    return new ShopHologramSetting(ShopResult.CITIZEN_NOT_FOUND, false);
+                }
+                boolean visible;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "SELECT visible FROM shop_hologram_preferences WHERE player_uuid = ?")) {
+                    statement.setString(1, player.toString());
+                    try (ResultSet results = statement.executeQuery()) {
+                        visible = results.next() && !results.getBoolean(1);
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement("""
+                        INSERT INTO shop_hologram_preferences(player_uuid, visible, updated_at)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(player_uuid) DO UPDATE SET
+                            visible = excluded.visible, updated_at = excluded.updated_at
+                        """)) {
+                    statement.setString(1, player.toString());
+                    statement.setBoolean(2, visible);
+                    statement.setLong(3, now);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return new ShopHologramSetting(ShopResult.SUCCESS, visible);
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        }
+    }
+
     public ShopSettlement settle(
             long shopId,
             UUID customer,
