@@ -72,6 +72,12 @@ commands:
     description: View chest shop transaction history.
     usage: /chestshop history [page]
     aliases: [csn, shop]
+  sign:
+    description: Edit a chest shop with the native sign interface.
+    usage: /sign ui
+  iteminfo:
+    description: Show the chest shop item key for the held item.
+    usage: /iteminfo
   bolt:
     description: Lock blocks and manage protection access lists.
     usage: /bolt <lock|unlock|edit|modify|group|trust|transfer|password|mode|info>

@@ -32,7 +32,8 @@ The first playable foundation includes:
   Administrator/Financial/ChestShop/Default capabilities, wages, payroll, and ownership transfer
 - persistent sign chest shops for personal or firm accounts
 - left-click sales, right-click purchases, shift-click stack transactions,
-  stock/capacity checks, item search, owner notices, and sales history
+  stock/capacity checks, `?` item autofill, `/iteminfo`, owner-authorized native
+  sign editing, item search, owner notices, and sales history
 - persistent individual block protection with automatic private container locks,
   five use policies, player/group/permission/password ACLs, owner trust, transfer,
   auto-closing doors, inventory/hopper safeguards, and piston/explosion resistance

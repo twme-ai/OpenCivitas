@@ -102,6 +102,68 @@ public final class ShopRepository {
         }
     }
 
+    public ShopResult canManage(UUID actor, long shopId) throws SQLException {
+        try (Connection connection = database.openConnection()) {
+            Optional<ChestShop> selected = find(connection, shopId);
+            if (selected.isEmpty()) return ShopResult.SHOP_NOT_FOUND;
+            if (!selected.get().active()) return ShopResult.SHOP_INACTIVE;
+            return authorization(connection, actor, selected.get());
+        }
+    }
+
+    public ShopCreation update(UUID actor, long shopId, ShopDraft draft) throws SQLException {
+        validateDraft(draft);
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<ChestShop> selected = find(connection, shopId);
+                if (selected.isEmpty()) {
+                    connection.rollback();
+                    return ShopCreation.failed(ShopResult.SHOP_NOT_FOUND);
+                }
+                ChestShop shop = selected.get();
+                if (!shop.active()) {
+                    connection.rollback();
+                    return ShopCreation.failed(ShopResult.SHOP_INACTIVE);
+                }
+                ShopResult authorization = authorization(connection, actor, shop);
+                if (authorization != ShopResult.SUCCESS) {
+                    connection.rollback();
+                    return ShopCreation.failed(authorization);
+                }
+                if (!sameLocation(shop, draft)) {
+                    connection.rollback();
+                    return ShopCreation.failed(ShopResult.SHOP_NOT_FOUND);
+                }
+                if (!sameOwner(connection, shop, draft)) {
+                    connection.rollback();
+                    return ShopCreation.failed(ShopResult.OWNER_CHANGE_NOT_ALLOWED);
+                }
+                try (PreparedStatement statement = connection.prepareStatement("""
+                        UPDATE chest_shops
+                        SET item_key = ?, quantity = ?, buy_price_cents = ?, sell_price_cents = ?
+                        WHERE id = ? AND active = 1
+                        """)) {
+                    statement.setString(1, draft.itemKey());
+                    statement.setInt(2, draft.quantity());
+                    setNullableLong(statement, 3, draft.buyPriceCents());
+                    setNullableLong(statement, 4, draft.sellPriceCents());
+                    statement.setLong(5, shopId);
+                    if (statement.executeUpdate() != 1) {
+                        throw new SQLException("Chest shop disappeared during update");
+                    }
+                }
+                ChestShop updated = find(connection, shopId).orElseThrow(
+                        () -> new SQLException("Updated chest shop could not be loaded"));
+                connection.commit();
+                return ShopCreation.created(updated);
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        }
+    }
+
     public List<ChestShop> search(String itemKey, int limit) throws SQLException {
         String sql = SHOP_SELECT + """
                 WHERE s.active = 1 AND s.item_key = ? COLLATE NOCASE
@@ -573,6 +635,35 @@ public final class ShopRepository {
                 return results.next();
             }
         }
+    }
+
+    private static ShopResult authorization(Connection connection, UUID actor, ChestShop shop)
+            throws SQLException {
+        if (!accountExists(connection, actor)) return ShopResult.CITIZEN_NOT_FOUND;
+        if (shop.ownerType() == ShopOwnerType.PLAYER) {
+            return actor.equals(shop.ownerId()) ? ShopResult.SUCCESS : ShopResult.NO_PERMISSION;
+        }
+        if (!activeBusiness(connection, shop.businessId())) return ShopResult.BUSINESS_INACTIVE;
+        return businessRole(connection, shop.businessId(), actor)
+                .filter(BusinessRole::canManageShops)
+                .isPresent() ? ShopResult.SUCCESS : ShopResult.NO_PERMISSION;
+    }
+
+    private static boolean sameLocation(ChestShop shop, ShopDraft draft) {
+        return shop.worldName().equals(draft.worldName())
+                && shop.signX() == draft.signX()
+                && shop.signY() == draft.signY()
+                && shop.signZ() == draft.signZ()
+                && shop.containerX() == draft.containerX()
+                && shop.containerY() == draft.containerY()
+                && shop.containerZ() == draft.containerZ();
+    }
+
+    private static boolean sameOwner(Connection connection, ChestShop shop, ShopDraft draft) throws SQLException {
+        if (shop.ownerType() != draft.ownerType()) return false;
+        if (shop.ownerType() == ShopOwnerType.PLAYER) return shop.ownerId().equals(draft.ownerId());
+        Optional<BusinessAccount> business = business(connection, draft.businessSlug());
+        return business.isPresent() && business.get().id() == shop.businessId();
     }
 
     private static boolean activeBusiness(Connection connection, long businessId) throws SQLException {

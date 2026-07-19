@@ -17,6 +17,7 @@ import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ProtectionCommand;
 import dev.opencivitas.command.ShopCommand;
+import dev.opencivitas.command.ShopSignCommand;
 import dev.opencivitas.command.HealthCommand;
 import dev.opencivitas.command.ChatCommand;
 import dev.opencivitas.command.NavigationCommand;
@@ -270,8 +271,15 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setExecutor(shopCommands);
             command.setTabCompleter(shopCommands);
         }
-        getServer().getPluginManager().registerEvents(
-                new ShopListener(this, database, shops, messages, currencySymbol), this);
+        ShopListener shopListener = new ShopListener(this, database, shops, messages, currencySymbol);
+        getServer().getPluginManager().registerEvents(shopListener, this);
+        ShopSignCommand shopSignCommand = new ShopSignCommand(
+                this, database, shops, shopListener, messages);
+        for (String name : List.of("sign", "iteminfo")) {
+            PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
+            command.setExecutor(shopSignCommand);
+            command.setTabCompleter(shopSignCommand);
+        }
 
         ClaimRepository claimRepository = new ClaimRepository(
                 database, freeClaimBlocks, maximumClaimBlocks, claimBlockCost);

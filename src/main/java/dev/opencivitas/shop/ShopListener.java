@@ -22,6 +22,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -50,8 +51,10 @@ public final class ShopListener implements Listener {
     private final String currencySymbol;
     private final ShopSignParser parser = new ShopSignParser();
     private final NamespacedKey shopIdKey;
+    private final NamespacedKey pendingOwnerKey;
     private final Set<Long> lockedShops = ConcurrentHashMap.newKeySet();
     private final Set<UUID> lockedPlayers = ConcurrentHashMap.newKeySet();
+    private final java.util.Map<UUID, ShopEditSession> editSessions = new ConcurrentHashMap<>();
 
     public ShopListener(
             JavaPlugin plugin,
@@ -66,6 +69,7 @@ public final class ShopListener implements Listener {
         this.messages = messages;
         this.currencySymbol = currencySymbol;
         shopIdKey = new NamespacedKey(plugin, "shop-id");
+        pendingOwnerKey = new NamespacedKey(plugin, "pending-shop-owner");
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -73,29 +77,58 @@ public final class ShopListener implements Listener {
         PlainTextComponentSerializer plainText = PlainTextComponentSerializer.plainText();
         String[] lines = event.lines().stream().map(plainText::serialize).toArray(String[]::new);
         ShopSignParse parsed = parser.parse(event.getPlayer().getName(), lines);
-        if (parsed.status() == ShopSignStatus.NOT_A_SHOP) {
+        Sign currentSign = (Sign) event.getBlock().getState();
+        Long existingShopId = currentSign.getPersistentDataContainer().get(shopIdKey, PersistentDataType.LONG);
+        ShopEditSession edit = existingShopId == null ? null
+                : editSessions.remove(event.getPlayer().getUniqueId());
+        if (existingShopId != null && (edit == null || !edit.matches(event.getBlock(), existingShopId))) {
+            event.setCancelled(true);
+            rewax(event.getBlock());
             return;
         }
-        event.setCancelled(true);
+        if (parsed.status() == ShopSignStatus.NOT_A_SHOP) {
+            if (existingShopId != null) {
+                event.setCancelled(true);
+                messages.send(event.getPlayer(), "shops.creation.invalid-price");
+                finishEdit(event.getBlock(), existingShopId);
+            }
+            return;
+        }
         if (parsed.status() != ShopSignStatus.SUCCESS) {
+            event.setCancelled(true);
             messages.send(event.getPlayer(), signError(parsed.status()));
+            if (existingShopId != null) finishEdit(event.getBlock(), existingShopId);
             return;
         }
 
         Optional<Block> selectedContainer = findContainer(event.getBlock());
         if (selectedContainer.isEmpty()) {
+            event.setCancelled(true);
             messages.send(event.getPlayer(), "shops.creation.no-container");
+            if (existingShopId != null) finishEdit(event.getBlock(), existingShopId);
             return;
         }
         Block containerBlock = selectedContainer.get();
         Container container = (Container) containerBlock.getState();
         ParsedShopSign sign = parsed.sign().orElseThrow();
-        Optional<Material> material = resolveMaterial(sign.itemInput(), container.getInventory());
+        Optional<Material> material = resolveMaterial(
+                sign.itemInput(), container.getInventory(), existingShopId == null
+                        ? null : event.getPlayer().getInventory().getItemInMainHand());
         if (material.isEmpty()) {
+            if (existingShopId == null && sign.itemInput().equals("?")) {
+                event.line(0, Component.text(sign.ownerType() == ShopOwnerType.BUSINESS
+                        ? "b:" + sign.businessSlug() : event.getPlayer().getName()));
+                preparePendingSign(event.getBlock(), event.getPlayer());
+                messages.send(event.getPlayer(), "shops.creation.pending-item");
+                return;
+            }
+            event.setCancelled(true);
             messages.send(event.getPlayer(), "shops.creation.invalid-item");
+            if (existingShopId != null) finishEdit(event.getBlock(), existingShopId);
             return;
         }
 
+        event.setCancelled(true);
         Block signBlock = event.getBlock();
         UUID actor = event.getPlayer().getUniqueId();
         ShopDraft draft = new ShopDraft(
@@ -105,18 +138,61 @@ public final class ShopListener implements Listener {
                 sign.ownerType(), sign.ownerType() == ShopOwnerType.PLAYER ? actor : null,
                 sign.businessSlug(), material.get().name(), sign.quantity(),
                 sign.buyPriceCents(), sign.sellPriceCents());
-        database.submit(() -> shops.create(actor, draft, Instant.now().toEpochMilli()))
+        submitConfiguration(event.getPlayer(), draft, existingShopId);
+    }
+
+    public Long shopId(Sign sign) {
+        return sign.getPersistentDataContainer().get(shopIdKey, PersistentDataType.LONG);
+    }
+
+    public boolean openEditor(Player player, Sign sign, long shopId) {
+        if (!lockedShops.add(shopId)) return false;
+        ShopEditSession session = new ShopEditSession(
+                shopId,
+                sign.getWorld().getName(),
+                sign.getX(), sign.getY(), sign.getZ());
+        editSessions.put(player.getUniqueId(), session);
+        try {
+            sign.setWaxed(false);
+            sign.update(true, false);
+            player.openSign(sign, Side.FRONT);
+        } catch (RuntimeException exception) {
+            editSessions.remove(player.getUniqueId(), session);
+            lockedShops.remove(shopId);
+            sign.setWaxed(true);
+            sign.update(true, false);
+            throw exception;
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (editSessions.remove(player.getUniqueId(), session)) {
+                lockedShops.remove(shopId);
+                restoreSign(shopId);
+            }
+        }, 1_200L);
+        return true;
+    }
+
+    private void submitConfiguration(Player actor, ShopDraft draft, Long existingShopId) {
+        database.submit(() -> existingShopId == null
+                        ? shops.create(actor.getUniqueId(), draft, Instant.now().toEpochMilli())
+                        : shops.update(actor.getUniqueId(), existingShopId, draft))
                 .whenComplete((creation, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (error != null) {
-                        plugin.getLogger().log(Level.SEVERE, "Could not create chest shop", error);
-                        messages.send(event.getPlayer(), "error.database");
-                        return;
+                    try {
+                        if (error != null) {
+                            plugin.getLogger().log(Level.SEVERE, "Could not configure chest shop", error);
+                            messages.send(actor, "error.database");
+                            if (existingShopId != null) restoreSign(existingShopId);
+                            return;
+                        }
+                        if (creation.result() != ShopResult.SUCCESS) {
+                            messages.send(actor, creationError(creation.result()));
+                            if (existingShopId != null) restoreSign(existingShopId);
+                            return;
+                        }
+                        activateSign(actor, creation.shop().orElseThrow(), existingShopId != null);
+                    } finally {
+                        if (existingShopId != null) lockedShops.remove(existingShopId);
                     }
-                    if (creation.result() != ShopResult.SUCCESS) {
-                        messages.send(event.getPlayer(), creationError(creation.result()));
-                        return;
-                    }
-                    activateSign(event.getPlayer(), creation.shop().orElseThrow());
                 }));
     }
 
@@ -133,6 +209,12 @@ public final class ShopListener implements Listener {
         }
         Long shopId = sign.getPersistentDataContainer().get(shopIdKey, PersistentDataType.LONG);
         if (shopId == null) {
+            String pendingOwner = sign.getPersistentDataContainer().get(
+                    pendingOwnerKey, PersistentDataType.STRING);
+            if (pendingOwner != null) {
+                event.setCancelled(true);
+                completePendingSign(event.getPlayer(), event.getClickedBlock(), sign, pendingOwner);
+            }
             return;
         }
         event.setCancelled(true);
@@ -183,7 +265,18 @@ public final class ShopListener implements Listener {
         }
     }
 
-    private void activateSign(Player actor, ChestShop shop) {
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID playerId = event.getPlayer().getUniqueId();
+        lockedPlayers.remove(playerId);
+        ShopEditSession edit = editSessions.remove(playerId);
+        if (edit != null) {
+            lockedShops.remove(edit.shopId());
+            restoreSign(edit.shopId());
+        }
+    }
+
+    private void activateSign(Player actor, ChestShop shop, boolean updated) {
         Block block = actor.getServer().getWorld(shop.worldName()) == null ? null
                 : actor.getServer().getWorld(shop.worldName()).getBlockAt(shop.signX(), shop.signY(), shop.signZ());
         if (block == null || !(block.getState() instanceof Sign sign)
@@ -196,16 +289,120 @@ public final class ShopListener implements Listener {
             messages.send(actor, "shops.creation.block-changed");
             return;
         }
+        writeSign((Sign) block.getState(), shop);
+        messages.send(actor, updated ? "shops.creation.updated" : "shops.creation.created",
+                Placeholder.unparsed("item", displayItem(shop.itemKey())));
+    }
+
+    private void writeSign(Sign sign, ChestShop shop) {
         sign.getPersistentDataContainer().set(shopIdKey, PersistentDataType.LONG, shop.id());
+        sign.getPersistentDataContainer().remove(pendingOwnerKey);
         sign.getSide(Side.FRONT).line(0, Component.text(
-                shop.ownerType() == ShopOwnerType.BUSINESS ? "b:" + shop.businessSlug() : actor.getName()));
+                shop.ownerType() == ShopOwnerType.BUSINESS ? "b:" + shop.businessSlug() : shop.accountName()));
         sign.getSide(Side.FRONT).line(1, Component.text(Integer.toString(shop.quantity())));
         sign.getSide(Side.FRONT).line(2, Component.text(priceLine(shop)));
         sign.getSide(Side.FRONT).line(3, Component.text(shop.itemKey().toLowerCase(java.util.Locale.ROOT)));
         sign.setWaxed(true);
         sign.update(true, false);
-        messages.send(actor, "shops.creation.created",
-                Placeholder.unparsed("item", displayItem(shop.itemKey())));
+    }
+
+    private void preparePendingSign(Block block, Player owner) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!(block.getState() instanceof Sign pending)
+                    || pending.getPersistentDataContainer().has(shopIdKey, PersistentDataType.LONG)) {
+                return;
+            }
+            pending.getPersistentDataContainer().set(
+                    pendingOwnerKey, PersistentDataType.STRING, owner.getUniqueId().toString());
+            pending.setWaxed(true);
+            pending.update(true, false);
+        });
+    }
+
+    private void completePendingSign(Player player, Block signBlock, Sign sign, String pendingOwner) {
+        if (!player.getUniqueId().toString().equals(pendingOwner)) {
+            messages.send(player, "shops.creation.pending-owner");
+            return;
+        }
+        ItemStack held = player.getInventory().getItemInMainHand();
+        if (held.getType().isAir() || !held.getType().isItem()) {
+            messages.send(player, "shops.creation.pending-item-required");
+            return;
+        }
+        if (!lockedPlayers.add(player.getUniqueId())) {
+            messages.send(player, "shops.transaction.busy");
+            return;
+        }
+        try {
+            PlainTextComponentSerializer plain = PlainTextComponentSerializer.plainText();
+            String[] lines = sign.getSide(Side.FRONT).lines().stream()
+                    .map(plain::serialize).toArray(String[]::new);
+            ShopSignParse parsed = parser.parse(player.getName(), lines);
+            Optional<Block> container = findContainer(signBlock);
+            if (parsed.status() != ShopSignStatus.SUCCESS || container.isEmpty()) {
+                lockedPlayers.remove(player.getUniqueId());
+                messages.send(player, parsed.status() == ShopSignStatus.SUCCESS
+                        ? "shops.creation.no-container" : signError(parsed.status()));
+                return;
+            }
+            ParsedShopSign definition = parsed.sign().orElseThrow();
+            Block containerBlock = container.get();
+            ShopDraft draft = new ShopDraft(
+                    signBlock.getWorld().getName(),
+                    signBlock.getX(), signBlock.getY(), signBlock.getZ(),
+                    containerBlock.getX(), containerBlock.getY(), containerBlock.getZ(),
+                    definition.ownerType(),
+                    definition.ownerType() == ShopOwnerType.PLAYER ? player.getUniqueId() : null,
+                    definition.businessSlug(), held.getType().name(), definition.quantity(),
+                    definition.buyPriceCents(), definition.sellPriceCents());
+            database.submit(() -> shops.create(
+                            player.getUniqueId(), draft, Instant.now().toEpochMilli()))
+                    .whenComplete((creation, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        lockedPlayers.remove(player.getUniqueId());
+                        if (error != null) {
+                            plugin.getLogger().log(Level.SEVERE, "Could not complete pending chest shop", error);
+                            messages.send(player, "error.database");
+                        } else if (creation.result() != ShopResult.SUCCESS) {
+                            messages.send(player, creationError(creation.result()));
+                        } else {
+                            activateSign(player, creation.shop().orElseThrow(), false);
+                        }
+                    }));
+        } catch (RuntimeException exception) {
+            lockedPlayers.remove(player.getUniqueId());
+            throw exception;
+        }
+    }
+
+    private void finishEdit(Block block, long shopId) {
+        lockedShops.remove(shopId);
+        rewax(block);
+    }
+
+    private void rewax(Block block) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (block.getState() instanceof Sign sign) {
+                sign.setWaxed(true);
+                sign.update(true, false);
+            }
+        });
+    }
+
+    private void restoreSign(long shopId) {
+        database.submit(() -> shops.find(shopId)).whenComplete((selected, error) ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (error != null) {
+                        plugin.getLogger().log(Level.SEVERE, "Could not restore chest shop sign", error);
+                        return;
+                    }
+                    selected.filter(ChestShop::active).ifPresent(shop -> {
+                        org.bukkit.World world = Bukkit.getWorld(shop.worldName());
+                        if (world != null && world.getBlockAt(
+                                shop.signX(), shop.signY(), shop.signZ()).getState() instanceof Sign sign) {
+                            writeSign(sign, shop);
+                        }
+                    });
+                }));
     }
 
     private void beginTransaction(Player player, ChestShop shop, ShopDirection direction, boolean stack) {
@@ -341,12 +538,15 @@ public final class ShopListener implements Listener {
         return Optional.empty();
     }
 
-    private static Optional<Material> resolveMaterial(String input, Inventory inventory) {
+    private static Optional<Material> resolveMaterial(String input, Inventory inventory, ItemStack fallback) {
         if (input.equals("?")) {
             for (ItemStack item : inventory.getStorageContents()) {
                 if (item != null && !item.getType().isAir()) {
                     return Optional.of(item.getType());
                 }
+            }
+            if (fallback != null && !fallback.getType().isAir() && fallback.getType().isItem()) {
+                return Optional.of(fallback.getType());
             }
             return Optional.empty();
         }
@@ -384,6 +584,7 @@ public final class ShopListener implements Listener {
             case BUSINESS_NOT_FOUND -> "shops.creation.business-not-found";
             case BUSINESS_INACTIVE -> "shops.creation.business-inactive";
             case NO_PERMISSION -> "shops.creation.no-permission";
+            case OWNER_CHANGE_NOT_ALLOWED -> "shops.creation.owner-change";
             case LOCATION_OCCUPIED -> "shops.creation.location-occupied";
             default -> "shops.creation.failed";
         };
@@ -398,5 +599,13 @@ public final class ShopListener implements Listener {
             case BUSINESS_INACTIVE, SHOP_INACTIVE, SHOP_NOT_FOUND -> "shops.transaction.inactive";
             default -> "shops.transaction.failed";
         };
+    }
+
+    private record ShopEditSession(long shopId, String world, int x, int y, int z) {
+        private boolean matches(Block block, long selectedShopId) {
+            return shopId == selectedShopId
+                    && world.equals(block.getWorld().getName())
+                    && x == block.getX() && y == block.getY() && z == block.getZ();
+        }
     }
 }

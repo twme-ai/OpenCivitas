@@ -196,8 +196,10 @@ behavioral reference, not a source of copyable implementation or content.
   10626 from 18 June 2026: public firm lifecycle, account, employee, wage, and
   chest-shop behavior; five fixed ranks; and custom roles with Administrator,
   Financial, ChestShop, and Default permissions.
-- [DemocracyCraft Chestshops](https://wiki.democracycraft.net/Chestshops): sign
-  format, buy/sell interaction, firm account prefix, and sales history behavior.
+- [DemocracyCraft Chestshops](https://wiki.democracycraft.net/Chestshops),
+  revision 8872 from 12 February 2026: four-line sign format, `/iteminfo`, `?`
+  item autofill from container contents or a later held-item click, `/sign ui`,
+  buy/sell interaction, firm account prefix, and sales history behavior.
 - [QuickShop-Hikari economy transactions](https://github.com/QuickShop-Community/QuickShop-Hikari/tree/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/economy/transaction):
   preflight balance checks, commit/rollback, callbacks, and transaction events.
   OpenCivitas uses a single SQLite transaction for the current internal account
@@ -220,7 +222,8 @@ behavioral reference, not a source of copyable implementation or content.
   the documented four-line format, explicit transaction direction, payer
   preflight, source stock check, and destination capacity check were inspected
   before the OpenCivitas shop parser and inventory reservation lifecycle were
-  implemented. No LGPL source was copied.
+  implemented. The current ChestShop commit inspected was
+  `dde7ee2155303714c2d5054deeccef4618e3939c`; no LGPL source was copied.
 - [ChestShop item transfer](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PostTransaction/ItemManager.java)
   and [transaction logging](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PostTransaction/TransactionLogger.java):
   inventory updates and auditable sale records informed OpenCivitas's own
@@ -231,7 +234,10 @@ behavioral reference, not a source of copyable implementation or content.
   and [PlayerInteractEvent API](https://jd.papermc.io/paper/1.21.11/org/bukkit/event/player/PlayerInteractEvent.html):
   persistent tile-state data, front-side Adventure components, waxed signs,
   main-hand filtering, and left/right block actions cover shop creation and
-  interaction without packet interception.
+  interaction without packet interception. Paper's native
+  `HumanEntity.openSign(Sign, Side)` provides the documented sign UI; edit
+  sessions are bounded, shop-locked, and restored from SQLite after invalid
+  input, disconnect, or timeout. Packet interception is not justified.
 - [DemocracyCraft Wilderness Claiming](https://wiki.democracycraft.net/Wilderness_Claiming):
   current revision 9515 documents wilderness-only self-service claims, a
   4,096-block limit, 10 free blocks, `$20` additional blocks, golden-shovel

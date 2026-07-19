@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ShopRepositoryTest {
@@ -71,6 +72,33 @@ class ShopRepositoryTest {
         shops.deactivate(shop.id(), NOW + 2);
         assertEquals(ShopResult.SUCCESS,
                 shops.create(OWNER, playerDraft(10, 20, 30, 3_000L, null), NOW + 3).result());
+    }
+
+    @Test
+    void ownerCanEditShopConfigurationWithoutChangingItsAccount() throws Exception {
+        ChestShop shop = shops.create(
+                OWNER, playerDraft(10, 20, 30, 2_500L, 1_000L), NOW).shop().orElseThrow();
+        ShopDraft updated = new ShopDraft(
+                "world", 10, 20, 30, 10, 19, 30,
+                ShopOwnerType.PLAYER, OWNER, null, "GOLD_INGOT", 2, 3_000L, null);
+
+        assertEquals(ShopResult.SUCCESS, shops.canManage(OWNER, shop.id()));
+        assertEquals(ShopResult.NO_PERMISSION, shops.canManage(WORKER, shop.id()));
+        assertEquals(ShopResult.NO_PERMISSION, shops.update(WORKER, shop.id(), updated).result());
+        assertEquals(ShopResult.SUCCESS, shops.update(OWNER, shop.id(), updated).result());
+
+        ChestShop stored = shops.find(shop.id()).orElseThrow();
+        assertEquals("GOLD_INGOT", stored.itemKey());
+        assertEquals(2, stored.quantity());
+        assertEquals(3_000L, stored.buyPriceCents());
+        assertNull(stored.sellPriceCents());
+        assertEquals(OWNER, stored.ownerId());
+
+        ShopDraft ownerChange = new ShopDraft(
+                "world", 10, 20, 30, 10, 19, 30,
+                ShopOwnerType.BUSINESS, null, "acme", "GOLD_INGOT", 2, 3_000L, null);
+        assertEquals(ShopResult.OWNER_CHANGE_NOT_ALLOWED,
+                shops.update(OWNER, shop.id(), ownerChange).result());
     }
 
     @Test
@@ -153,8 +181,14 @@ class ShopRepositoryTest {
                 Set.of(BusinessPermission.CHEST_SHOP, BusinessPermission.DEFAULT)));
         employ(WORKER, businesses.resolveRole("acme", "sales-associate").orElseThrow());
 
-        assertEquals(ShopResult.SUCCESS,
-                shops.create(WORKER, businessDraft("acme", 9, 10, 11, 2_000L, null), NOW + 2).result());
+        ChestShop shop = shops.create(
+                WORKER, businessDraft("acme", 9, 10, 11, 2_000L, null), NOW + 2).shop().orElseThrow();
+        ShopDraft updated = new ShopDraft(
+                "world", 9, 10, 11, 9, 9, 11,
+                ShopOwnerType.BUSINESS, null, "acme", "GOLD_INGOT", 2, 3_000L, 1_000L);
+        assertEquals(ShopResult.SUCCESS, shops.canManage(WORKER, shop.id()));
+        assertEquals(ShopResult.SUCCESS, shops.update(WORKER, shop.id(), updated).result());
+        assertEquals("GOLD_INGOT", shops.find(shop.id()).orElseThrow().itemKey());
     }
 
     private ShopDraft playerDraft(int x, int y, int z, Long buy, Long sell) {
