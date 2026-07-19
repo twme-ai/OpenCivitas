@@ -76,6 +76,10 @@ commands:
     description: Lock blocks and manage protection access lists.
     usage: /bolt <lock|unlock|edit|modify|group|trust|transfer|password|mode|info>
     aliases: [lock, unlock, cmodify]
+  mobcapture:
+    description: View mob capture settings and staff audit records.
+    usage: /mobcapture [info|logs [player] [page]]
+    aliases: [mobeggs]
   claim:
     description: Create and manage wilderness claims.
     usage: /claim <list|info|create|buy|trust|untrust|delete>
@@ -332,6 +336,12 @@ permissions:
   opencivitas.protection.permission-source:
     description: Add server permission nodes to a protection access list.
     default: true
+  opencivitas.mobcapture.logs:
+    description: View the persistent mob capture audit log.
+    default: op
+  opencivitas.mobcapture.spawn-bypass:
+    description: Use spawn eggs in configured city and town worlds.
+    default: op
   opencivitas.elections.manage:
     description: Create, close, and cancel elections and referendums.
     default: op

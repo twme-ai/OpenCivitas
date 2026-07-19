@@ -50,6 +50,8 @@ transactions:
   stock-refund: 'Unused stock order escrow refund'
   stock-sale: 'Stock sale proceeds'
   stock-dividend: 'Stock dividend'
+  mob-capture-fee: 'Mob capture fee'
+  mob-capture-refund: 'Interrupted mob capture refund'
 about:
   header: '<gold>Citizen profile: <player></gold>'
   joined: '<gray>Joined:</gray> <white><date></white>'
@@ -1201,3 +1203,22 @@ protection:
     group_not_owner: '<red>You do not own that protection group.</red>'
     member_exists: '<red>That citizen is already in the group.</red>'
     member_not_found: '<red>That citizen is not in the group.</red>'
+
+mob-capture:
+  info: '<gold>Mob capture:</gold> <white><numerator>/<denominator> chance, <fee> on success, <entities> eligible mob types.</white>'
+  success: '<green>Captured <entity> for <fee>. New balance: <balance>.</green>'
+  not-qualified: '<red>You need an eligible Hunter, Fisher, or Farmer job for that mob.</red>'
+  chance-failed: '<gray>The mob escaped this capture attempt.</gray>'
+  insufficient-funds: '<red>You need <fee> for a successful capture.</red>'
+  account-not-found: '<red>Your citizen account was not found.</red>'
+  busy: '<yellow>That mob or too many of your captures are already being processed.</yellow>'
+  target-unavailable: '<red>The mob changed or disappeared before capture; the fee was refunded.</red>'
+  spawn-restricted: '<red>Spawn eggs cannot be used in this city or town world.</red>'
+  logs-header: '<gold>Mob capture audit</gold> <gray>(filter <player>, page <page>)</gray>'
+  logs-empty: '<gray>No mob captures were found on this page.</gray>'
+  logs-entry: '<gray>#<id> <date></gray> <white><actor></white> <yellow><entity></yellow> <dark_gray><target></dark_gray> <gray><job> | <world> <x>,<y>,<z> | <status></gray>'
+  restriction:
+    named: '<red>Named mobs cannot be captured.</red>'
+    baby: '<red>Baby mobs cannot be captured.</red>'
+    tamed: '<red>Tamed mobs cannot be captured.</red>'
+    sheared: '<red>Sheared mobs cannot be captured.</red>'

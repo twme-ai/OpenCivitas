@@ -73,6 +73,26 @@ behavioral reference, not a source of copyable implementation or content.
   next chat message before broadcast, avoiding Paper's command logging; inline
   password syntax remains available for compatibility and may be logged by the
   server. Packet interception is not justified.
+- [DemocracyCraft Mob Eggs](https://wiki.democracycraft.net/Mob_Eggs), revision
+  6089 from 11 July 2025, defines thrown chicken eggs, a $50 fee only on a
+  successful one-in-three capture, exact Hunter/Fisher/Farmer entity catalogs,
+  city/town spawn restrictions, and exclusions for named, sheared, tamed, baby,
+  and villager targets. OpenCivitas retains all 61 unique documented entity types.
+- [MobCapturer](https://github.com/Slimefun-Addon-Community/MobCapturer), MIT
+  commit `b418c2dedd5c582a38821f961616fca7fc6de665`, was inspected for cancellable
+  capture hooks and inventory-overflow delivery behavior.
+- [EggEmAll2](https://github.com/Dirty-Dog-Gaming/EggEmAll2), current commit
+  `49389b0bc31c74eb62a1dcea51e01163e684a8a7`, was inspected for thrown-egg
+  collision ordering and named/baby/tamed/sheared eligibility checks. The
+  repository publishes no license, so it was used only as a behavioral reference;
+  no source, configuration, messages, or assets were copied.
+- [CreatureCapture](https://github.com/Stellionix/CreatureCapture), GPL-3.0 commit
+  `b227954ccb287be4e6fbaae4f3aa73870bf1dd04`, was inspected for current Paper
+  projectile-hit and native spawn-egg material behavior. OpenCivitas instead uses
+  original job-aware SQLite reservations, fee/refund ledgers, and staff audits.
+- Paper 1.21.11 natively exposes egg shooters, damage/hit ordering, hatch control,
+  age, tame, custom-name and sheared state, spawn-egg materials, inventory overflow,
+  and cancellable spawn-egg interactions. Packet interception is not justified.
 - [Towny](https://github.com/TownyAdvanced/Towny): residents, claims, towns,
   permissions, and taxes.
 - [WorldGuard](https://github.com/EngineHub/WorldGuard): region protection and
@@ -441,5 +461,7 @@ The implementation does not intercept, rewrite, or synthesize protocol packets.
 Paper APIs are sufficient for commands, components, locale selection, joins,
 SQLite persistence, complete vehicle input, persistent interaction hitboxes,
 item-display rendering, spectator game mode, and native entity camera targets.
+It also exposes the projectile, hatch, living-entity state, and interaction events
+required for mob capture and spawn-egg restrictions.
 PacketEvents would duplicate these paths and add lifecycle and versioning risk
 with no benefit. Re-evaluate it only for a future feature that proves packet-only.

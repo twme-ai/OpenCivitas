@@ -12,6 +12,7 @@ import dev.opencivitas.command.ExamCommand;
 import dev.opencivitas.command.ElectionCommand;
 import dev.opencivitas.command.JobCommand;
 import dev.opencivitas.command.LegislatureCommand;
+import dev.opencivitas.command.MobCaptureCommand;
 import dev.opencivitas.command.PropertyCommand;
 import dev.opencivitas.command.PoliceCommand;
 import dev.opencivitas.command.ProtectionCommand;
@@ -77,6 +78,9 @@ import dev.opencivitas.legislature.LegislatureRepository;
 import dev.opencivitas.legislature.LegislatureService;
 import dev.opencivitas.listener.CitizenListener;
 import dev.opencivitas.message.MessageService;
+import dev.opencivitas.mobcapture.MobCaptureListener;
+import dev.opencivitas.mobcapture.MobCapturePolicy;
+import dev.opencivitas.mobcapture.MobCaptureRepository;
 import dev.opencivitas.police.CustodyService;
 import dev.opencivitas.police.PoliceListener;
 import dev.opencivitas.police.PolicePolicy;
@@ -192,6 +196,33 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             command.setExecutor(jobCommands);
             command.setTabCompleter(jobCommands);
         }
+
+        MobCapturePolicy mobCapturePolicy;
+        try {
+            mobCapturePolicy = new MobCapturePolicy(this, jobRegistry);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load mob-capture.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        MobCaptureRepository mobCaptures = new MobCaptureRepository(database);
+        try {
+            int recovered = mobCaptures.recoverPending(System.currentTimeMillis());
+            if (recovered > 0) getLogger().warning("Refunded " + recovered + " interrupted mob captures");
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not recover pending mob captures", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        MobCaptureCommand mobCaptureCommands = new MobCaptureCommand(
+                this, database, citizens, mobCaptures, mobCapturePolicy,
+                messages, currencySymbol, pageSize);
+        PluginCommand mobCapture = Objects.requireNonNull(
+                getCommand("mobcapture"), "Missing command mobcapture");
+        mobCapture.setExecutor(mobCaptureCommands);
+        mobCapture.setTabCompleter(mobCaptureCommands);
+        getServer().getPluginManager().registerEvents(new MobCaptureListener(
+                this, database, mobCapturePolicy, mobCaptures, messages, currencySymbol), this);
 
         ExamRegistry examRegistry;
         try {

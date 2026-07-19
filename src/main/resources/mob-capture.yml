@@ -1,0 +1,79 @@
+enabled: true
+capture-fee: '50.00'
+
+chance:
+  numerator: 1
+  denominator: 3
+
+maximum-pending-per-player: 4
+
+# Spawn eggs are blocked in these worlds. Adjust these names to match the
+# deployment's city and town worlds.
+spawn-egg-restricted-worlds: [cities, towns]
+
+jobs:
+  hunter:
+    - ALLAY
+    - ARMADILLO
+    - BAT
+    - BLAZE
+    - CAMEL
+    - CAT
+    - CAVE_SPIDER
+    - CREEPER
+    - DONKEY
+    - DROWNED
+    - ELDER_GUARDIAN
+    - ENDERMAN
+    - EVOKER
+    - FOX
+    - FROG
+    - GHAST
+    - GUARDIAN
+    - HOGLIN
+    - HORSE
+    - HUSK
+    - IRON_GOLEM
+    - LLAMA
+    - MAGMA_CUBE
+    - MULE
+    - MOOSHROOM
+    - OCELOT
+    - PANDA
+    - PARROT
+    - PIGLIN
+    - PIGLIN_BRUTE
+    - PILLAGER
+    - POLAR_BEAR
+    - RABBIT
+    - RAVAGER
+    - SHULKER
+    - SKELETON
+    - SKELETON_HORSE
+    - SLIME
+    - SPIDER
+    - STRAY
+    - STRIDER
+    - TRADER_LLAMA
+    - VEX
+    - VINDICATOR
+    - WITCH
+    - WITHER_SKELETON
+    - WOLF
+    - ZOGLIN
+    - ZOMBIE
+    - ZOMBIE_HORSE
+    - ZOMBIFIED_PIGLIN
+  fisher:
+    - DOLPHIN
+    - FROG
+    - GLOW_SQUID
+    - SQUID
+    - TURTLE
+  farmer:
+    - BEE
+    - CHICKEN
+    - COW
+    - GOAT
+    - PIG
+    - SHEEP

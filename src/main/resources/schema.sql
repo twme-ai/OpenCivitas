@@ -1219,3 +1219,30 @@ CREATE TABLE IF NOT EXISTS protection_trust (
     added_at INTEGER NOT NULL,
     PRIMARY KEY (owner_uuid, source_type, source_identifier)
 );
+
+CREATE TABLE IF NOT EXISTS mob_capture_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    actor_name TEXT NOT NULL,
+    target_uuid TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    job_id TEXT NOT NULL,
+    world TEXT NOT NULL,
+    x REAL NOT NULL,
+    y REAL NOT NULL,
+    z REAL NOT NULL,
+    fee_cents INTEGER NOT NULL CHECK (fee_cents > 0),
+    status TEXT NOT NULL CHECK (status IN ('PENDING', 'SUCCESS', 'REFUNDED')),
+    failure_reason TEXT,
+    created_at INTEGER NOT NULL,
+    completed_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_mob_capture_actor_created
+    ON mob_capture_audit(actor_uuid, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_mob_capture_created
+    ON mob_capture_audit(created_at DESC, id DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mob_capture_active_target
+    ON mob_capture_audit(target_uuid) WHERE status IN ('PENDING', 'SUCCESS');

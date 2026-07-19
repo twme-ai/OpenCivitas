@@ -50,6 +50,8 @@ transactions:
   stock-refund: '未使用股票訂單託管退款'
   stock-sale: '股票出售收入'
   stock-dividend: '股票股息'
+  mob-capture-fee: '生物捕捉費用'
+  mob-capture-refund: '中斷的生物捕捉退款'
 about:
   header: '<gold>市民資料：<player></gold>'
   joined: '<gray>加入日期：</gray> <white><date></white>'
@@ -1201,3 +1203,22 @@ protection:
     group_not_owner: '<red>你並未擁有該保護群組。</red>'
     member_exists: '<red>該市民已在群組中。</red>'
     member_not_found: '<red>該市民不在群組中。</red>'
+
+mob-capture:
+  info: '<gold>生物捕捉：</gold> <white>成功機率 <numerator>/<denominator>，成功時收取 <fee>，共有 <entities> 種可捕捉生物。</white>'
+  success: '<green>已花費 <fee> 捕捉 <entity>。新餘額：<balance>。</green>'
+  not-qualified: '<red>你需要符合該生物資格的獵人、漁夫或農夫工作。</red>'
+  chance-failed: '<gray>該生物逃過了這次捕捉。</gray>'
+  insufficient-funds: '<red>成功捕捉需要 <fee>。</red>'
+  account-not-found: '<red>找不到你的市民帳戶。</red>'
+  busy: '<yellow>該生物或你過多的捕捉操作已在處理中。</yellow>'
+  target-unavailable: '<red>生物在捕捉前已變更或消失，費用已退款。</red>'
+  spawn-restricted: '<red>此城市或城鎮世界無法使用生怪蛋。</red>'
+  logs-header: '<gold>生物捕捉稽核</gold> <gray>（篩選 <player>，第 <page> 頁）</gray>'
+  logs-empty: '<gray>此頁沒有生物捕捉紀錄。</gray>'
+  logs-entry: '<gray>#<id> <date></gray> <white><actor></white> <yellow><entity></yellow> <dark_gray><target></dark_gray> <gray><job> | <world> <x>,<y>,<z> | <status></gray>'
+  restriction:
+    named: '<red>無法捕捉已命名的生物。</red>'
+    baby: '<red>無法捕捉幼年生物。</red>'
+    tamed: '<red>無法捕捉已馴服的生物。</red>'
+    sheared: '<red>無法捕捉已剪毛的生物。</red>'

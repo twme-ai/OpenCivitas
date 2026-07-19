@@ -35,6 +35,8 @@ The first playable foundation includes:
 - persistent individual block protection with automatic private container locks,
   five use policies, player/group/permission/password ACLs, owner trust, transfer,
   auto-closing doors, inventory/hopper safeguards, and piston/explosion resistance
+- job-gated capture of 61 eligible mob types with thrown chicken eggs, a one-in-three
+  chance, atomic success fees, state exclusions, vanilla spawn eggs, and staff audit logs
 - wilderness claims with a management menu, paid claim-block allowance,
   golden-shovel create/resize selection, trust, transfer, and protection
 - registered real-estate plots with purchase, fixed-term rent escrow/refunds,
@@ -90,7 +92,7 @@ resolved by Paper from the `libraries` declaration in `plugin.yml`.
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
 files including `vehicles.yml`, `stocks.yml`, `network.yml`, `security.yml`,
-`elevators.yml`, and `block-protection.yml`.
+`elevators.yml`, `block-protection.yml`, and `mob-capture.yml`.
 Language files are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are
 supported in all catalog strings.
 
@@ -119,8 +121,8 @@ persistent state are not synchronized by this transport. `/network status`,
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
   native spectator targets for camera feeds, and a cancellable player jump event,
-  plus native block/inventory events for protection, so it is not justified for
-  the current vehicle, camera, elevator, or block-protection paths.
+  plus native block/inventory and projectile/entity events, so it is not justified
+  for the current vehicle, camera, elevator, protection, or mob-capture paths.
 
 ## License
 

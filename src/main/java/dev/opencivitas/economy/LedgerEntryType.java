@@ -22,5 +22,7 @@ public enum LedgerEntryType {
     STOCK_ESCROW,
     STOCK_REFUND,
     STOCK_SALE,
-    STOCK_DIVIDEND
+    STOCK_DIVIDEND,
+    MOB_CAPTURE_FEE,
+    MOB_CAPTURE_REFUND
 }
