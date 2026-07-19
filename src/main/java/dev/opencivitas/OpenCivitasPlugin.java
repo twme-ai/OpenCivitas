@@ -41,6 +41,9 @@ import dev.opencivitas.exam.ExamRepository;
 import dev.opencivitas.exam.UniversityService;
 import dev.opencivitas.job.JobRegistry;
 import dev.opencivitas.job.JobRepository;
+import dev.opencivitas.job.JobEarningPolicy;
+import dev.opencivitas.job.JobEarningRepository;
+import dev.opencivitas.job.JobEarningService;
 import dev.opencivitas.health.HealthItems;
 import dev.opencivitas.health.HealthListener;
 import dev.opencivitas.health.HealthRegistry;
@@ -117,6 +120,7 @@ public final class OpenCivitasPlugin extends JavaPlugin {
     private CameraViewService cameraViews;
     private CameraManager cameraManager;
     private ShopHologramService shopHolograms;
+    private JobEarningService jobEarnings;
 
     @Override
     public void onEnable() {
@@ -190,8 +194,28 @@ public final class OpenCivitasPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        JobRepository jobRepository = new JobRepository(database);
+        JobEarningPolicy jobEarningPolicy;
+        try {
+            jobEarningPolicy = new JobEarningPolicy(this, jobRegistry);
+        } catch (IllegalArgumentException exception) {
+            getLogger().log(Level.SEVERE, "Could not load job-earnings.yml", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        jobEarnings = new JobEarningService(
+                this, database, new JobEarningRepository(database), jobEarningPolicy,
+                messages, currencySymbol);
+        getServer().getPluginManager().registerEvents(jobEarnings, this);
+        try {
+            jobEarnings.start();
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Could not restore job earning protection", exception);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         JobCommand jobCommands = new JobCommand(
-                this, database, citizens, new JobRepository(database), jobRegistry, messages);
+                this, database, citizens, jobRepository, jobRegistry, messages);
         for (String name : List.of(
                 "jobs", "job", "qualifications", "qualification", "licenses", "license",
                 "setprefix", "quitjob", "quitprofession")) {
@@ -766,6 +790,9 @@ public final class OpenCivitasPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (jobEarnings != null) {
+            jobEarnings.stop();
+        }
         if (shopHolograms != null) {
             shopHolograms.stop();
         }

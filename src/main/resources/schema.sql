@@ -76,6 +76,35 @@ CREATE TABLE IF NOT EXISTS player_prefixes (
     selected_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS job_placed_blocks (
+    world_name TEXT NOT NULL,
+    block_x INTEGER NOT NULL,
+    block_y INTEGER NOT NULL,
+    block_z INTEGER NOT NULL,
+    material_key TEXT NOT NULL,
+    placed_by TEXT,
+    placed_at INTEGER NOT NULL,
+    PRIMARY KEY (world_name, block_x, block_y, block_z)
+);
+
+CREATE TABLE IF NOT EXISTS job_earning_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    job_id TEXT NOT NULL,
+    action_type TEXT NOT NULL CHECK (action_type IN ('BREAK', 'KILL')),
+    target_key TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+    occurred_at INTEGER NOT NULL,
+    payable_at INTEGER NOT NULL CHECK (payable_at >= occurred_at),
+    paid_at INTEGER CHECK (paid_at IS NULL OR paid_at >= occurred_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_earning_due
+    ON job_earning_events(payable_at, player_uuid) WHERE paid_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_job_earning_player_created
+    ON job_earning_events(player_uuid, occurred_at DESC, id DESC);
+
 CREATE TABLE IF NOT EXISTS elections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     slug TEXT NOT NULL UNIQUE COLLATE NOCASE,

@@ -276,6 +276,7 @@ public final class CivitasCommand implements CommandExecutor, TabCompleter {
                 case STOCK_REFUND -> messages.component(sender, "transactions.stock-refund");
                 case STOCK_SALE -> messages.component(sender, "transactions.stock-sale");
                 case STOCK_DIVIDEND -> messages.component(sender, "transactions.stock-dividend");
+                case JOB_EARNING -> messages.component(sender, "transactions.job-earning");
                 case MOB_CAPTURE_FEE -> messages.component(sender, "transactions.mob-capture-fee");
                 case MOB_CAPTURE_REFUND -> messages.component(sender, "transactions.mob-capture-refund");
             };

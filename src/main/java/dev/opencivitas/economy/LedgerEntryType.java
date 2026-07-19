@@ -23,6 +23,7 @@ public enum LedgerEntryType {
     STOCK_REFUND,
     STOCK_SALE,
     STOCK_DIVIDEND,
+    JOB_EARNING,
     MOB_CAPTURE_FEE,
     MOB_CAPTURE_REFUND
 }

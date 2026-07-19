@@ -20,7 +20,8 @@ The first playable foundation includes:
 - SQLite persistence with an auditable per-account ledger
 - Configurable starting balance (default `$1,200`)
 - `/balance`, `/baltop`, `/pay`, `/transactions`, `/about`, and `/locale`
-- persistent qualifications and job membership
+- persistent qualifications and job membership with configurable miner/hunter
+  action earnings, durable payout batching, and placed-block exploit protection
 - permanent/expiring licenses and verified displayed-job prefix selection
 - two-trade, one-profession, and unlimited government-role limits
 - self-service career enrollment plus administrative appointments
@@ -94,8 +95,8 @@ resolved by Paper from the `libraries` declaration in `plugin.yml`.
 ## Configuration
 
 Configuration is generated at `plugins/OpenCivitas/config.yml`, with domain
-files including `vehicles.yml`, `stocks.yml`, `network.yml`, `security.yml`,
-`elevators.yml`, `block-protection.yml`, and `mob-capture.yml`.
+files including `job-earnings.yml`, `vehicles.yml`, `stocks.yml`, `network.yml`,
+`security.yml`, `elevators.yml`, `block-protection.yml`, and `mob-capture.yml`.
 Language files are generated at `plugins/OpenCivitas/lang/`. MiniMessage tags are
 supported in all catalog strings.
 
@@ -124,8 +125,9 @@ persistent state are not synchronized by this transport. `/network status`,
 - PacketEvents is added only for features that require packet interception or
   client-side illusions. Paper 1.21.11 exposes complete vehicle input directly,
   native spectator targets for camera feeds, and a cancellable player jump event,
-  plus native block/inventory and projectile/entity events, so it is not justified
-  for the current vehicle, camera, elevator, protection, or mob-capture paths.
+  plus native block/piston, inventory, and projectile/entity events, so it is not
+  justified for the current job, vehicle, camera, elevator, protection, or
+  mob-capture paths.
 
 ## License
 

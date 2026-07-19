@@ -50,6 +50,7 @@ transactions:
   stock-refund: '未使用股票訂單託管退款'
   stock-sale: '股票出售收入'
   stock-dividend: '股票股息'
+  job-earning: '工作行動收入'
   mob-capture-fee: '生物捕捉費用'
   mob-capture-refund: '中斷的生物捕捉退款'
 about:
@@ -85,6 +86,8 @@ jobs:
   prefix-set: '<green>目前顯示的職業已設為 <job>。</green>'
   prefix-cleared: '<green>已清除顯示的職業前綴。</green>'
   prefix-current: '<gray>目前顯示的職業：</gray> <white><job></white>'
+  earnings-queued: '<green>+<amount></green> <gray>已排入下一次工作薪資</gray>'
+  earnings-paid: '<green>工作薪資：<amount></green> <gray>（<actions> 次行動）。餘額：<balance>。</gray>'
   category:
     trade: '一般職業'
     profession: '專業職業'

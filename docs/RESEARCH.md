@@ -1,6 +1,6 @@
 # Research log
 
-Research was performed on 18 July 2026. Public documentation is treated as a
+Research was performed on 18-19 July 2026. Public documentation is treated as a
 behavioral reference, not a source of copyable implementation or content.
 
 ## Official behavior sources
@@ -8,8 +8,13 @@ behavioral reference, not a source of copyable implementation or content.
 - [DemocracyCraft Getting Started](https://wiki.democracycraft.net/Getting_Started):
   starting balance, earning paths, job limits, healthcare, government branches,
   world rules, property, businesses, and chat modes.
-- [DemocracyCraft Jobs](https://wiki.democracycraft.net/Jobs): trade,
-  profession, government, license, and legal qualification categories.
+- [DemocracyCraft Jobs](https://wiki.democracycraft.net/Jobs), revision 11653
+  from 14 July 2026: trade, profession, government, license, and legal
+  qualification categories.
+- [DemocracyCraft Miner](https://wiki.democracycraft.net/Miner), revision 11312
+  from 27 June 2026, and [Hunter](https://wiki.democracycraft.net/Hunter),
+  revision 8275: per-block ranged/chance payments settled every fifteen minutes
+  and direct job-plugin earnings for non-player mob kills.
 - [DemocracyCraft Government](https://wiki.democracycraft.net/Government):
   bicameral legislature, executive, courts, office terms, eligibility, vetoes,
   succession, and voting systems.
@@ -35,11 +40,18 @@ behavioral reference, not a source of copyable implementation or content.
 - [Paper](https://github.com/PaperMC/Paper): server API and runtime behavior.
 - [Adventure](https://github.com/PaperMC/adventure): components, MiniMessage,
   audiences, and localization building blocks.
-- [Jobs Reborn](https://github.com/Zrips/Jobs): configurable job actions,
-  progression, qualification/permission checks, duplicate membership checks,
-  slot limits, and join/leave lifecycle patterns (Apache-2.0). The public
-  `commands/list/join.java` and `container/JobsPlayer.java` implementations were
-  inspected before the OpenCivitas enrollment transaction was designed.
+- [Jobs Reborn](https://github.com/Zrips/Jobs), current Apache-2.0 commit
+  `67e82119fb2319b574a53d1a5bddd2b7fd94823a`: configurable job actions,
+  qualification/permission checks, duplicate membership checks, slot limits,
+  join/leave lifecycle, block placement protection, and buffered economy
+  settlement. Its public action listener, block-protection manager, example
+  job configuration, and buffered-payment task were inspected. OpenCivitas uses
+  original immutable rules, SQLite audit rows and payout transactions; no
+  source, messages, or configuration were copied.
+- Paper 1.21.11's block break/place, entity death, piston, burn, and explosion
+  events provide the complete action and anti-loop surface. `BlockPistonEvent`
+  explicitly reports the operating direction and both piston event variants
+  expose the moved blocks, so packet interception is not justified.
 - The current DemocracyCraft command reference documents `/licenses [player]`
   and `/setprefix <job>`. OpenCivitas stores license expiry separately from
   job qualifications and only resolves a displayed prefix while that job is
@@ -487,7 +499,8 @@ The implementation does not intercept, rewrite, or synthesize protocol packets.
 Paper APIs are sufficient for commands, components, locale selection, joins,
 SQLite persistence, complete vehicle input, persistent interaction hitboxes,
 item-display rendering, spectator game mode, and native entity camera targets.
-It also exposes the projectile, hatch, living-entity state, and interaction events
-required for mob capture and spawn-egg restrictions.
+It also exposes the block action/piston, projectile, hatch, living-entity state,
+and interaction events required for job earnings, mob capture, and spawn-egg
+restrictions.
 PacketEvents would duplicate these paths and add lifecycle and versioning risk
 with no benefit. Re-evaluate it only for a future feature that proves packet-only.

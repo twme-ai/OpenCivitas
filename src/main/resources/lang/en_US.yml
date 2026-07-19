@@ -50,6 +50,7 @@ transactions:
   stock-refund: 'Unused stock order escrow refund'
   stock-sale: 'Stock sale proceeds'
   stock-dividend: 'Stock dividend'
+  job-earning: 'Job action earnings'
   mob-capture-fee: 'Mob capture fee'
   mob-capture-refund: 'Interrupted mob capture refund'
 about:
@@ -85,6 +86,8 @@ jobs:
   prefix-set: '<green>Your displayed job is now <job>.</green>'
   prefix-cleared: '<green>Your displayed job prefix was cleared.</green>'
   prefix-current: '<gray>Displayed job:</gray> <white><job></white>'
+  earnings-queued: '<green>+<amount></green> <gray>queued for your next job payout</gray>'
+  earnings-paid: '<green>Job payout: <amount></green> <gray>for <actions> action(s). Balance: <balance>.</gray>'
   category:
     trade: 'trade'
     profession: 'profession'

@@ -1,0 +1,57 @@
+payout-interval-seconds: 900
+
+jobs:
+  miner:
+    break:
+      NETHER_GOLD_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      COAL_ORE: {minimum: '3.00', maximum: '5.00', chance: 0.10}
+      DEEPSLATE_REDSTONE_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      DEEPSLATE_IRON_ORE: {minimum: '3.00', maximum: '5.00', chance: 0.10}
+      DEEPSLATE_DIAMOND_ORE: {minimum: '20.00', maximum: '30.00', chance: 0.10}
+      DIAMOND_ORE: {minimum: '20.00', maximum: '30.00', chance: 0.10}
+      REDSTONE_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      DEEPSLATE_LAPIS_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      DEEPSLATE_COAL_ORE: {minimum: '3.00', maximum: '5.00', chance: 0.10}
+      LAPIS_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      ANCIENT_DEBRIS: {minimum: '30.00', maximum: '40.00', chance: 0.10}
+      DEEPSLATE_GOLD_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      COPPER_ORE: {minimum: '3.00', maximum: '5.00', chance: 0.10}
+      DEEPSLATE_EMERALD_ORE: {minimum: '20.00', maximum: '30.00', chance: 0.10}
+      GOLD_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      NETHER_QUARTZ_ORE: {minimum: '10.00', maximum: '15.00', chance: 0.10}
+      IRON_ORE: {minimum: '3.00', maximum: '5.00', chance: 0.10}
+      EMERALD_ORE: {minimum: '20.00', maximum: '30.00', chance: 0.10}
+      MOSSY_STONE_BRICKS: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      MOSSY_COBBLESTONE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      GRAY_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      GREEN_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      PURPLE_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      WARPED_NYLIUM: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      STONE_BRICKS: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      CRACKED_STONE_BRICKS: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      LIGHT_GRAY_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      GRANITE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      COBBLESTONE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      TUFF: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      DIORITE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      STONE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      LIGHT_BLUE_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      CRIMSON_NYLIUM: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      RED_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      BLUE_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      CYAN_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      PINK_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      WHITE_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      ORANGE_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      BLACK_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      ANDESITE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      DEEPSLATE: {minimum: '1.00', maximum: '2.00', chance: 0.01}
+      MAGENTA_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      YELLOW_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      CHISELED_STONE_BRICKS: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      BROWN_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+      LIME_TERRACOTTA: {minimum: '3.00', maximum: '5.00', chance: 0.01}
+  hunter:
+    kill:
+      '*': {minimum: '2.00', maximum: '8.00', chance: 1.0}
