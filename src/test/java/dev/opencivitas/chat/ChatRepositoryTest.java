@@ -84,6 +84,32 @@ class ChatRepositoryTest {
     }
 
     @Test
+    void ignoreListPersistsAndBlocksIncomingMessagesAndMail() throws Exception {
+        assertTrue(chat.ignoredPlayers(ALICE).isEmpty());
+        assertEquals(ChatResult.CANNOT_MESSAGE_SELF, chat.ignore(ALICE, ALICE, NOW));
+        assertEquals(ChatResult.CITIZEN_NOT_FOUND, chat.ignore(ALICE, id(99), NOW));
+        assertEquals(ChatResult.SUCCESS, chat.ignore(ALICE, BOB, NOW + 1));
+        assertEquals(ChatResult.ALREADY_IGNORED, chat.ignore(ALICE, BOB, NOW + 2));
+
+        IgnoredPlayer ignored = new ChatRepository(database).ignoredPlayers(ALICE).getFirst();
+        assertEquals(BOB, ignored.playerId());
+        assertEquals("Bob", ignored.playerName());
+        assertTrue(chat.ignoredIds(ALICE).contains(BOB));
+        assertEquals(ChatResult.TARGET_IGNORES_SENDER,
+                chat.touchConversation(BOB, ALICE, NOW + 3));
+        assertEquals(ChatResult.TARGET_IGNORES_SENDER,
+                chat.sendMail(BOB, ALICE, "blocked", 500, NOW + 4).result());
+        assertEquals(0, chat.unreadMail(ALICE));
+
+        assertEquals(ChatResult.SUCCESS, chat.touchConversation(ALICE, BOB, NOW + 5));
+        assertEquals(ChatResult.SUCCESS, chat.sendMail(ALICE, BOB, "allowed", 500, NOW + 6).result());
+        assertEquals(ChatResult.SUCCESS, chat.unignore(ALICE, BOB));
+        assertEquals(ChatResult.NOT_IGNORED, chat.unignore(ALICE, BOB));
+        assertTrue(chat.ignoredIds(ALICE).isEmpty());
+        assertEquals(ChatResult.SUCCESS, chat.touchConversation(BOB, ALICE, NOW + 7));
+    }
+
+    @Test
     void advertisementRequiresQualificationAndEnforcesCooldownAtomically() throws Exception {
         assertEquals(ChatResult.MISSING_QUALIFICATION, chat.submitAdvertisement(
                 ALICE, "Fresh bread", 500, Duration.ofMinutes(10), NOW).result());

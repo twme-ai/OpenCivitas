@@ -56,7 +56,8 @@ The first playable foundation includes:
   contagious spread, temperature illness, crafted treatments, hospital call
   monitors, pharmacy counters, Medicare benefits, and Department of Health chat
 - persisted global, local, murmur, and government channels, private messaging
-  and replies, offline mail, help questions, and qualification-gated advertising
+  and replies, offline mail, recipient-owned UUID ignore lists, help questions,
+  qualification-gated advertising, and configurable local timestamps
 - persistent named homes and civic warps, async safe teleport, coordinate sharing,
   configurable web-map link, and compass/action-bar GPS for registered plots
 - reciprocal friend consent, lawyer-officiated marriage, audited divorce, shared

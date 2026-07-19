@@ -19,7 +19,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -32,6 +34,8 @@ public final class ChatRouter implements Listener {
     private final NetworkService network;
     private final MessageService messages;
     private final ConcurrentHashMap<UUID, ChatChannel> preferences = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Set<UUID>> ignoredPlayers = new ConcurrentHashMap<>();
+    private final Set<UUID> loadedIgnoreState = ConcurrentHashMap.newKeySet();
 
     public ChatRouter(
             JavaPlugin plugin,
@@ -65,10 +69,23 @@ public final class ChatRouter implements Listener {
                         "chat.channel." + channel.name().toLowerCase(java.util.Locale.ROOT))));
     }
 
+    public void updateIgnore(UUID playerId, UUID ignoredId, boolean ignored) {
+        ignoredPlayers.compute(playerId, (key, current) -> {
+            Set<UUID> updated = new HashSet<>(current == null ? Set.of() : current);
+            if (ignored) updated.add(ignoredId);
+            else updated.remove(ignoredId);
+            return Set.copyOf(updated);
+        });
+    }
+
     public void broadcastSpecial(String formatKey, Player sender, Component content) {
-        for (Player recipient : Bukkit.getOnlinePlayers()) recipient.sendMessage(messages.component(
-                recipient, formatKey, Placeholder.unparsed("player", sender.getName()),
-                Placeholder.component("message", content)));
+        for (Player recipient : Bukkit.getOnlinePlayers()) {
+            if (!isIgnoredBy(recipient.getUniqueId(), sender.getUniqueId())) {
+                recipient.sendMessage(messages.component(
+                        recipient, formatKey, Placeholder.unparsed("player", sender.getName()),
+                        Placeholder.component("message", content)));
+            }
+        }
         Bukkit.getConsoleSender().sendMessage(messages.component("en_US", formatKey,
                 Placeholder.unparsed("player", sender.getName()), Placeholder.component("message", content)));
     }
@@ -108,7 +125,9 @@ public final class ChatRouter implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
-        database.submit(() -> new JoinState(chat.preference(playerId), chat.unreadMail(playerId)))
+        loadedIgnoreState.remove(playerId);
+        database.submit(() -> new JoinState(
+                        chat.preference(playerId), chat.unreadMail(playerId), chat.ignoredIds(playerId)))
                 .whenComplete((state, error) -> {
                     if (error != null) {
                         plugin.getLogger().log(Level.WARNING, "Could not load chat state", error);
@@ -118,6 +137,8 @@ public final class ChatRouter implements Listener {
                         Player player = Bukkit.getPlayer(playerId);
                         if (player == null) return;
                         preferences.put(playerId, state.channel());
+                        ignoredPlayers.put(playerId, state.ignoredPlayers());
+                        loadedIgnoreState.add(playerId);
                         if (state.unreadMail() > 0) messages.send(player, "chat.mail-notice",
                                 Placeholder.unparsed("count", Integer.toString(state.unreadMail())));
                     });
@@ -127,6 +148,8 @@ public final class ChatRouter implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         preferences.remove(event.getPlayer().getUniqueId());
+        ignoredPlayers.remove(event.getPlayer().getUniqueId());
+        loadedIgnoreState.remove(event.getPlayer().getUniqueId());
     }
 
     private void route(Player sender, ChatChannel channel, Component content) {
@@ -162,7 +185,9 @@ public final class ChatRouter implements Listener {
 
     private void deliver(
             Player sender, ChatChannel channel, Component content, Collection<? extends Player> recipients) {
-        List<Player> selected = new ArrayList<>(recipients);
+        List<Player> selected = new ArrayList<>(recipients.stream()
+                .filter(recipient -> !isIgnoredBy(recipient.getUniqueId(), sender.getUniqueId()))
+                .toList());
         if (selected.stream().noneMatch(player -> player.getUniqueId().equals(sender.getUniqueId()))) {
             selected.add(sender);
         }
@@ -185,16 +210,25 @@ public final class ChatRouter implements Listener {
         Component content = Component.text(envelope.content());
         String key = "network.chat-format."
                 + envelope.channel().name().toLowerCase(java.util.Locale.ROOT);
-        for (Player recipient : recipients) recipient.sendMessage(messages.component(recipient, key,
-                Placeholder.unparsed("server", envelope.sourceDisplayName()),
-                Placeholder.unparsed("player", envelope.playerName()),
-                Placeholder.component("message", content)));
+        for (Player recipient : recipients) {
+            if (!isIgnoredBy(recipient.getUniqueId(), envelope.playerId())) {
+                recipient.sendMessage(messages.component(recipient, key,
+                        Placeholder.unparsed("server", envelope.sourceDisplayName()),
+                        Placeholder.unparsed("player", envelope.playerName()),
+                        Placeholder.component("message", content)));
+            }
+        }
         Bukkit.getConsoleSender().sendMessage(messages.component("en_US", key,
                 Placeholder.unparsed("server", envelope.sourceDisplayName()),
                 Placeholder.unparsed("player", envelope.playerName()),
                 Placeholder.component("message", content)));
     }
 
-    private record JoinState(ChatChannel channel, int unreadMail) {
+    private boolean isIgnoredBy(UUID recipientId, UUID senderId) {
+        return !recipientId.equals(senderId) && (!loadedIgnoreState.contains(recipientId)
+                || ignoredPlayers.getOrDefault(recipientId, Set.of()).contains(senderId));
+    }
+
+    private record JoinState(ChatChannel channel, int unreadMail, Set<UUID> ignoredPlayers) {
     }
 }

@@ -546,7 +546,7 @@ public final class OpenCivitasPlugin extends JavaPlugin {
                 this, database, citizens, chatRepository, chatPolicy, chatRouter, messages);
         for (String name : List.of(
                 "g", "l", "murmur", "doj", "sen", "jud",
-                "msg", "r", "mail", "ad", "ask")) {
+                "msg", "r", "mail", "ad", "ask", "ignore", "unignore", "timestamp")) {
             PluginCommand command = Objects.requireNonNull(getCommand(name), "Missing command " + name);
             command.setExecutor(chatCommands);
             command.setTabCompleter(chatCommands);

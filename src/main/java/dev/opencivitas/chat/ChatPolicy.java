@@ -6,6 +6,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.time.Duration;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -21,6 +23,7 @@ public final class ChatPolicy {
     private final Duration advertisementCooldown;
     private final int maximumMessageLength;
     private final int mailPageSize;
+    private final ZoneId timeZone;
     private final Map<ChatChannel, DepartmentChannelDefinition> departments;
 
     public ChatPolicy(JavaPlugin plugin) {
@@ -36,6 +39,11 @@ public final class ChatPolicy {
                 1, 500, "maximum-message-length");
         mailPageSize = (int) bounded(configuration.getLong("mail-page-size", 10),
                 1, 50, "mail-page-size");
+        try {
+            timeZone = ZoneId.of(configuration.getString("time-zone", "UTC"));
+        } catch (DateTimeException exception) {
+            throw new IllegalArgumentException("chat.yml time-zone is not a valid zone id", exception);
+        }
         departments = loadDepartments(configuration.getConfigurationSection("department-channels"));
     }
 
@@ -57,6 +65,10 @@ public final class ChatPolicy {
 
     public int mailPageSize() {
         return mailPageSize;
+    }
+
+    public ZoneId timeZone() {
+        return timeZone;
     }
 
     public Optional<DepartmentChannelDefinition> department(ChatChannel channel) {

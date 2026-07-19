@@ -184,6 +184,15 @@ commands:
   ask:
     description: Ask the server help channel a question.
     usage: /ask <message>
+  ignore:
+    description: List or block communication from a citizen.
+    usage: /ignore [player]
+  unignore:
+    description: Allow communication from a blocked citizen.
+    usage: /unignore <player>
+  timestamp:
+    description: Show the current configured local time.
+    usage: /timestamp
   sethome:
     description: Save a named home at your current location.
     usage: /sethome <name>

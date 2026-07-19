@@ -858,6 +858,17 @@ CREATE TABLE IF NOT EXISTS chat_contacts (
     CHECK (player_uuid != reply_target_uuid)
 );
 
+CREATE TABLE IF NOT EXISTS chat_ignores (
+    player_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    ignored_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (player_uuid, ignored_uuid),
+    CHECK (player_uuid != ignored_uuid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_ignores_ignored
+    ON chat_ignores(ignored_uuid, player_uuid);
+
 CREATE TABLE IF NOT EXISTS mail_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sender_uuid TEXT NOT NULL REFERENCES players(uuid) ON DELETE RESTRICT,

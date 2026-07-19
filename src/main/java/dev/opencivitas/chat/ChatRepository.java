@@ -57,6 +57,76 @@ public final class ChatRepository {
         }
     }
 
+    public ChatResult ignore(UUID playerId, UUID ignoredId, long now) throws SQLException {
+        if (playerId.equals(ignoredId)) return ChatResult.CANNOT_MESSAGE_SELF;
+        try (Connection connection = database.openConnection()) {
+            if (!citizenExists(connection, playerId) || !citizenExists(connection, ignoredId)) {
+                return ChatResult.CITIZEN_NOT_FOUND;
+            }
+            try (PreparedStatement statement = connection.prepareStatement("""
+                    INSERT OR IGNORE INTO chat_ignores(player_uuid, ignored_uuid, created_at)
+                    VALUES (?, ?, ?)
+                    """)) {
+                statement.setString(1, playerId.toString());
+                statement.setString(2, ignoredId.toString());
+                statement.setLong(3, now);
+                return statement.executeUpdate() == 1 ? ChatResult.SUCCESS : ChatResult.ALREADY_IGNORED;
+            }
+        }
+    }
+
+    public ChatResult unignore(UUID playerId, UUID ignoredId) throws SQLException {
+        if (playerId.equals(ignoredId)) return ChatResult.CANNOT_MESSAGE_SELF;
+        try (Connection connection = database.openConnection()) {
+            if (!citizenExists(connection, playerId) || !citizenExists(connection, ignoredId)) {
+                return ChatResult.CITIZEN_NOT_FOUND;
+            }
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "DELETE FROM chat_ignores WHERE player_uuid = ? AND ignored_uuid = ?")) {
+                statement.setString(1, playerId.toString());
+                statement.setString(2, ignoredId.toString());
+                return statement.executeUpdate() == 1 ? ChatResult.SUCCESS : ChatResult.NOT_IGNORED;
+            }
+        }
+    }
+
+    public List<IgnoredPlayer> ignoredPlayers(UUID playerId) throws SQLException {
+        String sql = """
+                SELECT ignored.uuid, ignored.last_name, relation.created_at
+                FROM chat_ignores relation
+                JOIN players ignored ON ignored.uuid = relation.ignored_uuid
+                WHERE relation.player_uuid = ?
+                ORDER BY ignored.last_name COLLATE NOCASE, ignored.uuid
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, playerId.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                List<IgnoredPlayer> ignored = new ArrayList<>();
+                while (results.next()) {
+                    ignored.add(new IgnoredPlayer(
+                            UUID.fromString(results.getString("uuid")),
+                            results.getString("last_name"),
+                            Instant.ofEpochMilli(results.getLong("created_at"))));
+                }
+                return List.copyOf(ignored);
+            }
+        }
+    }
+
+    public Set<UUID> ignoredIds(UUID playerId) throws SQLException {
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT ignored_uuid FROM chat_ignores WHERE player_uuid = ?")) {
+            statement.setString(1, playerId.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                Set<UUID> ignored = new LinkedHashSet<>();
+                while (results.next()) ignored.add(UUID.fromString(results.getString(1)));
+                return Set.copyOf(ignored);
+            }
+        }
+    }
+
     public ChatResult touchConversation(UUID senderId, UUID recipientId, long now) throws SQLException {
         if (senderId.equals(recipientId)) return ChatResult.CANNOT_MESSAGE_SELF;
         try (Connection connection = database.openConnection()) {
@@ -65,6 +135,10 @@ public final class ChatRepository {
                 if (!citizenExists(connection, senderId) || !citizenExists(connection, recipientId)) {
                     connection.rollback();
                     return ChatResult.CITIZEN_NOT_FOUND;
+                }
+                if (ignores(connection, recipientId, senderId)) {
+                    connection.rollback();
+                    return ChatResult.TARGET_IGNORES_SENDER;
                 }
                 upsertContact(connection, senderId, recipientId, now);
                 upsertContact(connection, recipientId, senderId, now);
@@ -96,25 +170,39 @@ public final class ChatRepository {
         }
         if (senderId.equals(recipientId)) return ChatOperation.result(ChatResult.CANNOT_MESSAGE_SELF);
         try (Connection connection = database.openConnection()) {
-            String senderName = playerName(connection, senderId).orElse(null);
-            if (senderName == null || !citizenExists(connection, recipientId)) {
-                return ChatOperation.result(ChatResult.CITIZEN_NOT_FOUND);
-            }
-            String sql = """
-                    INSERT INTO mail_messages(sender_uuid, recipient_uuid, content, sent_at)
-                    VALUES (?, ?, ?, ?)
-                    """;
-            try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                statement.setString(1, senderId.toString());
-                statement.setString(2, recipientId.toString());
-                statement.setString(3, normalized);
-                statement.setLong(4, now);
-                statement.executeUpdate();
-                try (ResultSet keys = statement.getGeneratedKeys()) {
-                    if (!keys.next()) throw new SQLException("No generated mail id");
-                    return ChatOperation.success(new MailMessage(keys.getLong(1), senderId,
-                            senderName, recipientId, normalized, Instant.ofEpochMilli(now), null));
+            connection.setAutoCommit(false);
+            try {
+                String senderName = playerName(connection, senderId).orElse(null);
+                if (senderName == null || !citizenExists(connection, recipientId)) {
+                    connection.rollback();
+                    return ChatOperation.result(ChatResult.CITIZEN_NOT_FOUND);
                 }
+                if (ignores(connection, recipientId, senderId)) {
+                    connection.rollback();
+                    return ChatOperation.result(ChatResult.TARGET_IGNORES_SENDER);
+                }
+                String sql = """
+                        INSERT INTO mail_messages(sender_uuid, recipient_uuid, content, sent_at)
+                        VALUES (?, ?, ?, ?)
+                        """;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        sql, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setString(1, senderId.toString());
+                    statement.setString(2, recipientId.toString());
+                    statement.setString(3, normalized);
+                    statement.setLong(4, now);
+                    statement.executeUpdate();
+                    try (ResultSet keys = statement.getGeneratedKeys()) {
+                        if (!keys.next()) throw new SQLException("No generated mail id");
+                        MailMessage mail = new MailMessage(keys.getLong(1), senderId,
+                                senderName, recipientId, normalized, Instant.ofEpochMilli(now), null);
+                        connection.commit();
+                        return ChatOperation.success(mail);
+                    }
+                }
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
             }
         }
     }
@@ -315,6 +403,17 @@ public final class ChatRepository {
 
     private static boolean citizenExists(Connection connection, UUID playerId) throws SQLException {
         return playerName(connection, playerId).isPresent();
+    }
+
+    private static boolean ignores(Connection connection, UUID playerId, UUID ignoredId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM chat_ignores WHERE player_uuid = ? AND ignored_uuid = ?")) {
+            statement.setString(1, playerId.toString());
+            statement.setString(2, ignoredId.toString());
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next();
+            }
+        }
     }
 
     private static Optional<String> playerName(Connection connection, UUID playerId) throws SQLException {

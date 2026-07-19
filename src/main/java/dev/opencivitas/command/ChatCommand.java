@@ -7,6 +7,7 @@ import dev.opencivitas.chat.ChatRepository;
 import dev.opencivitas.chat.ChatResult;
 import dev.opencivitas.chat.ChatRouter;
 import dev.opencivitas.chat.DepartmentChannelDefinition;
+import dev.opencivitas.chat.IgnoredPlayer;
 import dev.opencivitas.chat.MailMessage;
 import dev.opencivitas.citizen.CitizenProfile;
 import dev.opencivitas.citizen.CitizenRepository;
@@ -22,6 +23,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -35,6 +37,7 @@ import java.util.logging.Level;
 public final class ChatCommand implements CommandExecutor, TabCompleter {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm 'UTC'")
             .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter LOCAL_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss z");
 
     private final JavaPlugin plugin;
     private final Database database;
@@ -76,6 +79,9 @@ public final class ChatCommand implements CommandExecutor, TabCompleter {
             case "mail" -> mail(sender, args);
             case "ad" -> advertise(sender, args);
             case "ask" -> ask(sender, args);
+            case "ignore" -> ignore(sender, args);
+            case "unignore" -> unignore(sender, args);
+            case "timestamp" -> timestamp(sender, args);
             default -> false;
         };
     }
@@ -280,6 +286,75 @@ public final class ChatCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean ignore(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) return playerOnly(sender);
+        if (args.length == 0) {
+            complete(sender, database.submit(() -> chat.ignoredPlayers(player.getUniqueId())), ignored -> {
+                messages.send(sender, "chat.ignore-header");
+                if (ignored.isEmpty()) {
+                    messages.send(sender, "chat.ignore-empty");
+                    return;
+                }
+                for (IgnoredPlayer entry : ignored) {
+                    messages.send(sender, "chat.ignore-entry",
+                            Placeholder.unparsed("player", entry.playerName()));
+                }
+            });
+            return true;
+        }
+        if (args.length != 1) return usage(sender, "/ignore [player]");
+        return changeIgnore(sender, player, args[0], true);
+    }
+
+    private boolean unignore(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) return playerOnly(sender);
+        if (args.length != 1) return usage(sender, "/unignore <player>");
+        return changeIgnore(sender, player, args[0], false);
+    }
+
+    private boolean changeIgnore(CommandSender sender, Player player, String targetName, boolean ignored) {
+        complete(sender, database.submit(() -> {
+            CitizenProfile target = citizens.findByName(targetName).orElse(null);
+            ChatResult result = target == null ? ChatResult.CITIZEN_NOT_FOUND
+                    : ignored
+                            ? chat.ignore(player.getUniqueId(), target.uuid(), System.currentTimeMillis())
+                            : chat.unignore(player.getUniqueId(), target.uuid());
+            return new IgnoreAction(target, result);
+        }), action -> {
+            if (action.target() == null) {
+                messages.send(sender, "error.player-not-found",
+                        Placeholder.unparsed("player", targetName));
+                return;
+            }
+            if (action.result() == ChatResult.SUCCESS) {
+                router.updateIgnore(player.getUniqueId(), action.target().uuid(), ignored);
+                messages.send(sender, ignored ? "chat.ignored" : "chat.unignored",
+                        Placeholder.unparsed("player", action.target().lastName()));
+                return;
+            }
+            String key = switch (action.result()) {
+                case CANNOT_MESSAGE_SELF -> "chat.cannot-ignore-self";
+                case ALREADY_IGNORED -> "chat.already-ignored";
+                case NOT_IGNORED -> "chat.not-ignored";
+                default -> null;
+            };
+            if (key == null) {
+                error(sender, action.result());
+            } else {
+                messages.send(sender, key,
+                        Placeholder.unparsed("player", action.target().lastName()));
+            }
+        });
+        return true;
+    }
+
+    private boolean timestamp(CommandSender sender, String[] args) {
+        if (args.length != 0) return usage(sender, "/timestamp");
+        messages.send(sender, "chat.timestamp",
+                Placeholder.unparsed("time", LOCAL_TIME.withZone(policy.timeZone()).format(Instant.now())));
+        return true;
+    }
+
     private boolean valid(String content) {
         String trimmed = content.trim();
         return !trimmed.isEmpty() && trimmed.length() <= policy.maximumMessageLength();
@@ -290,6 +365,9 @@ public final class ChatCommand implements CommandExecutor, TabCompleter {
             case CITIZEN_NOT_FOUND -> "error.player-not-found";
             case TARGET_OFFLINE -> "chat.target-offline";
             case CANNOT_MESSAGE_SELF -> "chat.cannot-message-self";
+            case ALREADY_IGNORED -> "chat.already-ignored";
+            case NOT_IGNORED -> "chat.not-ignored";
+            case TARGET_IGNORES_SENDER -> "chat.contact-blocked";
             case NOT_AUTHORIZED -> "chat.department-denied";
             case MISSING_QUALIFICATION -> "chat.ad-qualification";
             case MAIL_NOT_FOUND -> "chat.mail-not-found";
@@ -356,6 +434,9 @@ public final class ChatCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         String name = command.getName().toLowerCase(Locale.ROOT);
         if (name.equals("msg") && args.length == 1) return onlineNames(args[0]);
+        if ((name.equals("ignore") || name.equals("unignore")) && args.length == 1) {
+            return onlineNames(args[0]);
+        }
         if (!name.equals("mail")) return List.of();
         if (args.length == 1) return filter(List.of("send", "inbox", "read", "delete"), args[0]);
         if (args.length == 2 && args[0].equalsIgnoreCase("send")) return onlineNames(args[1]);
@@ -373,5 +454,8 @@ public final class ChatCommand implements CommandExecutor, TabCompleter {
     }
 
     private record MailSend(ChatOperation<MailMessage> operation, CitizenProfile target) {
+    }
+
+    private record IgnoreAction(CitizenProfile target, ChatResult result) {
     }
 }

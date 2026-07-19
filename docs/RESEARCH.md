@@ -300,11 +300,12 @@ behavioral reference, not a source of copyable implementation or content.
   illness state. OpenCivitas uses an original SQLite model with one active row
   per condition, immutable treatment history, exclusive medical-call claims,
   and exactly-once Medicare ledger settlement; no reference source was copied.
-- The [24 May 2026 Useful Commands archive](https://web.archive.org/web/20260524145749/https://wiki.democracycraft.net/Useful_commands)
-  was rechecked for `/g`, `/l`, `/murmur`, `/vc`, `/msg`, `/tell`, `/r`,
-  offline `/mail send`, `/ask`, entrepreneur-qualified `/ad` with a ten-minute
-  cooldown, emoji discovery, and government channels including `/doj`, `/sen`,
-  and `/jud`. The public page does not disclose local or murmur radii, so
+- [DemocracyCraft Useful Commands](https://wiki.democracycraft.net/Useful_commands),
+  revision 11468 from 11 July 2026, was rechecked for `/g`, `/l`, `/murmur`,
+  `/vc`, `/msg`, `/tell`, `/r`, offline `/mail send`, `/ignore`, `/unignore`,
+  `/timestamp`, `/ask`, entrepreneur-qualified `/ad` with a ten-minute cooldown,
+  emoji discovery, and government channels including `/doj`, `/sen`, and `/jud`.
+  The public page does not disclose local or murmur radii, so
   OpenCivitas uses conservative original defaults of 100 and 8 blocks in
   `chat.yml`; operators can change both without code changes.
 - [Carbon](https://github.com/Hexaoxide/Carbon) and
@@ -316,13 +317,20 @@ behavioral reference, not a source of copyable implementation or content.
   original Paper event router and SQLite repository; no GPL source was copied.
   Direct-message content is deliberately not stored, while offline mail is
   persisted with recipient ownership, read state, and soft deletion.
+- [EssentialsX](https://github.com/EssentialsX/Essentials), GPL-3.0 commit
+  `776f7094a8d4d780899bac0f459ce0ec33f557ab`, was inspected for UUID-backed
+  ignore persistence, list/toggle behavior, and recipient-side direct-message
+  refusal. OpenCivitas applies an original immutable join cache to public,
+  special, and cross-node chat and rechecks direct messages and mail inside the
+  SQLite write transaction. Paper exposes sender UUIDs and recipient delivery
+  directly, so packet interception is not justified; no GPL source was copied.
 - The same Useful Commands archive was cross-checked for `/map`, `/coords`,
   `/sendcoords`, `/gps start`, `/gps stop`, `/directions`, named `/sethome` and
   `/home`, central/north/south/university/airport warps, and the Oakridge,
   Willow, and Aventura district aliases. OpenCivitas resolves GPS only against
   locally registered real-estate plots and civic warps configured by the
   operator; it does not copy DemocracyCraft coordinates, streets, or map data.
-- [EssentialsX](https://github.com/EssentialsX/Essentials) is a GPL-3.0 home,
+- EssentialsX is also a home,
   warp, and teleport behavioral reference. Its current `Commandhome`,
   `Commandsethome`, and `AsyncTeleport` implementations were inspected for
   named-home limits that still allow updates, case-normalized names, missing

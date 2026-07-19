@@ -3,6 +3,7 @@ murmur-radius: 8
 advertisement-cooldown-seconds: 600
 maximum-message-length: 500
 mail-page-size: 10
+time-zone: UTC
 
 department-channels:
   doj:
