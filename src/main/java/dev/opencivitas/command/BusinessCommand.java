@@ -5,6 +5,7 @@ import dev.opencivitas.business.BusinessLedgerEntry;
 import dev.opencivitas.business.BusinessMember;
 import dev.opencivitas.business.BusinessOffer;
 import dev.opencivitas.business.BusinessOperation;
+import dev.opencivitas.business.BusinessPermission;
 import dev.opencivitas.business.BusinessRepository;
 import dev.opencivitas.business.BusinessResult;
 import dev.opencivitas.business.BusinessRole;
@@ -30,9 +31,11 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -41,6 +44,7 @@ import java.util.regex.Pattern;
 
 public final class BusinessCommand implements CommandExecutor, TabCompleter {
     private static final Pattern SLUG = Pattern.compile("[a-z0-9][a-z0-9-]{1,30}[a-z0-9]");
+    private static final Pattern ROLE_KEY = Pattern.compile("[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?");
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm 'UTC'")
             .withZone(ZoneOffset.UTC);
 
@@ -102,6 +106,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             case "fire" -> fire(sender, args);
             case "resign" -> resign(sender, args);
             case "role" -> setRole(sender, args);
+            case "roles", "customroles" -> customRoles(sender, args);
             case "wage" -> setWage(sender, args);
             case "payroll" -> payroll(sender, args);
             case "transferproprietorship" -> transferProprietorship(sender, args);
@@ -322,11 +327,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             usage(sender, "/business offer <business> <player> [role] [wage]");
             return true;
         }
-        Optional<BusinessRole> selectedRole = args.length >= 4
-                ? parseRole(sender, args[3]) : Optional.of(BusinessRole.EMPLOYEE);
-        if (selectedRole.isEmpty()) {
-            return true;
-        }
+        String roleInput = args.length >= 4 ? args[3] : BusinessRole.EMPLOYEE.name();
         Optional<Long> wage = args.length == 5
                 ? nonNegativeAmount(sender, args[4]) : Optional.of(0L);
         if (wage.isEmpty()) {
@@ -342,38 +343,53 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         }
         complete(sender, database.submit(() -> {
             Optional<CitizenProfile> target = citizens.findByName(args[2]);
-            BusinessResult result = target.isEmpty()
-                    ? BusinessResult.CITIZEN_NOT_FOUND
-                    : businesses.offer(
-                            player.getUniqueId(),
-                            args[1],
-                            target.get().uuid(),
-                            selectedRole.get(),
-                            wage.get(),
-                            now,
-                            expiresAt
-                    );
-            return new StaffAction(target, result);
+            Optional<Business> business = businesses.find(args[1]);
+            Optional<BusinessRole> selectedRole = businesses.resolveRole(args[1], roleInput);
+            BusinessResult result;
+            if (target.isEmpty()) {
+                result = BusinessResult.CITIZEN_NOT_FOUND;
+            } else if (business.isEmpty()) {
+                result = BusinessResult.BUSINESS_NOT_FOUND;
+            } else if (selectedRole.isEmpty()) {
+                result = BusinessResult.INVALID_ROLE;
+            } else {
+                result = businesses.offer(
+                        player.getUniqueId(),
+                        args[1],
+                        target.get().uuid(),
+                        selectedRole.get(),
+                        wage.get(),
+                        now,
+                        expiresAt
+                );
+            }
+            return new RoleStaffAction(target, selectedRole, result);
         }), action -> {
             if (action.target().isEmpty()) {
                 playerNotFound(sender, args[2]);
                 return;
             }
             CitizenProfile target = action.target().get();
+            BusinessRole selectedRole = action.role().orElse(BusinessRole.EMPLOYEE);
             if (action.result() != BusinessResult.SUCCESS) {
-                membershipError(sender, action.result(), args[1], target.lastName(), selectedRole.get());
+                if (action.result() == BusinessResult.INVALID_ROLE && action.role().isEmpty()) {
+                    messages.send(sender, "business.invalid-role",
+                            Placeholder.unparsed("role", roleInput));
+                    return;
+                }
+                membershipError(sender, action.result(), args[1], target.lastName(), selectedRole);
                 return;
             }
             String formattedWage = Money.format(wage.get(), currencySymbol);
             messages.send(sender, "business.offer-sent",
                     Placeholder.unparsed("player", target.lastName()),
-                    Placeholder.unparsed("role", displayRole(selectedRole.get())),
+                    Placeholder.unparsed("role", displayRole(selectedRole)),
                     Placeholder.unparsed("business", displayName(args[1])),
                     Placeholder.unparsed("wage", formattedWage));
             Player onlineTarget = Bukkit.getPlayer(target.uuid());
             if (onlineTarget != null) {
                 messages.send(onlineTarget, "business.offer-received",
-                        Placeholder.unparsed("role", displayRole(selectedRole.get())),
+                        Placeholder.unparsed("role", displayRole(selectedRole)),
                         Placeholder.unparsed("business", displayName(args[1])),
                         Placeholder.unparsed("wage", formattedWage));
             }
@@ -492,7 +508,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean setRole(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             messages.send(sender, "error.player-only");
             return true;
         }
@@ -500,11 +516,121 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             usage(sender, "/business role <business> <player> <role>");
             return true;
         }
-        Optional<BusinessRole> role = parseRole(sender, args[3]);
-        if (role.isEmpty()) {
+        complete(sender, database.submit(() -> {
+            Optional<CitizenProfile> target = citizens.findByName(args[2]);
+            Optional<Business> business = businesses.find(args[1]);
+            Optional<BusinessRole> role = businesses.resolveRole(args[1], args[3]);
+            BusinessResult result;
+            if (target.isEmpty()) {
+                result = BusinessResult.CITIZEN_NOT_FOUND;
+            } else if (business.isEmpty()) {
+                result = BusinessResult.BUSINESS_NOT_FOUND;
+            } else if (role.isEmpty()) {
+                result = BusinessResult.INVALID_ROLE;
+            } else {
+                result = businesses.setRole(
+                        player.getUniqueId(), args[1], target.get().uuid(), role.get());
+            }
+            return new RoleStaffAction(target, role, result);
+        }), action -> {
+            if (action.target().isEmpty()) {
+                playerNotFound(sender, args[2]);
+                return;
+            }
+            BusinessRole role = action.role().orElse(BusinessRole.EMPLOYEE);
+            if (action.result() != BusinessResult.SUCCESS) {
+                if (action.result() == BusinessResult.INVALID_ROLE && action.role().isEmpty()) {
+                    messages.send(sender, "business.invalid-role",
+                            Placeholder.unparsed("role", args[3]));
+                    return;
+                }
+                membershipError(sender, action.result(), args[1], action.target().get().lastName(), role);
+                return;
+            }
+            messages.send(sender, "business.role-changed",
+                    Placeholder.unparsed("player", action.target().get().lastName()),
+                    Placeholder.unparsed("business", displayName(args[1])),
+                    Placeholder.unparsed("role", displayRole(role)));
+        });
+        return true;
+    }
+
+    private boolean customRoles(CommandSender sender, String[] args) {
+        if (args.length == 3 && args[1].equalsIgnoreCase("list")) {
+            complete(sender, database.submit(() -> {
+                Optional<Business> business = businesses.find(args[2]);
+                List<BusinessRole> roles = business.isPresent()
+                        ? businesses.customRoles(args[2]) : List.of();
+                return new RoleListView(business, roles);
+            }), view -> showCustomRoles(sender, args[2], view));
             return true;
         }
-        return memberMutation(sender, args, MemberMutation.ROLE, role.get(), 0);
+        if (!(sender instanceof Player player)) {
+            messages.send(sender, "error.player-only");
+            return true;
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("delete")) {
+            complete(sender, database.submit(() -> businesses.deleteCustomRole(
+                    player.getUniqueId(), args[2], args[3])), result -> {
+                if (result == BusinessResult.SUCCESS) {
+                    messages.send(sender, "business.role-deleted",
+                            Placeholder.unparsed("role", displayName(args[3])),
+                            Placeholder.unparsed("business", displayName(args[2])));
+                } else {
+                    customRoleError(sender, result, args[2], args[3]);
+                }
+            });
+            return true;
+        }
+        boolean create = args.length >= 5 && args[1].equalsIgnoreCase("create");
+        boolean edit = args.length >= 5 && args[1].equalsIgnoreCase("edit");
+        if (!create && !edit) {
+            usage(sender, "/business roles <list|create|edit|delete> <business> [role] [permissions...]");
+            return true;
+        }
+        String roleKey = BusinessRole.normalizeCustomKey(args[3]);
+        if (!ROLE_KEY.matcher(roleKey).matches()) {
+            messages.send(sender, "business.invalid-role",
+                    Placeholder.unparsed("role", args[3]));
+            return true;
+        }
+        Optional<EnumSet<BusinessPermission>> permissions = parsePermissions(sender, args, 4);
+        if (permissions.isEmpty()) {
+            return true;
+        }
+        complete(sender, database.submit(() -> create
+                ? businesses.createCustomRole(
+                        player.getUniqueId(), args[2], roleKey, displayName(roleKey), permissions.get())
+                : businesses.editCustomRole(
+                        player.getUniqueId(), args[2], roleKey, permissions.get())), result -> {
+            if (result == BusinessResult.SUCCESS) {
+                messages.send(sender, create ? "business.role-created" : "business.role-edited",
+                        Placeholder.unparsed("role", displayName(roleKey)),
+                        Placeholder.unparsed("business", displayName(args[2])),
+                        Placeholder.component("permissions", permissionList(sender, permissions.get())));
+            } else {
+                customRoleError(sender, result, args[2], roleKey);
+            }
+        });
+        return true;
+    }
+
+    private void showCustomRoles(CommandSender sender, String slug, RoleListView view) {
+        if (view.business().isEmpty()) {
+            businessNotFound(sender, slug);
+            return;
+        }
+        messages.send(sender, "business.roles-header",
+                Placeholder.unparsed("business", view.business().get().displayName()));
+        if (view.roles().isEmpty()) {
+            messages.send(sender, "business.roles-empty");
+            return;
+        }
+        for (BusinessRole role : view.roles()) {
+            messages.send(sender, "business.roles-entry",
+                    Placeholder.unparsed("role", role.displayName()),
+                    Placeholder.component("permissions", permissionList(sender, role.permissions())));
+        }
     }
 
     private boolean setWage(CommandSender sender, String[] args) {
@@ -542,9 +668,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         if (args.length != expected) {
             usage(sender, mutation == MemberMutation.FIRE
                     ? "/business fire <business> <player>"
-                    : mutation == MemberMutation.ROLE
-                            ? "/business role <business> <player> <role>"
-                            : "/business wage <business> <player> <amount>");
+                    : "/business wage <business> <player> <amount>");
             return true;
         }
         complete(sender, database.submit(() -> {
@@ -555,7 +679,6 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             } else {
                 result = switch (mutation) {
                     case FIRE -> businesses.fire(player.getUniqueId(), args[1], target.get().uuid());
-                    case ROLE -> businesses.setRole(player.getUniqueId(), args[1], target.get().uuid(), role);
                     case WAGE -> businesses.setWage(player.getUniqueId(), args[1], target.get().uuid(), wage);
                 };
             }
@@ -572,7 +695,6 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
             }
             String key = switch (mutation) {
                 case FIRE -> "business.fired";
-                case ROLE -> "business.role-changed";
                 case WAGE -> "business.wage-changed";
             };
             messages.send(sender, key,
@@ -846,18 +968,51 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private Optional<BusinessRole> parseRole(CommandSender sender, String input) {
-        try {
-            BusinessRole role = BusinessRole.valueOf(
-                    input.toUpperCase(Locale.ROOT).replace('-', '_'));
-            if (role == BusinessRole.PROPRIETOR) {
-                throw new IllegalArgumentException("Proprietor is transferred separately");
+    private Optional<EnumSet<BusinessPermission>> parsePermissions(
+            CommandSender sender,
+            String[] args,
+            int start
+    ) {
+        EnumSet<BusinessPermission> permissions = EnumSet.noneOf(BusinessPermission.class);
+        for (int index = start; index < args.length; index++) {
+            for (String token : args[index].split(",")) {
+                Optional<BusinessPermission> permission = BusinessPermission.parse(token);
+                if (permission.isEmpty()) {
+                    messages.send(sender, "business.invalid-role-permission",
+                            Placeholder.unparsed("permission", token));
+                    return Optional.empty();
+                }
+                permissions.add(permission.get());
             }
-            return Optional.of(role);
-        } catch (IllegalArgumentException exception) {
-            messages.send(sender, "business.invalid-role",
-                    Placeholder.unparsed("role", input));
-            return Optional.empty();
+        }
+        return permissions.isEmpty() ? Optional.empty() : Optional.of(permissions);
+    }
+
+    private Component permissionList(CommandSender sender, Set<BusinessPermission> permissions) {
+        Component result = Component.empty();
+        boolean first = true;
+        for (BusinessPermission permission : BusinessPermission.values()) {
+            if (!permissions.contains(permission)) {
+                continue;
+            }
+            if (!first) {
+                result = result.append(Component.text(", "));
+            }
+            result = result.append(messages.component(sender,
+                    "business.permission." + permission.name().toLowerCase(Locale.ROOT).replace('_', '-')));
+            first = false;
+        }
+        return result;
+    }
+
+    private void customRoleError(CommandSender sender, BusinessResult result, String slug, String role) {
+        switch (result) {
+            case ROLE_EXISTS -> messages.send(sender, "business.role-exists",
+                    Placeholder.unparsed("role", displayName(role)));
+            case ROLE_LIMIT_REACHED -> messages.send(sender, "business.role-limit");
+            case INVALID_ROLE -> messages.send(sender, "business.invalid-role",
+                    Placeholder.unparsed("role", role));
+            default -> operationError(sender, result, slug);
         }
     }
 
@@ -910,7 +1065,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             return filter(args[0], List.of(
                     "create", "info", "list", "deposit", "withdraw", "pay", "offer", "accept", "deny",
-                    "offers", "staff", "fire", "resign", "role", "wage", "payroll",
+                    "offers", "staff", "fire", "resign", "role", "roles", "wage", "payroll",
                     "transferproprietorship", "transactions", "sales", "disband"));
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
@@ -923,6 +1078,15 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("staff")) {
             return filter(args[1], List.of("list"));
+        }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("roles")
+                || args[0].equalsIgnoreCase("customroles"))) {
+            return filter(args[1], List.of("list", "create", "edit", "delete"));
+        }
+        if (args.length >= 5 && (args[0].equalsIgnoreCase("roles")
+                || args[0].equalsIgnoreCase("customroles"))
+                && (args[1].equalsIgnoreCase("create") || args[1].equalsIgnoreCase("edit"))) {
+            return filter(args[args.length - 1], List.of("administrator", "financial", "chestshop", "default"));
         }
         if (args.length == 3 && (args[0].equalsIgnoreCase("offer")
                 || args[0].equalsIgnoreCase("fire")
@@ -966,7 +1130,7 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
     }
 
     private static String displayRole(BusinessRole role) {
-        return displayName(role.name().toLowerCase(Locale.ROOT).replace('_', '-'));
+        return role.displayName();
     }
 
     private enum TransferCommand {
@@ -982,7 +1146,6 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
 
     private enum MemberMutation {
         FIRE,
-        ROLE,
         WAGE
     }
 
@@ -996,6 +1159,16 @@ public final class BusinessCommand implements CommandExecutor, TabCompleter {
     }
 
     private record StaffAction(Optional<CitizenProfile> target, BusinessResult result) {
+    }
+
+    private record RoleStaffAction(
+            Optional<CitizenProfile> target,
+            Optional<BusinessRole> role,
+            BusinessResult result
+    ) {
+    }
+
+    private record RoleListView(Optional<Business> business, List<BusinessRole> roles) {
     }
 
     private record StaffView(

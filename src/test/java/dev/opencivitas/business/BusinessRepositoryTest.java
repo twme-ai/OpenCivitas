@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -256,6 +257,77 @@ class BusinessRepositoryTest {
                 .findFirst().orElseThrow().wageCents());
         assertEquals(BusinessResult.CANNOT_REMOVE_PROPRIETOR,
                 businesses.setWage(CUSTOMER, "acme", OWNER, 1));
+    }
+
+    @Test
+    void customFinancialRolePersistsThroughOffersAndAuthorizesFunds() throws Exception {
+        createBusiness();
+        Set<BusinessPermission> permissions = Set.of(
+                BusinessPermission.FINANCIAL, BusinessPermission.DEFAULT);
+
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                OWNER, "acme", "treasurer", "Treasurer", permissions));
+        BusinessRole treasurer = businesses.resolveRole("acme", "TREASURER").orElseThrow();
+        assertTrue(treasurer.isCustom());
+        assertEquals("Treasurer", treasurer.displayName());
+        assertTrue(treasurer.canManageFunds());
+
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.offer(OWNER, "acme", CUSTOMER, treasurer, 5_000, NOW, NOW + 10_000));
+        assertEquals(BusinessRole.custom("treasurer", "Treasurer", permissions),
+                businesses.offers(CUSTOMER, NOW).getFirst().role());
+        assertEquals(BusinessResult.SUCCESS, businesses.acceptOffer(CUSTOMER, "acme", NOW + 1));
+        assertEquals("Treasurer", businesses.role("acme", CUSTOMER).orElseThrow().displayName());
+
+        businesses.deposit(OWNER, "acme", 20_000);
+        assertEquals(BusinessResult.SUCCESS, businesses.withdraw(CUSTOMER, "acme", 5_000).result());
+        assertEquals(BusinessResult.SUCCESS, businesses.editCustomRole(
+                OWNER, "acme", "treasurer", Set.of(BusinessPermission.DEFAULT)));
+        assertEquals(BusinessResult.NO_PERMISSION, businesses.withdraw(CUSTOMER, "acme", 1_000).result());
+        assertEquals(BusinessResult.INVALID_ROLE,
+                businesses.offer(OWNER, "acme", WORKER, treasurer, 0, NOW, NOW + 10_000));
+
+        assertEquals(BusinessResult.SUCCESS, businesses.create(OWNER, "beta", "Beta"));
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                OWNER, "beta", "treasurer", "Treasurer", Set.of(BusinessPermission.DEFAULT)));
+        assertEquals(BusinessResult.INVALID_ROLE,
+                businesses.offer(OWNER, "beta", WORKER, treasurer, 0, NOW, NOW + 10_000));
+    }
+
+    @Test
+    void customAdministratorCannotGrantCapabilitiesItDoesNotHold() throws Exception {
+        createBusiness();
+        Set<BusinessPermission> administrator = Set.of(
+                BusinessPermission.ADMINISTRATOR, BusinessPermission.DEFAULT);
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                OWNER, "acme", "people-lead", "People Lead", administrator));
+        employ(CUSTOMER, businesses.resolveRole("acme", "people-lead").orElseThrow(), 0);
+
+        assertEquals(BusinessResult.NO_PERMISSION, businesses.createCustomRole(
+                CUSTOMER, "acme", "cashier", "Cashier", Set.of(BusinessPermission.FINANCIAL)));
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                CUSTOMER, "acme", "assistant", "Assistant", Set.of(BusinessPermission.DEFAULT)));
+        BusinessRole assistant = businesses.resolveRole("acme", "assistant").orElseThrow();
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.offer(CUSTOMER, "acme", WORKER, assistant, 0, NOW, NOW + 10_000));
+    }
+
+    @Test
+    void deletingCustomRoleAtomicallyReassignsMembersAndOffers() throws Exception {
+        createBusiness();
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                OWNER, "acme", "associate", "Associate", Set.of(BusinessPermission.DEFAULT)));
+        BusinessRole associate = businesses.resolveRole("acme", "associate").orElseThrow();
+        employ(CUSTOMER, associate, 0);
+        assertEquals(BusinessResult.SUCCESS,
+                businesses.offer(OWNER, "acme", WORKER, associate, 0, NOW, NOW + 10_000));
+
+        assertEquals(BusinessResult.SUCCESS, businesses.deleteCustomRole(OWNER, "acme", "associate"));
+        assertTrue(businesses.customRoles("acme").isEmpty());
+        assertEquals(BusinessRole.EMPLOYEE, businesses.role("acme", CUSTOMER).orElseThrow());
+        assertEquals(BusinessRole.EMPLOYEE, businesses.offers(WORKER, NOW).getFirst().role());
+        assertEquals(BusinessResult.SUCCESS, businesses.acceptOffer(WORKER, "acme", NOW + 1));
+        assertEquals(BusinessRole.EMPLOYEE, businesses.role("acme", WORKER).orElseThrow());
     }
 
     private void createBusiness() throws Exception {

@@ -10,11 +10,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public final class BusinessRepository {
+    private static final Pattern CUSTOM_ROLE_KEY = Pattern.compile("[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?");
+    private static final int MAX_CUSTOM_ROLES = 32;
+
     private final Database database;
 
     public BusinessRepository(Database database) {
@@ -103,7 +110,7 @@ public final class BusinessRepository {
 
     public Optional<BusinessRole> role(String slug, UUID player) throws SQLException {
         String sql = """
-                SELECT m.role
+                SELECT b.id, m.role
                 FROM business_members m
                 JOIN businesses b ON b.id = m.business_id
                 WHERE b.slug = ? COLLATE NOCASE AND m.player_uuid = ?
@@ -114,15 +121,185 @@ public final class BusinessRepository {
             statement.setString(2, player.toString());
             try (ResultSet results = statement.executeQuery()) {
                 return results.next()
-                        ? Optional.of(BusinessRole.valueOf(results.getString(1)))
+                        ? Optional.of(roleByStored(connection, results.getLong("id"), results.getString("role")))
                         : Optional.empty();
+            }
+        }
+    }
+
+    public Optional<BusinessRole> resolveRole(String slug, String input) throws SQLException {
+        Optional<BusinessRole> builtIn = BusinessRole.builtIn(input);
+        if (builtIn.isPresent()) {
+            return builtIn;
+        }
+        String key = BusinessRole.normalizeCustomKey(input);
+        try (Connection connection = database.openConnection()) {
+            Optional<Long> businessId = businessId(connection, slug);
+            return businessId.isEmpty() ? Optional.empty() : customRole(connection, businessId.get(), key);
+        }
+    }
+
+    public List<BusinessRole> customRoles(String slug) throws SQLException {
+        String sql = """
+                SELECT r.role_key, r.display_name, r.administrator, r.financial,
+                       r.chest_shop, r.default_access
+                FROM business_custom_roles r
+                JOIN businesses b ON b.id = r.business_id
+                WHERE b.slug = ? COLLATE NOCASE
+                ORDER BY r.display_name COLLATE NOCASE
+                """;
+        try (Connection connection = database.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, slug);
+            try (ResultSet results = statement.executeQuery()) {
+                List<BusinessRole> roles = new ArrayList<>();
+                while (results.next()) {
+                    roles.add(readCustomRole(results));
+                }
+                return List.copyOf(roles);
+            }
+        }
+    }
+
+    public BusinessResult createCustomRole(
+            UUID actor,
+            String slug,
+            String key,
+            String displayName,
+            Set<BusinessPermission> permissions
+    ) throws SQLException {
+        String normalizedKey = BusinessRole.normalizeCustomKey(key);
+        if (!validCustomRole(normalizedKey, displayName, permissions)
+                || BusinessRole.builtIn(normalizedKey).isPresent()) {
+            return BusinessResult.INVALID_ROLE;
+        }
+        BusinessRole proposed = BusinessRole.custom(normalizedKey, displayName, permissions);
+        long now = Instant.now().toEpochMilli();
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<Long> businessId = businessId(connection, slug);
+                if (businessId.isEmpty()) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_NOT_FOUND;
+                }
+                BusinessRow business = businessRow(connection, businessId.get());
+                if (business.status() != BusinessStatus.ACTIVE) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_INACTIVE;
+                }
+                Optional<BusinessRole> actorRole = memberRole(connection, businessId.get(), actor);
+                if (actorRole.isEmpty() || !actorRole.get().canAssign(proposed)) {
+                    connection.rollback();
+                    return BusinessResult.NO_PERMISSION;
+                }
+                if (customRole(connection, businessId.get(), normalizedKey).isPresent()) {
+                    connection.rollback();
+                    return BusinessResult.ROLE_EXISTS;
+                }
+                if (customRoleCount(connection, businessId.get()) >= MAX_CUSTOM_ROLES) {
+                    connection.rollback();
+                    return BusinessResult.ROLE_LIMIT_REACHED;
+                }
+                insertCustomRole(connection, businessId.get(), proposed, now);
+                connection.commit();
+                return BusinessResult.SUCCESS;
+            } catch (SQLException exception) {
+                connection.rollback();
+                if (isUniqueConstraint(exception)) {
+                    return BusinessResult.ROLE_EXISTS;
+                }
+                throw exception;
+            }
+        }
+    }
+
+    public BusinessResult editCustomRole(
+            UUID actor,
+            String slug,
+            String key,
+            Set<BusinessPermission> permissions
+    ) throws SQLException {
+        String normalizedKey = BusinessRole.normalizeCustomKey(key);
+        if (!CUSTOM_ROLE_KEY.matcher(normalizedKey).matches() || permissions.isEmpty()) {
+            return BusinessResult.INVALID_ROLE;
+        }
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<Long> businessId = businessId(connection, slug);
+                if (businessId.isEmpty()) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_NOT_FOUND;
+                }
+                BusinessRow business = businessRow(connection, businessId.get());
+                if (business.status() != BusinessStatus.ACTIVE) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_INACTIVE;
+                }
+                Optional<BusinessRole> existing = customRole(connection, businessId.get(), normalizedKey);
+                if (existing.isEmpty()) {
+                    connection.rollback();
+                    return BusinessResult.INVALID_ROLE;
+                }
+                BusinessRole updated = BusinessRole.custom(
+                        normalizedKey, existing.get().displayName(), permissions);
+                Optional<BusinessRole> actorRole = memberRole(connection, businessId.get(), actor);
+                if (actorRole.isEmpty()
+                        || !actorRole.get().canManage(existing.get())
+                        || !actorRole.get().canAssign(updated)) {
+                    connection.rollback();
+                    return BusinessResult.NO_PERMISSION;
+                }
+                updateCustomRole(connection, businessId.get(), updated, Instant.now().toEpochMilli());
+                connection.commit();
+                return BusinessResult.SUCCESS;
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        }
+    }
+
+    public BusinessResult deleteCustomRole(UUID actor, String slug, String key) throws SQLException {
+        String normalizedKey = BusinessRole.normalizeCustomKey(key);
+        try (Connection connection = database.openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<Long> businessId = businessId(connection, slug);
+                if (businessId.isEmpty()) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_NOT_FOUND;
+                }
+                BusinessRow business = businessRow(connection, businessId.get());
+                if (business.status() != BusinessStatus.ACTIVE) {
+                    connection.rollback();
+                    return BusinessResult.BUSINESS_INACTIVE;
+                }
+                Optional<BusinessRole> existing = customRole(connection, businessId.get(), normalizedKey);
+                if (existing.isEmpty()) {
+                    connection.rollback();
+                    return BusinessResult.INVALID_ROLE;
+                }
+                Optional<BusinessRole> actorRole = memberRole(connection, businessId.get(), actor);
+                if (actorRole.isEmpty() || !actorRole.get().canManage(existing.get())) {
+                    connection.rollback();
+                    return BusinessResult.NO_PERMISSION;
+                }
+                replaceRoleReferences(connection, businessId.get(), existing.get(), BusinessRole.EMPLOYEE);
+                deleteCustomRole(connection, businessId.get(), normalizedKey);
+                connection.commit();
+                return BusinessResult.SUCCESS;
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
             }
         }
     }
 
     public List<BusinessMember> members(String slug) throws SQLException {
         String sql = """
-                SELECT m.player_uuid, p.last_name, m.role, m.wage_cents, m.joined_at
+                SELECT b.id AS business_id, m.player_uuid, p.last_name, m.role, m.wage_cents, m.joined_at
                 FROM business_members m
                 JOIN businesses b ON b.id = m.business_id
                 JOIN players p ON p.uuid = m.player_uuid
@@ -144,7 +321,7 @@ public final class BusinessRepository {
                     members.add(new BusinessMember(
                             UUID.fromString(results.getString("player_uuid")),
                             results.getString("last_name"),
-                            BusinessRole.valueOf(results.getString("role")),
+                            roleByStored(connection, results.getLong("business_id"), results.getString("role")),
                             results.getLong("wage_cents"),
                             Instant.ofEpochMilli(results.getLong("joined_at"))
                     ));
@@ -179,7 +356,10 @@ public final class BusinessRepository {
                             results.getString("display_name"),
                             UUID.fromString(results.getString("offered_by")),
                             results.getString("offered_by_name"),
-                            BusinessRole.valueOf(results.getString("offered_role")),
+                            roleByStored(
+                                    connection,
+                                    results.getLong("business_id"),
+                                    results.getString("offered_role")),
                             results.getLong("offered_wage_cents"),
                             Instant.ofEpochMilli(results.getLong("offered_at")),
                             Instant.ofEpochMilli(results.getLong("expires_at"))
@@ -215,6 +395,10 @@ public final class BusinessRepository {
                 if (business.status() != BusinessStatus.ACTIVE) {
                     connection.rollback();
                     return BusinessResult.BUSINESS_INACTIVE;
+                }
+                if (!roleExists(connection, id.get(), offeredRole)) {
+                    connection.rollback();
+                    return BusinessResult.INVALID_ROLE;
                 }
                 Optional<BusinessRole> actorRole = memberRole(connection, id.get(), actor);
                 if (actorRole.isEmpty() || !actorRole.get().canAssign(offeredRole)) {
@@ -321,6 +505,10 @@ public final class BusinessRepository {
                 if (business.status() != BusinessStatus.ACTIVE) {
                     connection.rollback();
                     return BusinessResult.BUSINESS_INACTIVE;
+                }
+                if (!roleExists(connection, id.get(), newRole)) {
+                    connection.rollback();
+                    return BusinessResult.INVALID_ROLE;
                 }
                 Optional<BusinessRole> actorRole = memberRole(connection, id.get(), actor);
                 Optional<BusinessRole> targetRole = memberRole(connection, id.get(), target);
@@ -785,7 +973,7 @@ public final class BusinessRepository {
             statement.setString(2, player.toString());
             try (ResultSet results = statement.executeQuery()) {
                 return results.next()
-                        ? Optional.of(BusinessRole.valueOf(results.getString(1)))
+                        ? Optional.of(roleByStored(connection, businessId, results.getString(1)))
                         : Optional.empty();
             }
         }
@@ -855,7 +1043,7 @@ public final class BusinessRepository {
             try (ResultSet results = statement.executeQuery()) {
                 return results.next()
                         ? Optional.of(new OfferRow(
-                                BusinessRole.valueOf(results.getString(1)),
+                                roleByStored(connection, businessId, results.getString(1)),
                                 results.getLong(2),
                                 results.getLong(3)))
                         : Optional.empty();
@@ -882,6 +1070,169 @@ public final class BusinessRepository {
             statement.setLong(1, now);
             statement.executeUpdate();
         }
+    }
+
+    private static BusinessRole roleByStored(Connection connection, long businessId, String storedName)
+            throws SQLException {
+        Optional<BusinessRole> builtIn = BusinessRole.builtIn(storedName);
+        if (builtIn.isPresent()) {
+            return builtIn.get();
+        }
+        if (storedName.regionMatches(true, 0, "CUSTOM:", 0, "CUSTOM:".length())) {
+            return customRole(connection, businessId, storedName.substring("CUSTOM:".length()))
+                    .orElseThrow(() -> new SQLException("Missing custom business role: " + storedName));
+        }
+        throw new SQLException("Unknown business role: " + storedName);
+    }
+
+    private static Optional<BusinessRole> customRole(Connection connection, long businessId, String key)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT role_key, display_name, administrator, financial, chest_shop, default_access "
+                        + "FROM business_custom_roles WHERE business_id = ? AND role_key = ? COLLATE NOCASE")) {
+            statement.setLong(1, businessId);
+            statement.setString(2, BusinessRole.normalizeCustomKey(key));
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(readCustomRole(results)) : Optional.empty();
+            }
+        }
+    }
+
+    private static BusinessRole readCustomRole(ResultSet results) throws SQLException {
+        EnumSet<BusinessPermission> permissions = EnumSet.noneOf(BusinessPermission.class);
+        if (results.getBoolean("administrator")) {
+            permissions.add(BusinessPermission.ADMINISTRATOR);
+        }
+        if (results.getBoolean("financial")) {
+            permissions.add(BusinessPermission.FINANCIAL);
+        }
+        if (results.getBoolean("chest_shop")) {
+            permissions.add(BusinessPermission.CHEST_SHOP);
+        }
+        if (results.getBoolean("default_access")) {
+            permissions.add(BusinessPermission.DEFAULT);
+        }
+        return BusinessRole.custom(results.getString("role_key"), results.getString("display_name"), permissions);
+    }
+
+    private static boolean roleExists(Connection connection, long businessId, BusinessRole role) throws SQLException {
+        return !role.isCustom()
+                || customRole(connection, businessId, role.customKey()).filter(role::equals).isPresent();
+    }
+
+    private static int customRoleCount(Connection connection, long businessId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM business_custom_roles WHERE business_id = ?")) {
+            statement.setLong(1, businessId);
+            try (ResultSet results = statement.executeQuery()) {
+                results.next();
+                return results.getInt(1);
+            }
+        }
+    }
+
+    private static void insertCustomRole(
+            Connection connection,
+            long businessId,
+            BusinessRole role,
+            long now
+    ) throws SQLException {
+        String sql = """
+                INSERT INTO business_custom_roles(
+                    business_id, role_key, display_name, administrator, financial,
+                    chest_shop, default_access, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, businessId);
+            statement.setString(2, role.customKey());
+            statement.setString(3, role.displayName());
+            setPermissionFlags(statement, role, 4);
+            statement.setLong(8, now);
+            statement.setLong(9, now);
+            statement.executeUpdate();
+        }
+    }
+
+    private static void updateCustomRole(
+            Connection connection,
+            long businessId,
+            BusinessRole role,
+            long now
+    ) throws SQLException {
+        String sql = """
+                UPDATE business_custom_roles
+                SET administrator = ?, financial = ?, chest_shop = ?, default_access = ?, updated_at = ?
+                WHERE business_id = ? AND role_key = ? COLLATE NOCASE
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            setPermissionFlags(statement, role, 1);
+            statement.setLong(5, now);
+            statement.setLong(6, businessId);
+            statement.setString(7, role.customKey());
+            if (statement.executeUpdate() != 1) {
+                throw new SQLException("Custom business role disappeared during update");
+            }
+        }
+    }
+
+    private static void setPermissionFlags(PreparedStatement statement, BusinessRole role, int offset)
+            throws SQLException {
+        statement.setBoolean(offset, role.permissions().contains(BusinessPermission.ADMINISTRATOR));
+        statement.setBoolean(offset + 1, role.permissions().contains(BusinessPermission.FINANCIAL));
+        statement.setBoolean(offset + 2, role.permissions().contains(BusinessPermission.CHEST_SHOP));
+        statement.setBoolean(offset + 3, role.permissions().contains(BusinessPermission.DEFAULT));
+    }
+
+    private static void replaceRoleReferences(
+            Connection connection,
+            long businessId,
+            BusinessRole oldRole,
+            BusinessRole replacement
+    ) throws SQLException {
+        String oldStored = oldRole.name();
+        try (PreparedStatement members = connection.prepareStatement(
+                "UPDATE business_members SET role = ? WHERE business_id = ? AND role = ?");
+             PreparedStatement offers = connection.prepareStatement(
+                     "UPDATE business_offers SET offered_role = ? WHERE business_id = ? AND offered_role = ?")) {
+            members.setString(1, replacement.name());
+            members.setLong(2, businessId);
+            members.setString(3, oldStored);
+            members.executeUpdate();
+            offers.setString(1, replacement.name());
+            offers.setLong(2, businessId);
+            offers.setString(3, oldStored);
+            offers.executeUpdate();
+        }
+    }
+
+    private static void deleteCustomRole(Connection connection, long businessId, String key) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM business_custom_roles WHERE business_id = ? AND role_key = ? COLLATE NOCASE")) {
+            statement.setLong(1, businessId);
+            statement.setString(2, BusinessRole.normalizeCustomKey(key));
+            if (statement.executeUpdate() != 1) {
+                throw new SQLException("Custom business role disappeared during delete");
+            }
+        }
+    }
+
+    private static boolean validCustomRole(
+            String key,
+            String displayName,
+            Set<BusinessPermission> permissions
+    ) {
+        return CUSTOM_ROLE_KEY.matcher(key).matches()
+                && displayName != null
+                && !displayName.isBlank()
+                && displayName.length() <= 48
+                && permissions != null
+                && !permissions.isEmpty();
+    }
+
+    private static boolean isUniqueConstraint(SQLException exception) {
+        return exception.getMessage() != null
+                && exception.getMessage().toLowerCase(Locale.ROOT).contains("unique");
     }
 
     private static List<WageRow> wages(Connection connection, long businessId) throws SQLException {

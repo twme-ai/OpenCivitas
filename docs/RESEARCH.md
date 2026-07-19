@@ -192,23 +192,28 @@ behavioral reference, not a source of copyable implementation or content.
   provide the complete elevator trigger and destination-safety surface. Aligned
   floors share the player's already-loaded chunk, so same-column teleport does
   not need an asynchronous chunk load. Packet interception is not justified.
-- [DemocracyCraft Business](https://wiki.democracycraft.net/Business): public
-  firm lifecycle, account, employee, role, wage, and chest-shop command behavior.
+- [DemocracyCraft Business](https://wiki.democracycraft.net/Business), revision
+  10626 from 18 June 2026: public firm lifecycle, account, employee, wage, and
+  chest-shop behavior; five fixed ranks; and custom roles with Administrator,
+  Financial, ChestShop, and Default permissions.
 - [DemocracyCraft Chestshops](https://wiki.democracycraft.net/Chestshops): sign
   format, buy/sell interaction, firm account prefix, and sales history behavior.
 - [QuickShop-Hikari economy transactions](https://github.com/QuickShop-Community/QuickShop-Hikari/tree/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/economy/transaction):
   preflight balance checks, commit/rollback, callbacks, and transaction events.
   OpenCivitas uses a single SQLite transaction for the current internal account
   transfers and keeps the same all-or-nothing invariant.
-- [MyCompany](https://github.com/Ez4p1xEL/MyCompany): MIT-licensed company,
+- [MyCompany](https://github.com/Ez4p1xEL/MyCompany), MIT-licensed commit
+  `bcd3f77071769808750cf7da23b4a44d57881605`: company,
   persisted employee, hire request, position, salary, and ownership reference.
   Its current `HireRequestManager`, `CompanyManager`, configuration, and salary
   event were inspected before implementing restart-safe offers and payroll.
 - [Towny invitations](https://github.com/TownyAdvanced/Towny/tree/master/Towny/src/main/java/com/palmergames/bukkit/towny/invites):
   explicit sender/receiver ownership and accept/decline lifecycle reference.
-- [QuickShop permission groups](https://github.com/QuickShop-Community/QuickShop-Hikari/blob/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/shop/SimpleShopPermissionManager.java):
-  named permission group and least-privilege shop access reference for the firm
-  hierarchy and the upcoming custom-role/shop integration.
+- [QuickShop permission groups](https://github.com/QuickShop-Community/QuickShop-Hikari/blob/hikari/quickshop-bukkit/src/main/java/com/ghostchu/quickshop/shop/SimpleShopPermissionManager.java),
+  commit `f66f23f1cce8626559a97c2ff43dfd862e971c44`: named permission-group and
+  least-privilege shop access behavior. OpenCivitas uses original role value
+  objects and transactional SQLite definitions; no source, messages, or assets
+  were copied.
 - [ChestShop sign model](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Signs/ChestShopSign.java),
   [amount/price checks](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PreTransaction/AmountAndPriceChecker.java),
   and [stock fitting checks](https://github.com/ChestShop-authors/ChestShop-3/blob/master/plugin/src/main/java/com/Acrobot/ChestShop/Listeners/PreTransaction/StockFittingChecker.java):

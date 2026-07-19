@@ -1,6 +1,7 @@
 package dev.opencivitas.shop;
 
 import dev.opencivitas.business.BusinessRepository;
+import dev.opencivitas.business.BusinessPermission;
 import dev.opencivitas.business.BusinessResult;
 import dev.opencivitas.business.BusinessRole;
 import dev.opencivitas.citizen.CitizenRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -138,6 +140,21 @@ class ShopRepositoryTest {
                 shops.create(WORKER, businessDraft("acme", 5, 6, 7, 4_000L, null), NOW + 2).result());
         assertEquals(ShopResult.BUSINESS_NOT_FOUND,
                 shops.create(OWNER, businessDraft("missing", 8, 9, 10, 4_000L, null), NOW + 2).result());
+    }
+
+    @Test
+    void customChestShopRoleAuthorizesBusinessShop() throws Exception {
+        createBusiness();
+        assertEquals(BusinessResult.SUCCESS, businesses.createCustomRole(
+                OWNER,
+                "acme",
+                "sales-associate",
+                "Sales Associate",
+                Set.of(BusinessPermission.CHEST_SHOP, BusinessPermission.DEFAULT)));
+        employ(WORKER, businesses.resolveRole("acme", "sales-associate").orElseThrow());
+
+        assertEquals(ShopResult.SUCCESS,
+                shops.create(WORKER, businessDraft("acme", 9, 10, 11, 2_000L, null), NOW + 2).result());
     }
 
     private ShopDraft playerDraft(int x, int y, int z, Long buy, Long sell) {

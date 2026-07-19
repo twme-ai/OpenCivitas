@@ -1,6 +1,7 @@
 package dev.opencivitas.shop;
 
 import dev.opencivitas.business.BusinessRole;
+import dev.opencivitas.business.BusinessPermission;
 import dev.opencivitas.database.Database;
 import dev.opencivitas.economy.LedgerEntryType;
 
@@ -11,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -504,14 +506,44 @@ public final class ShopRepository {
 
     private static Optional<BusinessRole> businessRole(
             Connection connection, long businessId, UUID player) throws SQLException {
-        String sql = "SELECT role FROM business_members WHERE business_id = ? AND player_uuid = ?";
+        String sql = """
+                SELECT m.role, r.role_key, r.display_name, r.administrator, r.financial,
+                       r.chest_shop, r.default_access
+                FROM business_members m
+                LEFT JOIN business_custom_roles r
+                    ON r.business_id = m.business_id
+                    AND m.role = 'CUSTOM:' || r.role_key
+                WHERE m.business_id = ? AND m.player_uuid = ?
+                """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, businessId);
             statement.setString(2, player.toString());
             try (ResultSet results = statement.executeQuery()) {
-                return results.next()
-                        ? Optional.of(BusinessRole.valueOf(results.getString("role")))
-                        : Optional.empty();
+                if (!results.next()) {
+                    return Optional.empty();
+                }
+                Optional<BusinessRole> builtIn = BusinessRole.builtIn(results.getString("role"));
+                if (builtIn.isPresent()) {
+                    return builtIn;
+                }
+                if (results.getString("role_key") == null) {
+                    throw new SQLException("Missing custom business role: " + results.getString("role"));
+                }
+                EnumSet<BusinessPermission> permissions = EnumSet.noneOf(BusinessPermission.class);
+                if (results.getBoolean("administrator")) {
+                    permissions.add(BusinessPermission.ADMINISTRATOR);
+                }
+                if (results.getBoolean("financial")) {
+                    permissions.add(BusinessPermission.FINANCIAL);
+                }
+                if (results.getBoolean("chest_shop")) {
+                    permissions.add(BusinessPermission.CHEST_SHOP);
+                }
+                if (results.getBoolean("default_access")) {
+                    permissions.add(BusinessPermission.DEFAULT);
+                }
+                return Optional.of(BusinessRole.custom(
+                        results.getString("role_key"), results.getString("display_name"), permissions));
             }
         }
     }

@@ -513,6 +513,27 @@ CREATE TABLE IF NOT EXISTS business_members (
 CREATE INDEX IF NOT EXISTS idx_business_members_player
     ON business_members(player_uuid, business_id);
 
+CREATE TABLE IF NOT EXISTS business_custom_roles (
+    business_id INTEGER NOT NULL REFERENCES businesses(id),
+    role_key TEXT NOT NULL COLLATE NOCASE,
+    display_name TEXT NOT NULL,
+    administrator INTEGER NOT NULL DEFAULT 0 CHECK (administrator IN (0, 1)),
+    financial INTEGER NOT NULL DEFAULT 0 CHECK (financial IN (0, 1)),
+    chest_shop INTEGER NOT NULL DEFAULT 0 CHECK (chest_shop IN (0, 1)),
+    default_access INTEGER NOT NULL DEFAULT 0 CHECK (default_access IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (business_id, role_key),
+    CHECK (length(role_key) BETWEEN 1 AND 32),
+    CHECK (length(display_name) BETWEEN 1 AND 48)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_business_custom_roles_name
+    ON business_custom_roles(business_id, display_name COLLATE NOCASE);
+
+CREATE INDEX IF NOT EXISTS idx_business_custom_roles_business
+    ON business_custom_roles(business_id, role_key COLLATE NOCASE);
+
 CREATE TABLE IF NOT EXISTS business_offers (
     business_id INTEGER NOT NULL REFERENCES businesses(id),
     player_uuid TEXT NOT NULL REFERENCES players(uuid),

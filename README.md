@@ -28,7 +28,8 @@ The first playable foundation includes:
 - qualification awards and an asynchronous `/university` warp
 - entrepreneur-gated firms with separate accounts and transaction ledgers
 - atomic business deposits, withdrawals, payments, and disband refunds
-- persistent hiring offers, ranked staff, wages, payroll, and ownership transfer
+- persistent hiring offers, five built-in ranks, bounded custom roles with
+  Administrator/Financial/ChestShop/Default capabilities, wages, payroll, and ownership transfer
 - persistent sign chest shops for personal or firm accounts
 - left-click sales, right-click purchases, shift-click stack transactions,
   stock/capacity checks, item search, owner notices, and sales history
